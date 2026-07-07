@@ -1,0 +1,150 @@
+﻿import { ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  Users, 
+  DollarSign, 
+  FileText, 
+  Settings, 
+  LayoutDashboard,
+  Menu,
+  X,
+  Shield,
+  Coins
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { useAdmin } from "@/hooks/use-admin";
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+const navigation = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { name: "Members", href: "/members", icon: Users, adminOnly: false },
+  { name: "Share Management", href: "/share-management", icon: Coins, adminOnly: false },
+  { name: "Accounting", href: "/accounting", icon: DollarSign, adminOnly: false },
+  { name: "Reports", href: "/reports", icon: FileText, adminOnly: false },
+  { name: "User Management", href: "/user-management", icon: Shield, adminOnly: true },
+  { name: "Settings", href: "/settings", icon: Settings, adminOnly: false },
+];
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isAdmin } = useAdmin();
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center justify-between px-6 border-b border-sidebar-border">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+                <span className="text-white font-bold text-lg">T</span>
+              </div>
+              <span className="text-lg font-semibold text-sidebar-foreground">
+                Trust App
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 px-3 py-4">
+            {navigation.map((item) => {
+              if (item.adminOnly && !isAdmin) return null;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  )}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* User info */}
+          <div className="border-t border-sidebar-border p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-semibold">A</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  Admin User
+                </p>
+                <p className="text-xs text-sidebar-foreground/60 truncate">
+                  admin@trustapp.com
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Top bar */}
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-4 md:ml-0">
+            <h1 className="text-lg font-semibold text-foreground">
+              {navigation.find(item => item.href === pathname)?.name || "Dashboard"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Future: notifications, profile menu */}
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
