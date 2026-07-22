@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddMemberDialog } from "@/components/members/AddMemberDialog";
 import { BulkUploadDialog } from "@/components/members/BulkUploadDialog";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -308,7 +308,7 @@ export default function Members() {
                               className="font-semibold cursor-pointer text-primary hover:underline"
                               onClick={() => router.push(`/members/${member.id}/financial-report`)}
                             >
-                              à§³{(receivables[member.id]?.amount || 0).toFixed(2)}
+                              ৳{(receivables[member.id]?.amount || 0).toFixed(2)}
                             </TableCell>
                             {isAdmin && (
                               <TableCell onClick={(e) => e.stopPropagation()}>
@@ -498,7 +498,7 @@ export default function Members() {
                             className="font-semibold cursor-pointer text-primary hover:underline"
                             onClick={() => router.push(`/members/${member.id}/financial-report`)}
                           >
-                            à§³{(receivables[member.id]?.amount || 0).toFixed(2)}
+                            ৳{(receivables[member.id]?.amount || 0).toFixed(2)}
                           </TableCell>
                           {isAdmin && (
                             <TableCell>

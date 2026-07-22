@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, DollarSign, TrendingUp, UserCheck, Clock, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -114,7 +114,7 @@ export default function Dashboard() {
     },
     {
       title: "Total Share Capital",
-      value: statsLoading ? "..." : `à§³${stats?.totalShareValue.toLocaleString() || "0"}`,
+      value: statsLoading ? "..." : `৳${stats?.totalShareValue.toLocaleString() || "0"}`,
       change: `${stats?.totalShares || 0} shares`,
       icon: DollarSign,
       color: "text-primary",

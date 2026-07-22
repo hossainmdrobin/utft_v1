@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 
 export function useAdmin() {
   const [isAdmin, setIsAdmin] = useState(false);
