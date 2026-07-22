@@ -122,149 +122,147 @@ export default function Dashboard() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">Welcome back!</h2>
-          <p className="text-muted-foreground mt-1">
-            Here's what's happening with your trust today.
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div>
+        <h2 className="text-3xl font-bold text-foreground">Welcome back!</h2>
+        <p className="text-muted-foreground mt-1">
+          Here's what's happening with your trust today.
+        </p>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statsCards.map((stat) => (
-            <Card key={stat.title} className="shadow-soft">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                {stat.change && (
-                  <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Recent Members</CardTitle>
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statsCards.map((stat) => (
+          <Card key={stat.title} className="shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className={`h-5 w-5 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              {recentLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : recentMembers && recentMembers.length > 0 ? (
-                <div className="space-y-3">
-                  {recentMembers.map((member) => (
-                    <Link
-                      key={member.id}
-                      href={`/members/${member.id}`}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">{member.full_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(member.created_at), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                      <Badge variant={member.status === "active" ? "default" : "secondary"}>
-                        {member.member_type}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No members yet. Add your first member to get started.
-                </div>
+              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+              {stat.change && (
+                <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
               )}
             </CardContent>
           </Card>
+        ))}
+      </div>
 
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Pending Approvals</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pendingLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : pendingApprovals && pendingApprovals.length > 0 ? (
-                <div className="space-y-3">
-                  {pendingApprovals.map((member) => (
-                    <Link
-                      key={member.id}
-                      href={`/members/${member.id}`}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">{member.full_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(member.created_at), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                      <Badge variant="secondary">{member.member_type}</Badge>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No pending approvals
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card className="shadow-soft">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Recent Members</CardTitle>
           </CardHeader>
           <CardContent>
-            {activityLoading ? (
+            {recentLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            ) : recentActivity && recentActivity.length > 0 ? (
-              <div className="space-y-2">
-                {recentActivity.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between p-2 rounded hover:bg-accent"
+            ) : recentMembers && recentMembers.length > 0 ? (
+              <div className="space-y-3">
+                {recentMembers.map((member) => (
+                  <Link
+                    key={member.id}
+                    href={`/members/${member.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
                   >
-                    <div className="flex-1">
-                      <p className="text-sm text-foreground">{activity.description}</p>
+                    <div>
+                      <p className="font-medium text-foreground">{member.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(activity.changed_at), "MMM d, yyyy HH:mm")}
+                        {format(new Date(member.created_at), "MMM d, yyyy")}
                       </p>
                     </div>
-                    <Badge variant="outline" className="ml-2">
-                      {activity.action}
+                    <Badge variant={member.status === "active" ? "default" : "secondary"}>
+                      {member.member_type}
                     </Badge>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                No recent activity
+                No members yet. Add your first member to get started.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle>Pending Approvals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pendingLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : pendingApprovals && pendingApprovals.length > 0 ? (
+              <div className="space-y-3">
+                {pendingApprovals.map((member) => (
+                  <Link
+                    key={member.id}
+                    href={`/members/${member.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium text-foreground">{member.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(member.created_at), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">{member.member_type}</Badge>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No pending approvals
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+
+      {/* Recent Activity */}
+      <Card className="shadow-soft">
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activityLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : recentActivity && recentActivity.length > 0 ? (
+            <div className="space-y-2">
+              {recentActivity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center justify-between p-2 rounded hover:bg-accent"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground">{activity.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(activity.changed_at), "MMM d, yyyy HH:mm")}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="ml-2">
+                    {activity.action}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No recent activity
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

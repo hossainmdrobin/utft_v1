@@ -88,7 +88,7 @@ export default function Members() {
     try {
       const { error } = await supabase.rpc("approve_member", { p_member_id: memberId });
       if (error) throw error;
-      
+
       toast({
         title: "Success",
         description: "Member approved and Beneficiary ID generated"
@@ -107,7 +107,7 @@ export default function Members() {
     try {
       const { error } = await supabase.rpc("reject_member", { p_member_id: memberId });
       if (error) throw error;
-      
+
       toast({
         title: "Success",
         description: "Member rejected"
@@ -128,14 +128,14 @@ export default function Members() {
       if (newStatus === 'deceased') {
         updateData.deceased_at = new Date().toISOString();
       }
-      
+
       const { error } = await supabase
         .from("members")
         .update(updateData)
         .eq("id", memberId);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: "Success",
         description: `Member status updated to ${newStatus}`
@@ -161,7 +161,7 @@ export default function Members() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -260,51 +260,51 @@ export default function Members() {
                       <TableBody>
                         {members.map((member) => (
                           <TableRow key={member.id}>
-                            <TableCell 
+                            <TableCell
                               className="font-medium cursor-pointer hover:underline"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
                               {member.beneficiary_id || "Pending"}
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="cursor-pointer hover:underline"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
                               {member.full_name}
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="capitalize cursor-pointer"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
                               {member.member_type}
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="cursor-pointer"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
                               {member.share_quantity}
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="cursor-pointer"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
                               {getStatusBadge(member.status)}
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="cursor-pointer"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
-                              <PaymentStatusBadge 
-                                status={receivables[member.id]?.status || "cleared"} 
+                              <PaymentStatusBadge
+                                status={receivables[member.id]?.status || "cleared"}
                               />
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="cursor-pointer"
                               onClick={() => router.push(`/members/${member.id}`)}
                             >
                               {member.mobile}
                             </TableCell>
-                            <TableCell 
+                            <TableCell
                               className="font-semibold cursor-pointer text-primary hover:underline"
                               onClick={() => router.push(`/members/${member.id}/financial-report`)}
                             >
@@ -398,7 +398,7 @@ export default function Members() {
                     </TableHeader>
                     <TableBody>
                       {members.filter(m => m.status === 'pending').map((member) => (
-                        <TableRow 
+                        <TableRow
                           key={member.id}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => router.push(`/members/${member.id}`)}
@@ -464,37 +464,37 @@ export default function Members() {
                     <TableBody>
                       {members.filter(m => m.status === 'active').map((member) => (
                         <TableRow key={member.id}>
-                          <TableCell 
+                          <TableCell
                             className="font-medium cursor-pointer hover:underline"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.beneficiary_id}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="cursor-pointer hover:underline"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.full_name}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="capitalize cursor-pointer"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.member_type}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="cursor-pointer"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.share_quantity}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="cursor-pointer"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.mobile}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="font-semibold cursor-pointer text-primary hover:underline"
                             onClick={() => router.push(`/members/${member.id}/financial-report`)}
                           >
@@ -556,25 +556,25 @@ export default function Members() {
                     <TableBody>
                       {members.filter(m => m.status === 'deceased').map((member) => (
                         <TableRow key={member.id}>
-                          <TableCell 
+                          <TableCell
                             className="font-medium cursor-pointer hover:underline"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.beneficiary_id}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="cursor-pointer hover:underline"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.full_name}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="capitalize cursor-pointer"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
                             {member.member_type}
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             className="cursor-pointer"
                             onClick={() => router.push(`/members/${member.id}`)}
                           >
@@ -613,8 +613,8 @@ export default function Members() {
           </TabsContent>
         </Tabs>
       </div>
-      <AddMemberDialog 
-        open={addDialogOpen} 
+      <AddMemberDialog
+        open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         onSuccess={fetchMembers}
       />
@@ -623,6 +623,6 @@ export default function Members() {
         onOpenChange={setBulkUploadOpen}
         onSuccess={fetchMembers}
       />
-    </DashboardLayout>
+    </>
   );
 }
