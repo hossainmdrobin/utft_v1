@@ -4,7 +4,7 @@ interface IMember extends Document {
   user_id: string;
   password: string;
   role: string;
-  createdBy: string | { user_id: string; role: string; full_name?: string };
+  createdBy?: string | { user_id: string; role: string; full_name?: string };
   form_no: string;
   full_name?: string;
   father_name?: string;
