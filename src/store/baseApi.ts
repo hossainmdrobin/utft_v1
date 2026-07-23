@@ -7,14 +7,14 @@ export const baseApi = createApi({
     baseUrl: "/api",
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as { auth?: { token?: string } };
-      const token = state.auth?.token;
+      const token = state.auth?.token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
       if (token) {
         headers.set("authorization", `Bearer ${token}`);
       }
       return headers;
     },
   }),
-  tagTypes: [],
+  tagTypes: ["Members"],
   endpoints: () => ({}),
 });
 

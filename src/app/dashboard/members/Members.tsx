@@ -151,16 +151,23 @@ export default function Members() {
             </p>
           </div>
           <div className="flex gap-2">
-            {isAdmin && (
-              <Button variant="outline" className="gap-2" onClick={() => setBulkUploadOpen(true)}>
-                <Upload className="h-4 w-4" />
-                Bulk Upload
+            {isAdmin ? (
+              <>
+                <Button variant="outline" className="gap-2" onClick={() => setBulkUploadOpen(true)}>
+                  <Upload className="h-4 w-4" />
+                  Bulk Upload
+                </Button>
+                <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Add Member
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" className="gap-2" onClick={() => setAddDialogOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Add Member
               </Button>
             )}
-            <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Add Member
-            </Button>
           </div>
         </div>
 

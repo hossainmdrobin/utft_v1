@@ -25,6 +25,7 @@ const memberSchema = new Schema({
   approved_at: { type: String },
   deceased_at: { type: String },
   user_id: { type: String },
+  unique_code: { type: String },
 }, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
 
 export const Member = models.Member || model("Member", memberSchema);
