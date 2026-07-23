@@ -35,7 +35,7 @@ const memberSchema = new Schema<IMember>(
     user_id: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, default: "member", enum: ["admin", "president", "director", "accountant", "auditor", "member"] },
-    createdBy: { type: Schema.Types.ObjectId, ref: "Member", required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "Member" },
     form_no: { type: String },
     full_name: { type: String },
     father_name: { type: String },
