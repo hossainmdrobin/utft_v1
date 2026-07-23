@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddMemberDialog } from "@/components/members/AddMemberDialog";
+import { AddMemberDialog } from "./AddMemberDialog";
 import { BulkUploadDialog } from "@/components/members/BulkUploadDialog";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/mongodb/client";
