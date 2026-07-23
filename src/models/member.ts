@@ -3,6 +3,8 @@ import { Schema, model, models, Document } from "mongoose";
 interface IMember extends Document {
   user_id: string;
   password: string;
+  role: string;
+  createdBy: string | { user_id: string; role: string; full_name?: string };
   form_no: string;
   full_name?: string;
   father_name?: string;
@@ -32,6 +34,8 @@ const memberSchema = new Schema<IMember>(
   {
     user_id: { type: String, required: true },
     password: { type: String, required: true },
+    role: { type: String, default: "member", enum: ["admin", "president", "director", "accountant", "auditor", "member"] },
+    createdBy: { type: Schema.Types.ObjectId, ref: "Member", required: true },
     form_no: { type: String },
     full_name: { type: String },
     father_name: { type: String },
