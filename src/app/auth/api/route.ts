@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from "next/server";
+import { connectDB } from "@/integrations/mongodb/connection";
+import { Member } from "@/models/member";
+import { verifyPassword, generateToken } from "@/integrations/mongodb/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: NextRequest) {
+  await connectDB();
+
+  const body = await req.json();
+  const { email, password } = body;
+
+  if (!email || !password) {
+    return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+  }
+
+  try {
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const member = await (Member as any).findOne({ email: normalizedEmail });
+    if (!member) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+
+    const valid = await verifyPassword(password, member.password);
+    if (!valid) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+
+    const token = generateToken(member.user_id);
+
+    const response = NextResponse.json({
+      data: {
+        user: {
+          id: member.user_id,
+          email: member.email,
+          role: member.role,
+          full_name: member.full_name,
+        },
+      },
+    });
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    return response;
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error)?.message || "Login failed" }, { status: 400 });
+  }
+}
