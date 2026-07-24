@@ -22,7 +22,7 @@ export default function Auth() {
     setLoading(true)
     try {
       const res = await fetch("/auth/api", {
-        method: "GET",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },

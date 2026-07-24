@@ -16,7 +16,6 @@ interface AddMemberDialogProps {
 
 export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDialogProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [uniqueCode, setUniqueCode] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,7 +56,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unique_code: uniqueCode.trim(), password }),
+        body: JSON.stringify({ user_id: uniqueCode.trim(), password }),
         credentials: "include",
       });
 
