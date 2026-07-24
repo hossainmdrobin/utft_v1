@@ -52,7 +52,7 @@ const memberSchema = new Schema<IMember>(
     nid: { type: String },
     mobile: { type: String },
     email: { type: String },
-    member_type: { type: String },
+    member_type: { type: String,default:"founding" },
     share_quantity: { type: Number, default: 0 },
     nominee_name: { type: String },
     nominee_relation: { type: String },

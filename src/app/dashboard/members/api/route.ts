@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Member } from "@/integrations/mongodb/models/Member";
 import { UserRole } from "@/integrations/mongodb/models/UserRole";
-import { verifyToken } from "@/integrations/mongodb/lib/auth";
+import { hashPassword, verifyToken } from "@/integrations/mongodb/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -39,15 +39,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   await connectDB();
 
-  const adminId = await getAdminUser(req);
-  if (!adminId) {
-    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-  }
+//   const adminId = await getAdminUser(req);
+//   if (!adminId) {
+//     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+//   }
+
 
   const body = await req.json();
-
+console.log(body)
   try {
-    const member = await Member.create(body);
+    const member = await Member.create({...body,password:hashPassword(body.password)});
     return NextResponse.json({ data: member }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

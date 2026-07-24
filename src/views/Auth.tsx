@@ -49,19 +49,33 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    try {
+      const res = await fetch("/auth/api", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
 
-    if (error) {
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || "Sign in failed",
+        });
+      } else {
+        router.push("/dashboard");
+      }
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message
+        description: "Something went wrong",
       });
-    } else {
-      router.push("/dashboard");
     }
 
     setLoading(false);

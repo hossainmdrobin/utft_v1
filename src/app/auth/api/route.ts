@@ -5,6 +5,31 @@ import { verifyPassword, generateToken } from "@/integrations/mongodb/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(req: NextRequest) {
+  try {
+    await connectDB();
+    const body = await req.json()
+    const { user_id, password } = body;
+    if (!user_id || !password) return NextResponse.json({ error: "Required data is not provided" }, { status: 400 })
+    const member = (Member as any).findOne({ user_id })
+    if (!member) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    const valid = await verifyPassword(password, member.password);
+    if (!valid) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    return NextResponse.json({
+      data: {
+        user: {
+          id: member.user_id,
+          email: member.email,
+          role: member.role,
+          full_name: member.full_name,
+        },
+      },
+    });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error)?.message || "Login failed" }, { status: 400 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   await connectDB();
 
