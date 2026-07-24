@@ -125,7 +125,7 @@ export default function Auth() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSignUpLoading}>
-                  {isSignUpLoading ? "Creating account..." : "Create Account"}
+                  {isSignUpLoading ? "Submitting..." : "Submit"}
                 </Button>
               </form>
             </TabsContent>
