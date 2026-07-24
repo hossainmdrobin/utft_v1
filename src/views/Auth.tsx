@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/integrations/mongodb/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,33 +14,41 @@ export default function Auth() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [user_id, setUserid] = useState("")
   const [password, setPassword] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true)
+    try {
+      const res = await fetch("/auth/api", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id, password }),
+        credentials: "include",
+      });
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`
+      const data = await res.json();
+      console.log(data,"Signup date")
+
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || "Sign in failed",
+        });
+      } else {
+        router.push("/dashboard");
       }
-    });
-
-    if (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Account created! You can now sign in."
+        description: "Something went wrong",
       });
     }
-
     setLoading(false);
   };
 
@@ -100,9 +107,9 @@ export default function Auth() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="user_id">Email</Label>
                   <Input
-                    id="signin-email"
+                    id="user_id"
                     type="email"
                     placeholder="admin@example.com"
                     value={email}
@@ -129,13 +136,13 @@ export default function Auth() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">User ID</Label>
                   <Input
                     id="signup-email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="User ID"
+                    value={user_id}
+                    onChange={(e) => setUserid(e.target.value)}
                     required
                   />
                 </div>
