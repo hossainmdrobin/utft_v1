@@ -1,6 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MemberActionMenu } from "@/components/members/MemberActionMenu";
-import type { Member } from "./MembersTable.types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
 
 interface PendingApprovalsTableProps {
   members: any[];

@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MemberActionMenu } from "@/components/members/MemberActionMenu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ActiveMembersTableProps {
   members: any[];

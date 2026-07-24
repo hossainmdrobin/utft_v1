@@ -8,84 +8,44 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useVerifyCredentialsMutation, useLoginMutation } from "@/store/slices/authSlice/api.auth";
 
 export default function Auth() {
   const router = useRouter();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [user_id, setUserid] = useState("")
+  const [user_id, setUserid] = useState("");
   const [password, setPassword] = useState("");
+
+  const [verifyCredentials, { isLoading: isSignUpLoading }] = useVerifyCredentialsMutation();
+  const [login, { isLoading: isSignInLoading }] = useLoginMutation();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true)
     try {
-      const res = await fetch("/auth/api", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_id, password }),
-        credentials: "include",
-      });
-
-      const data = await res.json();
-      console.log(data,"Signup date")
-
-      if (!res.ok) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: data.error || "Sign in failed",
-        });
-      } else {
-        router.push("/dashboard");
-      }
-    } catch {
+      await verifyCredentials({ user_id, password }).unwrap();
+      router.push("/dashboard");
+    } catch (err: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Something went wrong",
+        description: err?.data?.error || "Sign in failed",
       });
     }
-    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
     try {
-      const res = await fetch("/auth/api", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: data.error || "Sign in failed",
-        });
-      } else {
-        router.push("/dashboard");
-      }
-    } catch {
+      await login({ email, password }).unwrap();
+      router.push("/dashboard");
+    } catch (err: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Something went wrong",
+        description: err?.data?.error || "Sign in failed",
       });
     }
-
-    setLoading(false);
   };
 
   return (
@@ -128,8 +88,8 @@ export default function Auth() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
+                <Button type="submit" className="w-full" disabled={isSignInLoading}>
+                  {isSignInLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
@@ -158,8 +118,8 @@ export default function Auth() {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Create Account"}
+                <Button type="submit" className="w-full" disabled={isSignUpLoading}>
+                  {isSignUpLoading ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>

@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "./index";
 
 export const baseApi = createApi({
@@ -34,5 +34,5 @@ export const injectEndpoint = (
   return baseApi.injectEndpoints({
     endpoints,
     overrideExisting: false,
-  });
+  }) as any;
 };
