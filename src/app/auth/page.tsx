@@ -1,5 +1,10 @@
+import ReduxProvider from "@/components/providers/ReduxProvider";
 import Auth from "@/views/Auth";
+import { } from "react-redux";
 
 export default function Page() {
-  return <Auth />;
+  return (
+    <ReduxProvider>
+      <Auth />;
+    </ReduxProvider>)
 }

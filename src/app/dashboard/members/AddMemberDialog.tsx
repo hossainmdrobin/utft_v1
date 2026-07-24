@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -29,10 +28,12 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("summitesalek")
     e.preventDefault();
     setLoading(true);
 
     try {
+      console.log(uniqueCode, password, "cteating memnter")
       if (!uniqueCode.trim() || !password.trim()) {
         toast({
           variant: "destructive",

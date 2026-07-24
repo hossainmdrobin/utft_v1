@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Mail, Phone, MapPin, User, FileText, Banknote, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
-import { AddMemberDialog } from "@/components/members/AddMemberDialog";
+import { AddMemberDialog } from "@/components/members/SignupForm";
 import { RecordPaymentDialog } from "@/components/members/RecordPaymentDialog";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMemberFinancials } from "@/hooks/use-member-financials";
