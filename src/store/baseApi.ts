@@ -4,7 +4,7 @@ import type { RootState } from "./index";
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api",
+    baseUrl: "/",
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as { auth?: { token?: string } };
       const token = state.auth?.token || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
