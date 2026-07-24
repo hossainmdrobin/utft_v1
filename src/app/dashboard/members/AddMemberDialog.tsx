@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface AddMemberDialogProps {
 export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDialogProps) {
   const { toast } = useToast();
   const [uniqueCode, setUniqueCode] = useState("");
+  const [member_type,setMemberType] = useState("general")
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -117,6 +119,18 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
                 placeholder="Enter password (min 6 characters)"
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="member_type">Member Type *</Label>
+              <Select value={member_type} onValueChange={(value) => setMemberType(value)} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="founding">Founding Member</SelectItem>
+                  <SelectItem value="general">General Member</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

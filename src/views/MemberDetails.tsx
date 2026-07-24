@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Mail, Phone, MapPin, User, FileText, Banknote, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
-import { AddMemberDialog } from "@/components/members/SignupForm";
+import { AddMemberDialog } from "@/app/auth/SignupForm";
 import { RecordPaymentDialog } from "@/components/members/RecordPaymentDialog";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMemberFinancials } from "@/hooks/use-member-financials";
@@ -28,19 +28,19 @@ export default function MemberDetails() {
   const [member, setMember] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  
+
   // Payment dialog state
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentRecord, setPaymentRecord] = useState<{
     type: "donation" | "charge" | "fine";
     record: any;
   } | null>(null);
-  
+
   // Financial data
   const [donations, setDonations] = useState<any[]>([]);
   const [fines, setFines] = useState<any[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
-  
+
   const { summary: financialSummary, loading: financialLoading, refetch: refetchSummary } = useMemberFinancials(id);
 
   // Fetch share receivables count
@@ -179,8 +179,8 @@ export default function MemberDetails() {
             Back to Members
           </Button>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => router.push(`/members/${id}/financial-report`)}
             >
               <FileText className="h-4 w-4 mr-2" />

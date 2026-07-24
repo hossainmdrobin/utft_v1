@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useVerifyCredentialsMutation, useLoginMutation } from "@/store/slices/authSlice/api.auth";
+import SignupForm from "@/app/auth/SignupForm";
 
 export default function Auth() {
   const router = useRouter();
@@ -16,37 +17,42 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [user_id, setUserid] = useState("");
   const [password, setPassword] = useState("");
+  const [open,setOpen] = useState(false)
 
-  const [verifyCredentials, { isLoading: isSignUpLoading }] = useVerifyCredentialsMutation();
-  const [login, { isLoading: isSignInLoading }] = useLoginMutation();
+  const [verifyCredentials, { data: verifyData, isLoading: isSignUpLoading, error: verifiedError }] = useVerifyCredentialsMutation();
+  const [login, { isLoading: isSignInLoading, error: signInError }] = useLoginMutation();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await verifyCredentials({ user_id, password }).unwrap();
-      router.push("/dashboard");
-    } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err?.data?.error || "Sign in failed",
-      });
-    }
+    await verifyCredentials({ user_id, password }).unwrap();
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await login({ email, password }).unwrap();
-      router.push("/dashboard");
-    } catch (err: any) {
+    await login({ email, password }).unwrap();
+  };
+
+  useEffect(() => {
+    if (verifiedError) {
       toast({
-        variant: "destructive",
         title: "Error",
-        description: err?.data?.error || "Sign in failed",
+        description: verifiedError?.data?.error || "Verification failed",
       });
     }
-  };
+    if (verifyData) {
+      setOpen(true)
+      toast({
+        title: "Success",
+        description: "Credentials verified successfully",
+      });
+    }
+    if (signInError) {
+      toast({
+        title: "Error",
+        description: signInError?.data?.error || "Login failed",
+      });
+    }
+  }, [verifyData, verifiedError, signInError,])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -126,6 +132,7 @@ export default function Auth() {
           </Tabs>
         </CardContent>
       </Card>
+      {open && <SignupForm open={open} onOpenChange={setOpen} onSuccess={() => { setOpen(false) }} />}
     </div>
   );
 }

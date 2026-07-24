@@ -9,14 +9,14 @@ import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
 import { memberSchema } from "@/lib/validations/member";
 
-interface AddMemberDialogProps {
+interface SignupFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   editMember?: any;
 }
 
-export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: AddMemberDialogProps) {
+export default function SignupForm({ open, onOpenChange, onSuccess, editMember }: SignupFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
