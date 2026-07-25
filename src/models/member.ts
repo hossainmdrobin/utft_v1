@@ -1,6 +1,7 @@
 import { Schema, model, models, Document } from "mongoose";
 
 interface IMember extends Document {
+  profile_photo?:string,
   user_id: string;
   password: string;
   role: string;
@@ -32,6 +33,7 @@ interface IMember extends Document {
 
 const memberSchema = new Schema<IMember>(
   {
+    profile_photo: { type: String, default: "" },
     user_id: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, default: "member", enum: ["admin", "president", "director", "accountant", "auditor", "member"] },

@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
 
 
   const body = await req.json();
-console.log(body)
   try {
     const member = await Member.create({...body,password:hashPassword(body.password)});
     return NextResponse.json({ data: member }, { status: 201 });

@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   Shield,
-  Coins
+  Coins,
+  CircleUserRound
 } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -30,6 +31,7 @@ const navigation = [
   { name: "Accounting", href: "/accounting", icon: DollarSign, adminOnly: false },
   { name: "Reports", href: "/reports", icon: FileText, adminOnly: false },
   { name: "User Management", href: "/user-management", icon: Shield, adminOnly: true },
+  {name:"Profile", href:"/dashboard/profile", icon:CircleUserRound, adminOnly:false},
   { name: "Settings", href: "/settings", icon: Settings, adminOnly: false },
 ];
 
