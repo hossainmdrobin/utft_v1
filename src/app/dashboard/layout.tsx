@@ -13,10 +13,11 @@ import {
   Shield,
   Coins
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { useAdmin } from "@/hooks/use-admin";
+import { Providers } from "../providers";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -38,7 +39,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAdmin } = useAdmin();
 
   return (
-    <div className="flex h-screen bg-background">
+    <Providers>
+      <div className="flex h-screen bg-background">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -146,6 +148,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
       </div>
     </div>
+    </Providers>
   );
 }
 
