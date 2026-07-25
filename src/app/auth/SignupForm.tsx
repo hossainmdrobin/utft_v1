@@ -5,20 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
-import { memberSchema } from "@/lib/validations/member";
-
+import { useUpdateAuthUserMutation } from "@/store/slices/authSlice/api.auth";
+import { useRouter } from "next/navigation";
 interface SignupFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   editMember?: any;
+  id:string
 }
 
-export default function SignupForm({ open, onOpenChange, onSuccess, editMember }: SignupFormProps) {
+export default function SignupForm({ open, onOpenChange, onSuccess, editMember,id }: SignupFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [updateAuthUser, {data:updatedData, isLoading: updateLoading }] = useUpdateAuthUserMutation();
+  console.log(updatedData,"updatedData")
+  const route = useRouter();
   const [formData, setFormData] = useState({
     form_no: "",
     full_name: "",
@@ -92,9 +95,14 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember }
     }
   }, [editMember, open]);
 
+  useEffect(()=>{
+    if(updatedData) route.push("/dashboard")
+
+  },[updatedData])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData)
+    updateAuthUser({user_id:id,data:formData});
     // setLoading(true);
 
     // try {

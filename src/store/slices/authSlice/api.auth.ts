@@ -38,9 +38,17 @@ export const authApi = injectEndpoint("authApi", (builder) => ({
       body,
     }),
   }),
+  updateAuthUser: builder.mutation<any, { user_id: string; data: any }>({
+    query: (body) => ({
+      url: "/auth/api",
+      method: "PUT",
+      body,
+    }),
+  }),
 }));
 
 export const {
   useVerifyCredentialsMutation,
   useLoginMutation,
+  useUpdateAuthUserMutation,
 } = authApi;

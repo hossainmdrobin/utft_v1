@@ -132,7 +132,7 @@ export default function Auth() {
           </Tabs>
         </CardContent>
       </Card>
-      {open && <SignupForm open={open} onOpenChange={setOpen} onSuccess={() => { setOpen(false) }} />}
+      {open && <SignupForm id={user_id} open={open} onOpenChange={setOpen} onSuccess={() => { setOpen(false) }} />}
     </div>
   );
 }

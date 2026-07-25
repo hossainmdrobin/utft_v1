@@ -61,11 +61,6 @@ console.log(body)
 export async function PATCH(req: NextRequest) {
   await connectDB();
 
-  const adminId = await getAdminUser(req);
-  if (!adminId) {
-    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-  }
-
   const body = await req.json();
   const { id, ...updateData } = body;
 

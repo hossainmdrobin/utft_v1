@@ -31,6 +31,31 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    await connectDB();
+    const body = await req.json()
+    const { user_id, data } = body;
+    delete data.password;
+    delete data.user_id;
+    const member = await (Member as any).findOneAndUpdate({ user_id }, data, { new: true })
+    if (!member) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    let response = NextResponse.json({ data })
+    const token = generateToken(member.user_id);
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+    return response;
+
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error)?.message || "Login failed" }, { status: 400 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   await connectDB();
 
