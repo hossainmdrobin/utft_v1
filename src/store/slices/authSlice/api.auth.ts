@@ -1,3 +1,4 @@
+import { useGetMembersQuery } from '@/store/slices/memberSlice/api.member';
 import { injectEndpoint } from "@/store/baseApi";
 
 export interface AuthUser {
@@ -45,10 +46,17 @@ export const authApi = injectEndpoint("authApi", (builder) => ({
       body,
     }),
   }),
+  getCurrentUser: builder.query({
+    query: () => ({
+      url: "/auth/api",
+      method: "GET",
+    }),
+  }),
 }));
 
 export const {
   useVerifyCredentialsMutation,
   useLoginMutation,
   useUpdateAuthUserMutation,
+  useGetCurrentUser
 } = authApi;

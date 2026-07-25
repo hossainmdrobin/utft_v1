@@ -1,9 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Member } from "@/models/member";
-import { verifyPassword, generateToken } from "@/integrations/mongodb/lib/auth";
+import { verifyPassword, generateToken, verifyToken } from "@/integrations/mongodb/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  try {
+    await connectDB();
+    const token = req.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded?.userId) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const member = await (Member as any)
+      .findOne({ user_id: decoded.userId })
+      .select("-password")
+      .lean();
+
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: { member } });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error)?.message || "Failed to fetch user" }, { status: 400 });
+  }
+}
 
 export async function PATCH(req: NextRequest) {
   try {
