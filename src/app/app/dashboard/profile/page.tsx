@@ -16,7 +16,7 @@ export default function ProfilePage() {
   const { data: currentUserData, isLoading: isAuthLoading, error: authError } = useGetCurrentUserQuery();
   const [updateMember, { isLoading: isUpdating }] = useUpdateMemberMutation();
 
-  const member = currentUserData?.data?.member || null;
+  const member = currentUserData?.data || null;
 
   const [formData, setFormData] = useState<any>({
     profile_photo: "",

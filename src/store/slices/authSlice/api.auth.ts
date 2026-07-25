@@ -1,5 +1,6 @@
 import { useGetMembersQuery } from '@/store/slices/memberSlice/api.member';
 import { injectEndpoint } from "@/store/baseApi";
+import { MemberDoc } from '@/models/member';
 
 export interface AuthUser {
   id: string;
@@ -15,9 +16,7 @@ export interface AuthResponse {
 }
 
 export interface CurrentUserResponse {
-  data: {
-    member: any;
-  };
+  data: MemberDoc
 }
 
 export interface VerifyCredentialsRequest {

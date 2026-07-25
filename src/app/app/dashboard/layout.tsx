@@ -16,13 +16,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
-import { Providers } from "../../providers";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
+const {data} = useGetCurrentUserQuery();
+console.log(data)
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: false },
