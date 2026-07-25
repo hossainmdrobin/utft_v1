@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const member = getCurrentMember(req);
+    if (!member) return NextResponse.json({ error: "Forbidden" }, { status: 500 })
     return NextResponse.json({ data: { member } });
   } catch (error) {
     return NextResponse.json({ error: (error as Error)?.message || "Failed to fetch user" }, { status: 400 });
