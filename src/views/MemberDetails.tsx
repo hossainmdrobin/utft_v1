@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Mail, Phone, MapPin, User, FileText, Banknote, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
-import { AddMemberDialog } from "@/app/auth/SignupForm";
+import SignupForm from "@/app/auth/SignupForm";
 import { RecordPaymentDialog } from "@/components/members/RecordPaymentDialog";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMemberFinancials } from "@/hooks/use-member-financials";
@@ -564,11 +564,12 @@ export default function MemberDetails() {
         </Card>
       </div>
 
-      <AddMemberDialog
+      <SignupForm
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSuccess={fetchMember}
         editMember={member}
+        id={member?.user_id}
       />
 
       {paymentRecord && (
