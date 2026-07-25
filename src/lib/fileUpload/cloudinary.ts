@@ -1,8 +1,8 @@
 import { createHmac } from "crypto";
 
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME?.trim().replace(/^["']|["']$/g, "");
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY?.trim().replace(/^["']|["']$/g, "");
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET?.trim().replace(/^["']|["']$/g, "");
 
 export async function uploadToCloudinary(file: File | Blob | Buffer, folder = "utft/profile") {
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
@@ -11,8 +11,10 @@ export async function uploadToCloudinary(file: File | Blob | Buffer, folder = "u
 
   const timestamp = Math.round(Date.now() / 1000).toString();
 
-  const params: Record<string, string> = { timestamp };
-  params[folder] = folder;
+  const params: Record<string, string> = {
+    timestamp,
+    folder,
+  };
 
   const stringToSign = Object.keys(params)
     .sort()
@@ -29,7 +31,7 @@ export async function uploadToCloudinary(file: File | Blob | Buffer, folder = "u
   formData.append("folder", folder);
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
     {
       method: "POST",
       body: formData,

@@ -10,7 +10,6 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const member =await getCurrentMember(req);
-    console.log(member,"Member form server")
     if (!member) return NextResponse.json({ error: "Forbidden" }, { status: 500 })
     return NextResponse.json({ data: { member } });
   } catch (error) {
