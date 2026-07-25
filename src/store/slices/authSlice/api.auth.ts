@@ -14,6 +14,12 @@ export interface AuthResponse {
   };
 }
 
+export interface CurrentUserResponse {
+  data: {
+    member: any;
+  };
+}
+
 export interface VerifyCredentialsRequest {
   user_id: string;
   password: string;
@@ -46,7 +52,7 @@ export const authApi = injectEndpoint("authApi", (builder) => ({
       body,
     }),
   }),
-  getCurrentUser: builder.query({
+  getCurrentUser: builder.query<CurrentUserResponse, void>({
     query: () => ({
       url: "/auth/api",
       method: "GET",
@@ -58,5 +64,5 @@ export const {
   useVerifyCredentialsMutation,
   useLoginMutation,
   useUpdateAuthUserMutation,
-  useGetCurrentUser
+  useGetCurrentUserQuery
 } = authApi;

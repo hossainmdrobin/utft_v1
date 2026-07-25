@@ -3,15 +3,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User } from "lucide-react";
+import { User, Upload } from "lucide-react";
 
 interface PersonalDetailsSectionProps {
   formData: any;
   handleChange: (field: string, value: any) => void;
+  onPhotoUpload?: (file: File) => Promise<void>;
+  isUploadingPhoto?: boolean;
 }
 
-export function PersonalDetailsSection({ formData, handleChange }: PersonalDetailsSectionProps) {
+export function PersonalDetailsSection({ formData, handleChange, onPhotoUpload, isUploadingPhoto }: PersonalDetailsSectionProps) {
   return (
     <Card className="shadow-elegant border-border/40">
       <CardHeader>
@@ -22,13 +25,38 @@ export function PersonalDetailsSection({ formData, handleChange }: PersonalDetai
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2 col-span-1 md:col-span-2">
-          <Label htmlFor="profile_photo">Profile Photo URL</Label>
-          <Input
-            id="profile_photo"
-            placeholder="https://example.com/photo.jpg"
-            value={formData.profile_photo}
-            onChange={(e) => handleChange("profile_photo", e.target.value)}
-          />
+          <Label htmlFor="profile_photo">Profile Photo</Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="profile_photo_file"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && onPhotoUpload) {
+                  onPhotoUpload(file);
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2"
+              disabled={isUploadingPhoto}
+              onClick={() => document.getElementById("profile_photo_file")?.click()}
+            >
+              {isUploadingPhoto ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              {isUploadingPhoto ? "Uploading..." : "Choose Photo"}
+            </Button>
+            {formData.profile_photo && (
+              <span className="text-xs text-muted-foreground">Photo uploaded</span>
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="full_name">Full Name *</Label>

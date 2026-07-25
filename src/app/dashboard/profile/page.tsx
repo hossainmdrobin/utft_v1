@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/mongodb/client";
-import { useGetMembersQuery, useUpdateMemberMutation } from "@/store/slices/memberSlice/api.member";
+import { useState, useEffect } from "react";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { useUpdateMemberMutation } from "@/store/slices/memberSlice/api.member";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -13,24 +13,10 @@ import { NomineeDetailsSection } from "./NomineeDetailsSection";
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getUser()
-      .then(({ data }) => {
-        setCurrentUser(data.user);
-      })
-      .finally(() => {
-        setAuthLoading(false);
-      });
-  }, []);
-
-  const { data: membersResponse, isLoading: membersLoading } = useGetMembersQuery();
+  const { data: currentUserData, isLoading: isAuthLoading, error: authError } = useGetCurrentUserQuery();
   const [updateMember, { isLoading: isUpdating }] = useUpdateMemberMutation();
 
-  const members = membersResponse?.data || [];
-  const member = members.find((m: any) => m.user_id === currentUser?.id);
+  const member = currentUserData?.data?.member || null;
 
   const [formData, setFormData] = useState<any>({
     profile_photo: "",
@@ -55,6 +41,8 @@ export default function ProfilePage() {
     nominee_relation: "",
     nominee_nid: "",
   });
+
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   useEffect(() => {
     if (member) {
@@ -88,6 +76,29 @@ export default function ProfilePage() {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
+  const handlePhotoUpload = async (file: File) => {
+    setIsUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Upload failed");
+      handleChange("profile_photo", result.url);
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: err?.message || "Failed to upload photo.",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member) return;
@@ -112,7 +123,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (authLoading || membersLoading) {
+  if (isAuthLoading) {
     return (
       <div className="flex h-[70vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -120,7 +131,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!currentUser || !member) {
+  if (authError || !member) {
     return (
       <div className="flex h-[70vh] flex-col items-center justify-center gap-2">
         <p className="text-muted-foreground text-lg">No profile found or you are not logged in.</p>
@@ -144,7 +155,7 @@ export default function ProfilePage() {
 
         <div className="md:col-span-2">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <PersonalDetailsSection formData={formData} handleChange={handleChange} />
+            <PersonalDetailsSection formData={formData} handleChange={handleChange} onPhotoUpload={handlePhotoUpload} isUploadingPhoto={isUploadingPhoto} />
             <ContactDetailsSection formData={formData} handleChange={handleChange} />
             <NomineeDetailsSection formData={formData} handleChange={handleChange} />
 
