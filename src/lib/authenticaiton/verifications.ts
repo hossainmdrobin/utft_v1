@@ -3,7 +3,7 @@ import { connectDB } from "@/integrations/mongodb/connection";
 import { Member } from "@/models/member";
 import { verifyToken } from "@/integrations/mongodb/lib/auth";
 
-export async function getCurrentMember(req: NextRequest) {
+export async function getCurrentMember(req: NextRequest, roles?: string[]) {
   await connectDB();
 
   const token = req.cookies.get("token")?.value;
@@ -25,5 +25,15 @@ export async function getCurrentMember(req: NextRequest) {
     .select("-password")
     .lean();
 
-  return member ?? null;
+  if (!member) {
+    const response = NextResponse.redirect(new URL("/auth", req.url));
+    response.cookies.delete("token");
+    return response;
+  }
+
+  if (roles && roles.length > 0 && !roles.includes(member.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return member;
 }
