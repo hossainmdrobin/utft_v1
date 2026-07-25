@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
-import { Providers } from "../providers";
+import { Providers } from "../../providers";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAdmin } = useAdmin();
 
   return (
-    <Providers>
+    <>
       <div className="flex h-screen bg-background">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
       </div>
     </div>
-    </Providers>
+    </>
   );
 }
 
