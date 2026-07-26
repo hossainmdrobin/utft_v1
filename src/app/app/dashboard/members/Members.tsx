@@ -1,11 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, RotateCcw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddMemberDialog } from "./AddMemberDialog";
 import { BulkUploadDialog } from "@/components/members/BulkUploadDialog";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/use-admin";
@@ -14,54 +14,55 @@ import { MembersTable } from "@/components/members/MembersTable";
 import { PendingApprovalsTable } from "@/components/members/PendingApprovalsTable";
 import { ActiveMembersTable } from "@/components/members/ActiveMembersTable";
 import { DeceasedMembersTable } from "@/components/members/DeceasedMembersTable";
-import { useGetMemberQuery } from "@/store/slices/memberSlice/api.member";
+import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function Members() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
-
-  const {data, isLoading} = useGetMemberQuery();
-  console.log(data, "data member");
-  const [members, setMembers] = useState<any[]>([]);
+  const [filters, setFilters] = useState<{
+    stage?: string;
+    joinDateFrom?: string;
+    joinDateTo?: string;
+    user_id?: string;
+    role?: string;
+    member_type?: string;
+    search?: string;
+  }>({});
+  const [memberList, setMemberList] = useState<any[]>([]);
   const [receivables, setReceivables] = useState<Record<string, { amount: number; status: string }>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
   const router = useRouter();
 
-  const fetchMembers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("members")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data, isLoading } = useGetMembersQuery(Object.keys(filters).length > 0 ? filters : undefined);
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch members"
-      });
-    } else {
-      setMembers(data || []);
-      await fetchReceivables(data || []);
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    const mapped = (data?.data || []).map((member: any) => ({
+      ...member,
+      id: member._id || member.id,
+      status: member.stage || member.status,
+      beneficiary_id: member.user_id || member.beneficiary_id,
+    }));
+    setMemberList(mapped);
+  }, [data]);
 
   const fetchReceivables = async (membersList: any[]) => {
     const receivablesMap: Record<string, { amount: number; status: string }> = {};
 
     for (const member of membersList) {
       try {
-        const { data } = await supabase.rpc("get_member_financial_summary", {
+        const { data: financialData } = await supabase.rpc("get_member_financial_summary", {
           p_member_id: member.id,
         });
 
-        if (data && data.length > 0) {
+        if (financialData && financialData.length > 0) {
           receivablesMap[member.id] = {
-            amount: Number(data[0].grand_total_due) || 0,
-            status: data[0].payment_status || "cleared",
+            amount: Number(financialData[0].grand_total_due) || 0,
+            status: financialData[0].payment_status || "cleared",
           };
         } else {
           receivablesMap[member.id] = { amount: 0, status: "cleared" };
@@ -72,11 +73,16 @@ export default function Members() {
     }
 
     setReceivables(receivablesMap);
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchMembers();
-  }, []);
+    if (memberList.length > 0) {
+      fetchReceivables(memberList);
+    } else {
+      setLoading(false);
+    }
+  }, [memberList]);
 
   const handleApprove = async (memberId: string) => {
     try {
@@ -87,7 +93,6 @@ export default function Members() {
         title: "Success",
         description: "Member approved and Beneficiary ID generated"
       });
-      fetchMembers();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -106,7 +111,6 @@ export default function Members() {
         title: "Success",
         description: "Member rejected"
       });
-      fetchMembers();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -134,7 +138,6 @@ export default function Members() {
         title: "Success",
         description: `Member status updated to ${newStatus}`
       });
-      fetchMembers();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -143,6 +146,24 @@ export default function Members() {
       });
     }
   };
+
+  const updateFilter = (key: string, value: string) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (value) {
+        next[key] = value;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
+  };
+
+  const resetFilters = () => {
+    setFilters({});
+  };
+
+  const hasActiveFilters = Object.keys(filters).length > 0;
 
   return (
     <>
@@ -175,6 +196,95 @@ export default function Members() {
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[200px] max-w-[300px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Search</Label>
+            <Input
+              placeholder="Name, NID, mobile..."
+              value={filters.search || ""}
+              onChange={(e) => updateFilter("search", e.target.value)}
+            />
+          </div>
+          <div className="min-w-[150px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Stage</Label>
+            <Select
+              value={filters.stage}
+              onValueChange={(v) => updateFilter("stage", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All stages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="initiated">Initiated</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[150px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Role</Label>
+            <Select
+              value={filters.role}
+              onValueChange={(v) => updateFilter("role", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="president">President</SelectItem>
+                <SelectItem value="director">Director</SelectItem>
+                <SelectItem value="accountant">Accountant</SelectItem>
+                <SelectItem value="auditor">Auditor</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[150px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Member Type</Label>
+            <Select
+              value={filters.member_type}
+              onValueChange={(v) => updateFilter("member_type", v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="founding">Founding</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[140px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Join Date From</Label>
+            <Input
+              type="date"
+              value={filters.joinDateFrom || ""}
+              onChange={(e) => updateFilter("joinDateFrom", e.target.value)}
+            />
+          </div>
+          <div className="min-w-[140px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Join Date To</Label>
+            <Input
+              type="date"
+              value={filters.joinDateTo || ""}
+              onChange={(e) => updateFilter("joinDateTo", e.target.value)}
+            />
+          </div>
+          <div className="min-w-[150px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">User ID</Label>
+            <Input
+              placeholder="Filter by user ID"
+              value={filters.user_id || ""}
+              onChange={(e) => updateFilter("user_id", e.target.value)}
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={resetFilters}>
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset Filters
+            </Button>
+        </div>
+
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList>
             <TabsTrigger value="all">All Members</TabsTrigger>
@@ -185,9 +295,9 @@ export default function Members() {
 
           <TabsContent value="all" className="space-y-4">
             <MembersTable
-              members={members}
+              members={memberList}
               receivables={receivables}
-              loading={loading}
+              loading={loading || isLoading}
               isAdmin={isAdmin}
               onMemberClick={(memberId) => router.push(`/members/${memberId}`)}
               onFinancialReportClick={(memberId) => router.push(`/members/${memberId}/financial-report`)}
@@ -201,7 +311,7 @@ export default function Members() {
 
           <TabsContent value="pending">
             <PendingApprovalsTable
-              members={members}
+              members={memberList}
               isAdmin={isAdmin}
               onMemberClick={(memberId) => router.push(`/members/${memberId}`)}
               onApprove={handleApprove}
@@ -211,7 +321,7 @@ export default function Members() {
 
           <TabsContent value="active">
             <ActiveMembersTable
-              members={members}
+              members={memberList}
               receivables={receivables}
               isAdmin={isAdmin}
               onMemberClick={(memberId) => router.push(`/members/${memberId}`)}
@@ -222,7 +332,7 @@ export default function Members() {
 
           <TabsContent value="deceased">
             <DeceasedMembersTable
-              members={members}
+              members={memberList}
               isAdmin={isAdmin}
               onMemberClick={(memberId) => router.push(`/members/${memberId}`)}
               onStatusChange={handleStatusChange}
@@ -233,12 +343,12 @@ export default function Members() {
       <AddMemberDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        onSuccess={fetchMembers}
+        onSuccess={() => {}}
       />
       <BulkUploadDialog
         open={bulkUploadOpen}
         onOpenChange={setBulkUploadOpen}
-        onSuccess={fetchMembers}
+        onSuccess={() => {}}
       />
     </>
   );
