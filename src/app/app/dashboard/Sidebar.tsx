@@ -27,7 +27,6 @@ export const navigation = [
 export default function Sidebar({ setSidebarOpen }: { setSidebarOpen: (boolean) => void }) {
     const pathname = usePathname();
     const { data, isLoading } = useGetCurrentUserQuery();
-    console.log(data?.data?.role, isLoading, "consoleing role");
     if (isLoading) return <div className='text-white'>Loading...</div>
 
 
