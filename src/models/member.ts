@@ -1,6 +1,8 @@
 import { Schema, model, models, Document } from "mongoose";
 
 interface IMember extends Document {
+  stage:string,
+  joinDate?: Date | string
   profile_photo?:string,
   user_id: string;
   password: string;
@@ -33,6 +35,8 @@ interface IMember extends Document {
 
 const memberSchema = new Schema<IMember>(
   {
+    stage:{type:String, default:"initiated",enum:['initiated','pending','approved','rejected']},
+    joinDate:{type:Date},
     profile_photo: { type: String, default: "" },
     user_id: { type: String, required: true },
     password: { type: String, required: true },

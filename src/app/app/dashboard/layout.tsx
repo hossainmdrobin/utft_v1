@@ -6,7 +6,6 @@ import {
   X
 } from "lucide-react";
 import { useState } from "react";
-import { useAdmin } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Sidebar, { navigation } from "./Sidebar";
@@ -16,12 +15,9 @@ interface DashboardLayoutProps {
 }
 
 
-
-
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isAdmin } = useAdmin();
 
   return (
     <>
