@@ -4,6 +4,15 @@ import { Member } from "@/integrations/mongodb/models/Member";
 import { UserRole } from "@/integrations/mongodb/models/UserRole";
 import { hashPassword, verifyToken } from "@/integrations/mongodb/lib/auth";
 
+interface MemberFilter {
+  stage?: string;
+  user_id?: string;
+  role?: string;
+  member_type?: string;
+  joinDate?: { $gte?: Date; $lte?: Date };
+  $or?: { full_name?: RegExp; father_name?: RegExp; mother_name?: RegExp; nid?: RegExp; mobile?: RegExp; nominee_nid?: RegExp }[];
+}
+
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
@@ -17,7 +26,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: member });
   }
 
-  const members = await Member.find({}).sort({ created_at: -1 }).lean();
+  const filter: MemberFilter = {};
+
+  const stage = searchParams.get("stage");
+  if (stage) filter.stage = stage;
+
+  const userId = searchParams.get("user_id");
+  if (userId) filter.user_id = userId;
+
+  const role = searchParams.get("role");
+  if (role) filter.role = role;
+
+  const memberType = searchParams.get("member_type");
+  if (memberType) filter.member_type = memberType;
+
+  const joinDateFrom = searchParams.get("joinDateFrom");
+  const joinDateTo = searchParams.get("joinDateTo");
+  if (joinDateFrom || joinDateTo) {
+    filter.joinDate = {};
+    if (joinDateFrom) filter.joinDate.$gte = new Date(joinDateFrom);
+    if (joinDateTo) filter.joinDate.$lte = new Date(joinDateTo);
+  }
+
+  const search = searchParams.get("search");
+  if (search) {
+    const regex = new RegExp(search, "i");
+    filter.$or = [
+      { full_name: regex },
+      { father_name: regex },
+      { mother_name: regex },
+      { nid: regex },
+      { mobile: regex },
+      { nominee_nid: regex },
+    ];
+  }
+
+  const members = await Member.find(filter).sort({ created_at: -1 }).lean();
   return NextResponse.json({ data: members, count: members.length });
 }
 
