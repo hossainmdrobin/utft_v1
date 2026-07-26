@@ -14,10 +14,14 @@ import { MembersTable } from "@/components/members/MembersTable";
 import { PendingApprovalsTable } from "@/components/members/PendingApprovalsTable";
 import { ActiveMembersTable } from "@/components/members/ActiveMembersTable";
 import { DeceasedMembersTable } from "@/components/members/DeceasedMembersTable";
+import { useGetMemberQuery } from "@/store/slices/memberSlice/api.member";
 
 export default function Members() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+
+  const {data, isLoading} = useGetMemberQuery();
+  console.log(data, "data member");
   const [members, setMembers] = useState<any[]>([]);
   const [receivables, setReceivables] = useState<Record<string, { amount: number; status: string }>>({});
   const [loading, setLoading] = useState(true);

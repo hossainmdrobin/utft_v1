@@ -4,21 +4,6 @@ import { Member } from "@/integrations/mongodb/models/Member";
 import { UserRole } from "@/integrations/mongodb/models/UserRole";
 import { hashPassword, verifyToken } from "@/integrations/mongodb/lib/auth";
 
-export const dynamic = "force-dynamic";
-
-async function getAdminUser(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return null;
-  }
-  const token = authHeader.slice(7);
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
-
-  const adminRole = await UserRole.findOne({ user_id: decoded.userId, role: "admin" });
-  return adminRole ? decoded.userId : null;
-}
-
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
@@ -83,11 +68,6 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   await connectDB();
-
-  const adminId = await getAdminUser(req);
-  if (!adminId) {
-    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-  }
 
   const body = await req.json();
   const { id } = body;
