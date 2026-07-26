@@ -18,23 +18,21 @@ import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
-const {data} = useGetCurrentUserQuery();
-console.log(data)
+
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: false },
-  { name: "Members", href: "/dashboard/members", icon: Users, adminOnly: false },
-  { name: "Share Management", href: "/share-management", icon: Coins, adminOnly: false },
-  { name: "Accounting", href: "/accounting", icon: DollarSign, adminOnly: false },
-  { name: "Reports", href: "/reports", icon: FileText, adminOnly: false },
-  { name: "User Management", href: "/user-management", icon: Shield, adminOnly: true },
-  {name:"Profile", href:"/dashboard/profile", icon:CircleUserRound, adminOnly:false},
-  { name: "Settings", href: "/settings", icon: Settings, adminOnly: false },
+  { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { name: "Members", href: "/app/dashboard/members", icon: Users, adminOnly: false },
+  { name: "Share Management", href: "/app/dashboard/share-management", icon: Coins, adminOnly: false },
+  { name: "Accounting", href: "/app/dashboard/accounting", icon: DollarSign, adminOnly: false },
+  { name: "Reports", href: "/app/dashboard/reports", icon: FileText, adminOnly: false },
+  { name: "User Management", href: "/app/dashboard/user-management", icon: Shield, adminOnly: true },
+  {name:"Profile", href:"/app/dashboard/profile", icon:CircleUserRound, adminOnly:false},
+  { name: "Settings", href: "/app/dashboard/settings", icon: Settings, adminOnly: false },
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
