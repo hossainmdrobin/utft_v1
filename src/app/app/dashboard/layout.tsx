@@ -99,7 +99,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
           <div className="flex items-center gap-2">
             {/* Future: notifications, profile menu */}
-            jhgkjh
           </div>
         </header>
 

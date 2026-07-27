@@ -1,5 +1,4 @@
-"use client";
-
+'use client'
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, RotateCcw } from "lucide-react";
@@ -18,6 +17,9 @@ import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import type { MemberDoc } from "@/models/member";
+
+type MemberDisplay = MemberDoc & { id: string };
 
 export default function Members() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -31,7 +33,7 @@ export default function Members() {
     member_type?: string;
     search?: string;
   }>({});
-  const [memberList, setMemberList] = useState<any[]>([]);
+  const [memberList, setMemberList] = useState<MemberDisplay[]>([]);
   const [receivables, setReceivables] = useState<Record<string, { amount: number; status: string }>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export default function Members() {
   const { data, isLoading } = useGetMembersQuery(Object.keys(filters).length > 0 ? filters : undefined);
 
   useEffect(() => {
-    const mapped = (data?.data || []).map((member: any) => ({
+    const mapped: MemberDisplay[] = (data?.data || []).map((member) => ({
       ...member,
       id: member._id || member.id,
       status: member.stage || member.status,
@@ -50,7 +52,7 @@ export default function Members() {
     setMemberList(mapped);
   }, [data]);
 
-  const fetchReceivables = async (membersList: any[]) => {
+  const fetchReceivables = async (membersList: MemberDisplay[]) => {
     const receivablesMap: Record<string, { amount: number; status: string }> = {};
 
     for (const member of membersList) {
@@ -93,11 +95,12 @@ export default function Members() {
         title: "Success",
         description: "Member approved and Beneficiary ID generated"
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to approve member";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to approve member"
+        description: message
       });
     }
   };
@@ -111,18 +114,19 @@ export default function Members() {
         title: "Success",
         description: "Member rejected"
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to reject member";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to reject member"
+        description: message
       });
     }
   };
 
   const handleStatusChange = async (memberId: string, newStatus: string) => {
+    const updateData: Record<string, string | Date> = { status: newStatus };
     try {
-      const updateData: any = { status: newStatus };
       if (newStatus === "deceased") {
         updateData.deceased_at = new Date().toISOString();
       }
@@ -138,11 +142,12 @@ export default function Members() {
         title: "Success",
         description: `Member status updated to ${newStatus}`
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update member status";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to update member status"
+        description: message
       });
     }
   };

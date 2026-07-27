@@ -26,7 +26,7 @@ export const memberApi = injectEndpoint("memberApi", (builder) => ({
       }
       const queryString = params.toString();
       return {
-        url: `/dashboard/members/api${queryString ? `?${queryString}` : ""}`,
+        url: `/app/dashboard/members/api${queryString ? `?${queryString}` : ""}`,
         method: "GET",
       };
     },
@@ -34,14 +34,14 @@ export const memberApi = injectEndpoint("memberApi", (builder) => ({
   }),
   getMember: builder.query<any, string>({
     query: (id) => ({
-      url: `/dashboard/members/api?id=${id}`,
+      url: `/app/dashboard/members/api?id=${id}`,
       method: "GET",
     }),
     providesTags: (result, error, id) => [{ type: "Members", id }],
   }),
   updateMember: builder.mutation<any, { id: string; [key: string]: any }>({
     query: (body) => ({
-      url: "/dashboard/members/api",
+      url: "/app/dashboard/members/api",
       method: "PATCH",
       body,
     }),

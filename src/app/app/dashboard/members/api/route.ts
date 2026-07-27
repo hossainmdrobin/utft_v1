@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
-import { Member } from "@/integrations/mongodb/models/Member";
-import { UserRole } from "@/integrations/mongodb/models/UserRole";
-import { hashPassword, verifyToken } from "@/integrations/mongodb/lib/auth";
+import { hashPassword } from "@/integrations/mongodb/lib/auth";
+import { Member } from "@/models/member";
 
 interface MemberFilter {
   stage?: string;
@@ -15,53 +14,55 @@ interface MemberFilter {
 
 export async function GET(req: NextRequest) {
   await connectDB();
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
+  // const { searchParams } = new URL(req.url);
+  // const id = searchParams.get("id");
 
-  if (id) {
-    const member = await Member.findById(id).lean();
-    if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
-    }
-    return NextResponse.json({ data: member });
-  }
+  // if (id) {
+  //   const member = await Member.find().lean();
+  //   if (!member) {
+  //     return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  //   }
+  //   return NextResponse.json({ data: member });
+  // }
 
-  const filter: MemberFilter = {};
+  // const filter: MemberFilter = {};
 
-  const stage = searchParams.get("stage");
-  if (stage) filter.stage = stage;
+  // const stage = searchParams.get("stage");
+  // if (stage) filter.stage = stage;
 
-  const userId = searchParams.get("user_id");
-  if (userId) filter.user_id = userId;
+  // const userId = searchParams.get("user_id");
+  // if (userId) filter.user_id = userId;
 
-  const role = searchParams.get("role");
-  if (role) filter.role = role;
+  // const role = searchParams.get("role");
+  // if (role) filter.role = role;
 
-  const memberType = searchParams.get("member_type");
-  if (memberType) filter.member_type = memberType;
+  // const memberType = searchParams.get("member_type");
+  // if (memberType) filter.member_type = memberType;
 
-  const joinDateFrom = searchParams.get("joinDateFrom");
-  const joinDateTo = searchParams.get("joinDateTo");
-  if (joinDateFrom || joinDateTo) {
-    filter.joinDate = {};
-    if (joinDateFrom) filter.joinDate.$gte = new Date(joinDateFrom);
-    if (joinDateTo) filter.joinDate.$lte = new Date(joinDateTo);
-  }
+  // const joinDateFrom = searchParams.get("joinDateFrom");
+  // const joinDateTo = searchParams.get("joinDateTo");
+  // if (joinDateFrom || joinDateTo) {
+  //   filter.joinDate = {};
+  //   if (joinDateFrom) filter.joinDate.$gte = new Date(joinDateFrom);
+  //   if (joinDateTo) filter.joinDate.$lte = new Date(joinDateTo);
+  // }
 
-  const search = searchParams.get("search");
-  if (search) {
-    const regex = new RegExp(search, "i");
-    filter.$or = [
-      { full_name: regex },
-      { father_name: regex },
-      { mother_name: regex },
-      { nid: regex },
-      { mobile: regex },
-      { nominee_nid: regex },
-    ];
-  }
+  // const search = searchParams.get("search");
+  // if (search) {
+  //   const regex = new RegExp(search, "i");
+  //   filter.$or = [
+  //     { full_name: regex },
+  //     { father_name: regex },
+  //     { mother_name: regex },
+  //     { nid: regex },
+  //     { mobile: regex },
+  //     { nominee_nid: regex },
+  //   ];
+  // }
 
-  const members = await Member.find(filter).sort({ created_at: -1 }).lean();
+  // const members = await Member.find(filter as any).sort({ created_at: -1 }).lean();
+  const members = await Member.find();
+  console.log(members)
   return NextResponse.json({ data: members, count: members.length });
 }
 
@@ -97,7 +98,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const member = await Member.findByIdAndUpdate(id, updateData, { new: true }).lean();
+    const member = await (Member as any).findByIdAndUpdate(id, updateData, { new: true } as any).lean();
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
@@ -121,7 +122,8 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const member = await Member.findByIdAndDelete(id).lean();
+    // Await the query directly to avoid overload/union callable signature issues
+    const member = await (Member as any).findByIdAndDelete(id);
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
