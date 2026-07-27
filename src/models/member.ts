@@ -35,7 +35,7 @@ interface IMember extends Document {
 
 const memberSchema = new Schema<IMember>(
   {
-    stage:{type:String, default:"initiated",enum:['initiated','pending','approved','rejected']},
+    stage:{type:String, default:"initiated",enum:['initiated','pending','approved','rejected','deceased']},
     joinDate:{type:Date},
     profile_photo: { type: String, default: "" },
     user_id: { type: String, required: true },

@@ -115,7 +115,7 @@ export default function Members() {
             <TabsTrigger value="deceased">Deceased</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-4">
+          {data && <TabsContent value="all" className="space-y-4">
             <MembersTable
               members={data.data}
               receivables={receivables}
@@ -129,7 +129,7 @@ export default function Members() {
               // onReject={handleReject}
               // onStatusChange={handleStatusChange}
             />
-          </TabsContent>
+          </TabsContent>}
 
         </Tabs>
       </div>
