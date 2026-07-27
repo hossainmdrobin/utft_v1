@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Member } from "@/models/member";
-import { verifyPassword, generateToken, verifyToken } from "@/integrations/mongodb/lib/auth";
+import { verifyPassword, generateToken } from "@/integrations/mongodb/lib/auth";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 
 export const dynamic = "force-dynamic";
