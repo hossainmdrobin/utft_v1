@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { hashPassword } from "@/integrations/mongodb/lib/auth";
 import { Member } from "@/models/member";
+import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 
 interface MemberFilter {
   stage?: string;
@@ -64,19 +65,16 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ data: members, count: members.length });
 }
 
+
+// INITIATING A MEMBER
 export async function POST(req: NextRequest) {
   await connectDB();
-
-//   const adminId = await getAdminUser(req);
-//   if (!adminId) {
-//     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-//   }
-
-
+  const member = await getCurrentMember(req, ["admin", "president", "director"])
+  if(!member) return NextResponse.json({error:"Access Denied! Only Admin, President and Director can add members"})
   const body = await req.json();
   try {
-    const member = await Member.create({...body,password:hashPassword(body.password)});
-    return NextResponse.json({ data: member }, { status: 201 });
+    const newMember = await Member.create({ ...body, createdBy: member._id, password: hashPassword(body.password) });
+    return NextResponse.json({ data: newMember }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error)?.message || "Failed to create member" },

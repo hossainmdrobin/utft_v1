@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { PaymentStatusBadge } from "@/components/members/PaymentStatusBadge";
 import { MemberActionMenu } from "@/components/members/MemberActionMenu";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 
 interface MembersTableProps {
   members: any[];
@@ -45,6 +46,9 @@ export function MembersTable({
     };
     return <Badge variant={variants[status] || "default"}>{status}</Badge>;
   };
+
+  const {data,} = useGetCurrentUserQuery()
+  const updateAccess = ["admin", "president", "director"]
 
   return (
     <div className="space-y-4">
@@ -140,7 +144,7 @@ export function MembersTable({
                         className="cursor-pointer"
                         onClick={() => onMemberClick(member.id)}
                       >
-                        {getStatusBadge(member.status)}
+                        {getStatusBadge(member.stage)}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer"
@@ -162,7 +166,7 @@ export function MembersTable({
                       >
                         ৳{(receivables[member.id]?.amount || 0).toFixed(2)}
                       </TableCell>
-                      {isAdmin && (
+                      {updateAccess.includes(data?.data.role) && (
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2">
                             {member.status === "pending" ? (
