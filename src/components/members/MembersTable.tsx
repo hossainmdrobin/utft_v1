@@ -18,9 +18,9 @@ interface MembersTableProps {
   onFinancialReportClick: (memberId: string) => void;
   onAddMember: () => void;
   onBulkUpload: () => void;
-  onApprove: (memberId: string) => void;
-  onReject: (memberId: string) => void;
-  onStatusChange: (memberId: string, newStatus: string) => void;
+  // onApprove: (memberId: string) => void;
+  // onReject: (memberId: string) => void;
+  // onStatusChange: (memberId: string, newStatus: string) => void;
 }
 
 export function MembersTable({
@@ -32,9 +32,9 @@ export function MembersTable({
   onFinancialReportClick,
   onAddMember,
   onBulkUpload,
-  onApprove,
-  onReject,
-  onStatusChange,
+  // onApprove,
+  // onReject,
+  // onStatusChange,
 }: MembersTableProps) {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -170,14 +170,14 @@ export function MembersTable({
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => onApprove(member.id)}
+                                  // onClick={() => onApprove(member.id)}
                                 >
                                   <Check className="h-4 w-4 text-green-600" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => onReject(member.id)}
+                                  // onClick={() => onReject(member.id)}
                                 >
                                   <X className="h-4 w-4 text-red-600" />
                                 </Button>
@@ -186,7 +186,7 @@ export function MembersTable({
                               <MemberActionMenu
                                 memberId={member.id}
                                 status={member.status}
-                                onStatusChange={onStatusChange}
+                                // onStatusChange={onStatusChange}
                               />
                             )}
                           </div>
