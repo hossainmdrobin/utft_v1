@@ -33,7 +33,7 @@ interface IMember extends Document {
   updated_at?: string;
 }
 
-const memberSchema = new Schema<IMember>(
+const memberSchema = new Schema(
   {
     stage:{type:String, default:"initiated",enum:['initiated','pending','approved','rejected','deceased']},
     joinDate:{type:Date},
@@ -67,5 +67,5 @@ const memberSchema = new Schema<IMember>(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-export const Member = models.Member || model<IMember>("Member", memberSchema);
+export const Member = models.Member || model("Member", memberSchema);
 export type MemberDoc = IMember;

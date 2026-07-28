@@ -3,6 +3,7 @@ import { connectDB } from "@/integrations/mongodb/connection";
 import { hashPassword } from "@/integrations/mongodb/lib/auth";
 import { Member } from "@/models/member";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import { Activity } from "@/models/activities";
 
 interface MemberFilter {
   stage?: string;
@@ -70,10 +71,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   await connectDB();
   const member = await getCurrentMember(req, ["admin", "president", "director"])
-  if(!member) return NextResponse.json({error:"Access Denied! Only Admin, President and Director can add members"})
+  if (!member) return NextResponse.json({ error: "Access Denied! Only Admin, President and Director can add members" })
   const body = await req.json();
   try {
     const newMember = await Member.create({ ...body, createdBy: member._id, password: hashPassword(body.password) });
+    await Activity.create({ table_name: "Member", record_id: newMember._id, updatedBy: member._id, description: `A member is created with ID:${newMember.user_id}`, action: "create" })
     return NextResponse.json({ data: newMember }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   await connectDB();
-
+  const user = await getCurrentMember(req);
   const body = await req.json();
   const { id, ...updateData } = body;
 
@@ -93,11 +95,17 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Member id is required" }, { status: 400 });
   }
 
+  if (!['admin', 'president', 'director'].includes(user.role) || user._id != id) return NextResponse.json(
+    { error: "Failed to update member" },
+    { status: 400 }
+  );
   try {
+    const oldMember = await Member.findById(id)
     const member = await (Member as any).findByIdAndUpdate(id, updateData, { new: true } as any).lean();
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
+    await Activity.create({updatedBy:user._id, table_name:"Member",record_id:member._id,newData:member, oldData:oldMember,action:'update'})
     return NextResponse.json({ data: member });
   } catch (error) {
     return NextResponse.json(

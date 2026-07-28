@@ -6,11 +6,9 @@ interface IActivity extends Document {
   action: string;
   action_type?: string;
   description?: string;
-  old_data?: Schema.Types.Mixed;
-  new_data?: Schema.Types.Mixed;
+  changes?: Record<string, { from: string; to: string }>;
   changed_by?: string;
   changed_at?: string;
-  deleted_by?: string
   deleted_at?: string;
   is_deleted?: boolean;
   created_at?: string;
@@ -20,7 +18,7 @@ interface IActivity extends Document {
 const activitySchema = new Schema(
   {
     table_name: { type: String, required: true },
-    record_id: { type: String, required: true },
+    record_id: { type: Schema.Types.ObjectId, required: true,refPath:"table_name" },
     action: { type: String, required: true },
     action_type: { type: String },
     description: { type: String },
