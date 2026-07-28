@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/mongodb/client";
+
+type Session = {
+  access_token: string;
+  user: {
+    id: string;
+    email?: string;
+    name?: string;
+  };
+} | null;
 
 export default function ProtectedRoute({
   children,
@@ -11,18 +19,18 @@ export default function ProtectedRoute({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data }: { data: { session: Session } }) => {
+      setSession(data.session);
       setLoading(false);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session) => {
       setSession(session);
     });
 

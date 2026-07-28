@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { useAdmin } from "@/hooks/use-admin";
@@ -212,8 +212,8 @@ export function AuditLogs() {
     return matches;
   });
 
-  const uniqueTables = [...new Set(logs?.map((l) => l.table_name) || [])];
-  const uniqueActions = [...new Set(logs?.map((l) => l.action) || [])];
+  const uniqueTables = [...new Set((logs?.map((l: any) => l.table_name) || []) as any[])] as string[];
+  const uniqueActions = [...new Set((logs?.map((l: any) => l.action) || []) as any[])] as string[];
 
   const toggleSelectLog = (id: string) => {
     setSelectedLogs((prev) =>

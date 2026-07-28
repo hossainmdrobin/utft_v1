@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calculator, Loader2, Filter, X, CheckCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { MarkAsPaidDialog } from "@/components/shares/MarkAsPaidDialog";
@@ -228,7 +228,7 @@ export default function ShareManagement() {
           <div>
             <h2 className="text-3xl font-bold text-foreground">Share Management</h2>
             <p className="text-muted-foreground mt-1">
-              Manage member share receivables and payments â€¢ Share Price: à§³{sharePrice.toLocaleString()}/share
+              Manage member share receivables and payments • Share Price: ৳{sharePrice.toLocaleString()}/share
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -266,7 +266,7 @@ export default function ShareManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">à§³{totalReceivable.toLocaleString()}</div>
+              <div className="text-2xl font-bold">৳{totalReceivable.toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card>
@@ -277,7 +277,7 @@ export default function ShareManagement() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                à§³{totalPaid.toLocaleString()}
+                ৳{totalPaid.toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -289,7 +289,7 @@ export default function ShareManagement() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                à§³{totalRemaining.toLocaleString()}
+                ৳{totalRemaining.toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -426,13 +426,13 @@ export default function ShareManagement() {
                         </TableCell>
                         <TableCell className="text-right">{receivable.share_quantity}</TableCell>
                         <TableCell className="text-right">
-                          à§³{Number(receivable.total_amount).toLocaleString()}
+                          ৳{Number(receivable.total_amount).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right text-green-600">
-                          à§³{Number(receivable.paid_amount).toLocaleString()}
+                          ৳{Number(receivable.paid_amount).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right text-orange-600">
-                          à§³{remaining.toLocaleString()}
+                          ৳{remaining.toLocaleString()}
                         </TableCell>
                         <TableCell>{getStatusBadge(receivable.status)}</TableCell>
                         <TableCell className="text-right">

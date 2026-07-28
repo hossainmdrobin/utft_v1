@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { useAdmin } from "@/hooks/use-admin";
 import { BulkPaymentConfirmDialog } from "@/components/shares/BulkPaymentConfirmDialog";
@@ -279,7 +279,7 @@ export default function BulkSharePayment() {
         });
       }
 
-      toast.success(`${selectedIds.size} payments recorded successfully (à§³${totalAmount.toLocaleString()})`);
+      toast.success(`${selectedIds.size} payments recorded successfully (৳${totalAmount.toLocaleString()})`);
       
       // Invalidate queries and navigate back
       queryClient.invalidateQueries({ queryKey: ["share-receivables"] });
@@ -428,7 +428,7 @@ export default function BulkSharePayment() {
               </div>
               {previousMonthUnlocked && (
                 <p className="mt-3 text-xs text-amber-600 dark:text-amber-400 border-t border-amber-200 dark:border-amber-800 pt-3">
-                  âš ï¸ Admin approval granted. You can now record payments for previous months. 
+                  ⚠️ Admin approval granted. You can now record payments for previous months. 
                   This action will be logged for audit purposes.
                 </p>
               )}
@@ -505,18 +505,18 @@ export default function BulkSharePayment() {
                           </TableCell>
                           <TableCell className="text-right">{receivable.share_quantity}</TableCell>
                           <TableCell className="text-right">
-                            à§³{Number(receivable.total_amount).toLocaleString()}
+                            ৳{Number(receivable.total_amount).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right text-green-600">
-                            à§³{Number(receivable.paid_amount).toLocaleString()}
+                            ৳{Number(receivable.paid_amount).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right font-medium text-orange-600">
-                            à§³{remaining.toLocaleString()}
+                            ৳{remaining.toLocaleString()}
                           </TableCell>
                           <TableCell>
                             {isSelected ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">à§³</span>
+                                <span className="text-sm text-muted-foreground">৳</span>
                                 <Input
                                   type="number"
                                   value={currentAmount}
@@ -535,7 +535,7 @@ export default function BulkSharePayment() {
                                 </Button>
                               </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground">â€”</span>
+                              <span className="text-sm text-muted-foreground">—</span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -559,7 +559,7 @@ export default function BulkSharePayment() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Payment Amount</p>
-                  <p className="text-2xl font-bold text-primary">à§³{totalAmount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-primary">৳{totalAmount.toLocaleString()}</p>
                 </div>
               </div>
 

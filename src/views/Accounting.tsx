@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Receipt, TrendingUp, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { CreateAccountDialog } from "@/components/accounting/CreateAccountDialog";
 import { JournalEntryDialog } from "@/components/accounting/JournalEntryDialog";
 import { AccountsList } from "@/components/accounting/AccountsList";
@@ -55,7 +55,7 @@ export default function Accounting() {
   });
 
   const formatCurrency = (amount: number) => {
-    return `à§³${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+    return `৳${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
   };
 
   return (

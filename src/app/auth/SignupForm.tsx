@@ -5,20 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { memberSchema } from "@/lib/validations/member";
-
-interface AddMemberDialogProps {
+import { useUpdateAuthUserMutation } from "@/store/slices/authSlice/api.auth";
+import { useRouter } from "next/navigation";
+interface SignupFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   editMember?: any;
+  id:string
 }
 
-export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: AddMemberDialogProps) {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+export default function SignupForm({ open, onOpenChange, onSuccess, editMember,id }: SignupFormProps) {
+  const [updateAuthUser, {data:updatedData, isLoading: updateLoading }] = useUpdateAuthUserMutation();
+  console.log(updatedData,"updatedData")
+  const route = useRouter();
   const [formData, setFormData] = useState({
     form_no: "",
     full_name: "",
@@ -36,7 +36,6 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     nid: "",
     mobile: "",
     email: "",
-    member_type: "",
     share_quantity: "0",
     nominee_name: "",
     nominee_relation: "",
@@ -62,7 +61,6 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         nid: editMember.nid || "",
         mobile: editMember.mobile || "",
         email: editMember.email || "",
-        member_type: editMember.member_type || "",
         share_quantity: String(editMember.share_quantity || 0),
         nominee_name: editMember.nominee_name || "",
         nominee_relation: editMember.nominee_relation || "",
@@ -86,7 +84,6 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
         nid: "",
         mobile: "",
         email: "",
-        member_type: "",
         share_quantity: "0",
         nominee_name: "",
         nominee_relation: "",
@@ -95,108 +92,14 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
     }
   }, [editMember, open]);
 
+  useEffect(()=>{
+    if(updatedData) route.push("/dashboard")
+
+  },[updatedData])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Validate form data with Zod
-      const validationResult = memberSchema.safeParse({
-        ...formData,
-        share_quantity: Number(formData.share_quantity),
-      });
-
-      if (!validationResult.success) {
-        const firstError = validationResult.error.errors[0];
-        toast({
-          title: "Validation Error",
-          description: firstError.message,
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      const updateData: any = {
-        form_no: formData.form_no || null,
-        full_name: formData.full_name,
-        father_name: formData.father_name || null,
-        mother_name: formData.mother_name || null,
-        date_of_birth: formData.date_of_birth || null,
-        profession: formData.profession || null,
-        nationality: formData.nationality || null,
-        religion: formData.religion || null,
-        blood_group: formData.blood_group || null,
-        education: formData.education || null,
-        present_address: formData.present_address || null,
-        permanent_address: formData.permanent_address || null,
-        nid: formData.nid || null,
-        mobile: formData.mobile || null,
-        email: formData.email || null,
-        member_type: formData.member_type as "founding" | "general",
-        share_quantity: parseInt(formData.share_quantity) || 0,
-        nominee_name: formData.nominee_name || null,
-        nominee_relation: formData.nominee_relation || null,
-        nominee_nid: formData.nominee_nid || null,
-      };
-
-      if (formData.gender) {
-        updateData.gender = formData.gender;
-      }
-
-      if (editMember) {
-        const { error } = await supabase
-          .from("members")
-          .update(updateData)
-          .eq("id", editMember.id);
-
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message
-          });
-        } else {
-          toast({
-            title: "Success",
-            description: "Member updated successfully"
-          });
-          onSuccess();
-          onOpenChange(false);
-        }
-      } else {
-        const insertData = {
-          ...updateData,
-          status: 'pending' as const
-        };
-
-        const { error } = await supabase.from("members").insert([insertData]);
-
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message
-          });
-        } else {
-          toast({
-            title: "Success",
-            description: "Member added successfully and pending approval"
-          });
-          onSuccess();
-          onOpenChange(false);
-        }
-      }
-
-      setLoading(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
+    updateAuthUser({user_id:id,data:formData});
   };
 
   const handleChange = (field: string, value: string) => {
@@ -379,18 +282,6 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
             <h3 className="font-semibold text-lg">Membership Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="member_type">Member Type *</Label>
-                <Select value={formData.member_type} onValueChange={(value) => handleChange("member_type", value)} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="founding">Founding Member</SelectItem>
-                    <SelectItem value="general">General Member</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="share_quantity">Share Quantity</Label>
                 <Input
                   id="share_quantity"
@@ -438,8 +329,8 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess, editMember }: A
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Adding..." : "Add Member"}
+            <Button type="submit" disabled={updateLoading}>
+              {updateLoading ? "Adding..." : "Add Member"}
             </Button>
           </div>
         </form>

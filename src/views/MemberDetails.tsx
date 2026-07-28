@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Mail, Phone, MapPin, User, FileText, Banknote, CreditCard } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { useToast } from "@/hooks/use-toast";
-import { AddMemberDialog } from "@/components/members/AddMemberDialog";
+import SignupForm from "@/app/auth/SignupForm";
 import { RecordPaymentDialog } from "@/components/members/RecordPaymentDialog";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMemberFinancials } from "@/hooks/use-member-financials";
@@ -28,19 +28,19 @@ export default function MemberDetails() {
   const [member, setMember] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  
+
   // Payment dialog state
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentRecord, setPaymentRecord] = useState<{
     type: "donation" | "charge" | "fine";
     record: any;
   } | null>(null);
-  
+
   // Financial data
   const [donations, setDonations] = useState<any[]>([]);
   const [fines, setFines] = useState<any[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
-  
+
   const { summary: financialSummary, loading: financialLoading, refetch: refetchSummary } = useMemberFinancials(id);
 
   // Fetch share receivables count
@@ -179,8 +179,8 @@ export default function MemberDetails() {
             Back to Members
           </Button>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => router.push(`/members/${id}/financial-report`)}
             >
               <FileText className="h-4 w-4 mr-2" />
@@ -350,25 +350,25 @@ export default function MemberDetails() {
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-1 p-4 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground">Total Shares Value</p>
-                  <p className="text-2xl font-bold">à§³{financialSummary.total_contributions.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">৳{financialSummary.total_contributions.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Paid: à§³{financialSummary.total_paid.toFixed(2)}
+                    Paid: ৳{financialSummary.total_paid.toFixed(2)}
                   </p>
                 </div>
                 <div className="space-y-1 p-4 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground">Shares Due</p>
-                  <p className="text-2xl font-bold text-orange-600">à§³{financialSummary.total_due.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-orange-600">৳{financialSummary.total_due.toFixed(2)}</p>
                 </div>
                 <div className="space-y-1 p-4 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground">Total Fines (Late Share Payment)</p>
-                  <p className="text-2xl font-bold text-red-600">à§³{financialSummary.total_fines.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-red-600">৳{financialSummary.total_fines.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Pending: à§³{financialSummary.fines_pending.toFixed(2)}
+                    Pending: ৳{financialSummary.fines_pending.toFixed(2)}
                   </p>
                 </div>
                 <div className="space-y-1 p-4 rounded-lg bg-primary/10">
                   <p className="text-sm text-muted-foreground">Grand Total Due</p>
-                  <p className="text-2xl font-bold text-primary">à§³{financialSummary.grand_total_due.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-primary">৳{financialSummary.grand_total_due.toFixed(2)}</p>
                   <PaymentStatusBadge status={financialSummary.payment_status} />
                 </div>
               </div>
@@ -429,8 +429,8 @@ export default function MemberDetails() {
                           <TableCell className="font-medium">
                             {formatMonthYear(donation.year, donation.month)}
                           </TableCell>
-                          <TableCell>à§³{Number(donation.amount).toFixed(2)}</TableCell>
-                          <TableCell>à§³{Number(donation.paid_amount).toFixed(2)}</TableCell>
+                          <TableCell>৳{Number(donation.amount).toFixed(2)}</TableCell>
+                          <TableCell>৳{Number(donation.paid_amount).toFixed(2)}</TableCell>
                           <TableCell>
                             {donation.due_date ? new Date(donation.due_date).toLocaleDateString() : "N/A"}
                           </TableCell>
@@ -484,8 +484,8 @@ export default function MemberDetails() {
                           </TableCell>
                           <TableCell>{charge.description || "N/A"}</TableCell>
                           <TableCell>{charge.year}</TableCell>
-                          <TableCell>à§³{Number(charge.amount).toFixed(2)}</TableCell>
-                          <TableCell>à§³{Number(charge.paid_amount).toFixed(2)}</TableCell>
+                          <TableCell>৳{Number(charge.amount).toFixed(2)}</TableCell>
+                          <TableCell>৳{Number(charge.paid_amount).toFixed(2)}</TableCell>
                           <TableCell>
                             <DonationStatusBadge status={charge.status} />
                           </TableCell>
@@ -534,8 +534,8 @@ export default function MemberDetails() {
                           <TableCell>
                             {fine.applied_date ? new Date(fine.applied_date).toLocaleDateString() : "N/A"}
                           </TableCell>
-                          <TableCell className="text-red-600">à§³{Number(fine.fine_amount).toFixed(2)}</TableCell>
-                          <TableCell>à§³{Number(fine.paid_amount).toFixed(2)}</TableCell>
+                          <TableCell className="text-red-600">৳{Number(fine.fine_amount).toFixed(2)}</TableCell>
+                          <TableCell>৳{Number(fine.paid_amount).toFixed(2)}</TableCell>
                           <TableCell>
                             <DonationStatusBadge status={fine.status} />
                           </TableCell>
@@ -564,11 +564,12 @@ export default function MemberDetails() {
         </Card>
       </div>
 
-      <AddMemberDialog
+      <SignupForm
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSuccess={fetchMember}
         editMember={member}
+        id={member?.user_id}
       />
 
       {paymentRecord && (

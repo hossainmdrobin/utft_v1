@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { ArrowLeft, Download } from "lucide-react";
 import { format } from "date-fns";
@@ -135,22 +135,22 @@ export default function MemberFinancialReport() {
 
     csv += `Financial Summary\n`;
     csv += `Total Shares,${summary.totalShares}\n`;
-    csv += `Total Share Value,à§³${summary.totalShareValue.toFixed(2)}\n`;
-    csv += `Total Donations,à§³${summary.totalDonations.toFixed(2)}\n`;
-    csv += `Total Paid,à§³${summary.totalPaid.toFixed(2)}\n`;
-    csv += `Total Receivables,à§³${summary.totalReceivables.toFixed(2)}\n\n`;
+    csv += `Total Share Value,৳${summary.totalShareValue.toFixed(2)}\n`;
+    csv += `Total Donations,৳${summary.totalDonations.toFixed(2)}\n`;
+    csv += `Total Paid,৳${summary.totalPaid.toFixed(2)}\n`;
+    csv += `Total Receivables,৳${summary.totalReceivables.toFixed(2)}\n\n`;
 
     csv += `Share Transactions\n`;
     csv += `Date,Type,Shares,Amount,Notes\n`;
     shareTransactions.forEach((t) => {
-      csv += `${format(new Date(t.transaction_date), "yyyy-MM-dd")},${t.transaction_type},${t.share_quantity},à§³${Number(t.amount).toFixed(2)},${t.notes || ""}\n`;
+      csv += `${format(new Date(t.transaction_date), "yyyy-MM-dd")},${t.transaction_type},${t.share_quantity},৳${Number(t.amount).toFixed(2)},${t.notes || ""}\n`;
     });
 
     csv += `\nMonthly Donations\n`;
     csv += `Month,Year,Amount,Paid,Status,Due Date\n`;
     donations.forEach((d) => {
       const monthName = format(new Date(d.year, d.month - 1), "MMMM");
-      csv += `${monthName},${d.year},à§³${Number(d.amount).toFixed(2)},à§³${Number(d.paid_amount).toFixed(2)},${d.status},${d.due_date ? format(new Date(d.due_date), "yyyy-MM-dd") : "N/A"}\n`;
+      csv += `${monthName},${d.year},৳${Number(d.amount).toFixed(2)},৳${Number(d.paid_amount).toFixed(2)},${d.status},${d.due_date ? format(new Date(d.due_date), "yyyy-MM-dd") : "N/A"}\n`;
     });
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -244,7 +244,7 @@ export default function MemberFinancialReport() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                à§³{summary.totalShareValue.toFixed(2)}
+                ৳{summary.totalShareValue.toFixed(2)}
               </div>
             </CardContent>
           </Card>
@@ -256,7 +256,7 @@ export default function MemberFinancialReport() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                à§³{summary.totalDonations.toFixed(2)}
+                ৳{summary.totalDonations.toFixed(2)}
               </div>
             </CardContent>
           </Card>
@@ -268,7 +268,7 @@ export default function MemberFinancialReport() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                à§³{summary.totalPaid.toFixed(2)}
+                ৳{summary.totalPaid.toFixed(2)}
               </div>
             </CardContent>
           </Card>
@@ -280,7 +280,7 @@ export default function MemberFinancialReport() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                à§³{summary.totalReceivables.toFixed(2)}
+                ৳{summary.totalReceivables.toFixed(2)}
               </div>
             </CardContent>
           </Card>
@@ -317,7 +317,7 @@ export default function MemberFinancialReport() {
                         {transaction.transaction_type}
                       </TableCell>
                       <TableCell>{transaction.share_quantity}</TableCell>
-                      <TableCell>à§³{Number(transaction.amount).toFixed(2)}</TableCell>
+                      <TableCell>৳{Number(transaction.amount).toFixed(2)}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {transaction.notes || "-"}
                       </TableCell>
@@ -359,12 +359,12 @@ export default function MemberFinancialReport() {
                         <TableCell>
                           {format(new Date(donation.year, donation.month - 1), "MMMM yyyy")}
                         </TableCell>
-                        <TableCell>à§³{Number(donation.amount).toFixed(2)}</TableCell>
+                        <TableCell>৳{Number(donation.amount).toFixed(2)}</TableCell>
                         <TableCell className="text-green-600">
-                          à§³{Number(donation.paid_amount).toFixed(2)}
+                          ৳{Number(donation.paid_amount).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-red-600">
-                          à§³{due.toFixed(2)}
+                          ৳{due.toFixed(2)}
                         </TableCell>
                         <TableCell>{getStatusBadge(donation.status)}</TableCell>
                         <TableCell>
