@@ -8,9 +8,6 @@ interface IActivity extends Document {
   description?: string;
   changes?: Record<string, { from: string; to: string }>;
   changed_by?: string;
-  changed_at?: string;
-  deleted_at?: string;
-  is_deleted?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -18,17 +15,13 @@ interface IActivity extends Document {
 const activitySchema = new Schema(
   {
     table_name: { type: String, required: true },
-    record_id: { type: Schema.Types.ObjectId, required: true,refPath:"table_name" },
+    record_id: { type: Schema.Types.ObjectId, required: true, refPath: "table_name" },
     action: { type: String, required: true },
     action_type: { type: String },
     description: { type: String },
     old_data: { type: Schema.Types.Mixed },
     new_data: { type: Schema.Types.Mixed },
-    changed_by: { type: Schema.Types.ObjectId, ref:'Member' },
-    changed_at: { type: String, required: true },
-    deleted_by: { type: Schema.Types.ObjectId ,ref:'Member'},
-    deleted_at: { type: String },
-    is_deleted: { type: Boolean, default: false },
+    changed_by: { type: Schema.Types.ObjectId, ref: 'Member' },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );

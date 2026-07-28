@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCreateMemberMutation } from "@/store/slices/memberSlice/api.member";
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -17,9 +18,23 @@ interface AddMemberDialogProps {
 export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDialogProps) {
   const { toast } = useToast();
   const [uniqueCode, setUniqueCode] = useState("");
-  const [member_type,setMemberType] = useState("general")
+  const [member_type, setMemberType] = useState("general")
   const [password, setPassword] = useState("");
+  const [share_quantity, setShare_quantity] = useState(0)
   const [loading, setLoading] = useState(false);
+  const [joinDate, setJoinDate] = useState(new Date())
+
+  const [createMember, { data, error }] = useCreateMemberMutation()
+  console.log(error, data)
+
+  useEffect(() => {
+    const date = new Date(joinDate)
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    setUniqueCode(`${member_type == "founding" ? "FM" : "GM"}${dd}${mm}${yyyy}`)
+
+  }, [joinDate, member_type])
 
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -56,23 +71,12 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
         return;
       }
 
-      const res = await fetch("/api/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uniqueCode.trim(), password }),
-        credentials: "include",
-      });
+      createMember({ user_id: uniqueCode, member_type, share_quantity, role:"member", password, joinDate })
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create member");
-      }
-
-      toast({
-        title: "Success",
-        description: "Member created successfully and pending approval"
-      });
+      // toast({
+      //   title: "Success",
+      //   description: "Member created successfully and pending approval"
+      // });
       setUniqueCode("");
       setPassword("");
       onSuccess();
@@ -88,23 +92,35 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
     }
   };
 
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Member</DialogTitle>
           <DialogDescription>
-            Create a new member account with a unique code and password. The member will be pending approval.
+            Create a new member account with a unique code and password. The member will be pending approval when he joins.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="unique_code">Unique Code *</Label>
+              <Label htmlFor="unique_code">Member ID *</Label>
               <Input
                 id="unique_code"
                 value={uniqueCode}
                 onChange={(e) => setUniqueCode(e.target.value)}
+                placeholder="Enter unique code"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unique_code">Join Date</Label>
+              <Input
+                id="joinDate"
+                type="date"
+                // value={String(joinDate)}
+                onChange={(e) => setJoinDate(new Date(e.target.value))}
                 placeholder="Enter unique code"
                 required
               />
@@ -120,6 +136,19 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Share Quantity * </Label>
+              <Input
+                id="share_quantity"
+                type="number"
+                value={share_quantity}
+                onChange={(e) => setShare_quantity(Number(e.target.value))}
+                placeholder="Share quantity"
+                defaultValue={0}
+                required
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="member_type">Member Type *</Label>
               <Select value={member_type} onValueChange={(value) => setMemberType(value)} required>

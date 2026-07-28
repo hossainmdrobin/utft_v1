@@ -2,7 +2,7 @@ import { Schema, model, models, Document } from "mongoose";
 
 interface IMember extends Document {
   stage:string,
-  joinDate?: Date | string
+  joinDate?: string
   profile_photo?:string,
   user_id: string;
   password: string;

@@ -29,7 +29,6 @@ export default function Sidebar({ setSidebarOpen }: { setSidebarOpen: (boolean) 
     const { data, isLoading } = useGetCurrentUserQuery();
     if (isLoading) return <div className='text-white'>Loading...</div>
 
-
     return (
         <>
             <nav className="flex-1 space-y-1 px-3 py-4">
