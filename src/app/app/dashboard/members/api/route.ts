@@ -73,7 +73,6 @@ export async function POST(req: NextRequest) {
   const member = await getCurrentMember(req, ["admin", "president", "director"])
   if (!member) return NextResponse.json({ error: "Access Denied! Only Admin, President and Director can add members" })
   const body = await req.json();
-console.log(body)
   try {
     const newMember = await Member.create({ ...body, createdBy: member._id, password: await hashPassword(body.password) });
     await Activity.create({ table_name: "Member", record_id: newMember._id, updatedBy: member._id, description: `A member is created with ID:${newMember.user_id}`, action: "create" })
