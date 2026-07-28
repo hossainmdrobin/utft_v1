@@ -21,11 +21,9 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
   const [member_type, setMemberType] = useState("general")
   const [password, setPassword] = useState("");
   const [share_quantity, setShare_quantity] = useState(0)
-  const [loading, setLoading] = useState(false);
   const [joinDate, setJoinDate] = useState(new Date())
 
-  const [createMember, { data, error }] = useCreateMemberMutation()
-  console.log(error, data)
+  const [createMember, { data, isLoading:loading, error }] = useCreateMemberMutation()
 
   useEffect(() => {
     const date = new Date(joinDate)
@@ -39,58 +37,27 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
     if (!newOpen) {
-      setUniqueCode("");
       setPassword("");
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    console.log("summitesalek")
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      console.log(uniqueCode, password, "cteating memnter")
-      if (!uniqueCode.trim() || !password.trim()) {
-        toast({
-          variant: "destructive",
-          title: "Validation Error",
-          description: "Unique code and password are required"
-        });
-        setLoading(false);
-        return;
-      }
-
-      if (password.length < 6) {
-        toast({
-          variant: "destructive",
-          title: "Validation Error",
-          description: "Password must be at least 6 characters"
-        });
-        setLoading(false);
-        return;
-      }
-
-      createMember({ user_id: uniqueCode, member_type, share_quantity, role:"member", password, joinDate })
-
-      // toast({
-      //   title: "Success",
-      //   description: "Member created successfully and pending approval"
-      // });
-      setUniqueCode("");
+  useEffect(() => {
+    if (data) {
+      toast({
+        title: "Success",
+        description: "Member created successfully and pending approval"
+      });
       setPassword("");
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create member"
-      });
-    } finally {
-      setLoading(false);
     }
-  };
+
+    if (error) toast({
+      variant: "destructive",
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to create member"
+    });
+  }, [data, error])
 
 
   return (
@@ -102,7 +69,7 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
             Create a new member account with a unique code and password. The member will be pending approval when he joins.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={() => createMember({ user_id: uniqueCode, member_type, share_quantity, role: "member", password, joinDate })} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="unique_code">Member ID *</Label>
