@@ -58,7 +58,6 @@ export function MembersTable({
   const onStatusChange = (id, stage) => {
     updateMember({ id, stage })
   }
-  console.log(data, "updated error")
   return (
     <div className="space-y-4">
       <Card className="shadow-soft">
@@ -111,7 +110,7 @@ export function MembersTable({
                         className="font-medium cursor-pointer hover:underline"
                       // onClick={() => onMemberClick(member.id)}
                       >
-                        {member.beneficiary_id || "Pending"}
+                        {member.user_id || "Pending"}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer hover:underline"

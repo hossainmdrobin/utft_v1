@@ -13,10 +13,9 @@ import { useCreateMemberMutation } from "@/store/slices/memberSlice/api.member";
 interface AddMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
 }
 
-export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDialogProps) {
+export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
   const { toast } = useToast();
   const [uniqueCode, setUniqueCode] = useState("");
   const [member_type, setMemberType] = useState("general")
@@ -47,7 +46,6 @@ export function AddMemberDialog({ open, onOpenChange, onSuccess }: AddMemberDial
   useEffect(() => {
     if (data) {
       setShowSuccessDialog(true);
-      onSuccess();
     }
 
     if (error) toast({
