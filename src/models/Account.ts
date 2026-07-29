@@ -1,4 +1,21 @@
-import { Schema, model, models } from "mongoose";
+import { Schema, model, models, Document } from "mongoose";
+
+interface IAccount extends Document {
+  name: string;
+  code: string;
+  account_type: "asset" | "liability" | "equity" | "income" | "expense";
+  description?: string;
+  opening_balance: number;
+  current_balance: number;
+  is_active: boolean;
+  is_contra: boolean;
+  is_system: boolean;
+  parent_account_id?: string;
+  parent_id?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 const accountSchema = new Schema({
   name: { type: String, required: true },
@@ -16,3 +33,4 @@ const accountSchema = new Schema({
 }, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
 
 export const Account = models.Account || model("Account", accountSchema);
+export type AccountDoc = IAccount;
