@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import {
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateAccountFormFields, accountSchema, type AccountFormValues } from "./CreateAccountFormFields";
+import { useCreateAccountMutation } from "@/store/slices/accountSlice/api.account";
 
 interface CreateAccountDialogProps {
   trigger?: React.ReactNode;
@@ -23,6 +24,7 @@ interface CreateAccountDialogProps {
 export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const [createNewAccount, { data: accountData, isLoading, error }] = useCreateAccountMutation();
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -38,20 +40,20 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
     },
   });
 
-  const { data: parentAccounts } = useQuery({
-    queryKey: ["accounts-parents"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("id, code, name, account_type, is_contra")
-        .eq("is_active", true)
-        .order("code");
-      if (error) throw error;
-      return data;
-    },
-  });
 
-  const mainAccounts = parentAccounts?.filter((acc) => !acc.is_contra);
+  useEffect(() => {
+    if (accountData) {
+      form.reset()
+      setOpen(false)
+      toast.success("Account created successfully");
+    }
+    if (error) {
+      toast.error("Could not create account.")
+    }
+  }, [])
+
+  // const mainAccounts = parentAccounts?.filter((acc) => !acc.is_contra);
+  const mainAccounts = []
 
   const createAccount = useMutation({
     mutationFn: async (values: AccountFormValues) => {
@@ -84,7 +86,7 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
 
   const selectedType = form.watch("account_type");
 
-  const filteredParents = parentAccounts?.filter(
+  const filteredParents = [].filter(
     (acc) => acc.account_type === selectedType && !acc.is_contra
   );
 
@@ -108,7 +110,7 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
         </DialogHeader>
         <CreateAccountFormFields
           form={form}
-          parentAccounts={parentAccounts}
+          // parentAccounts={parentAccounts}
           mainAccounts={mainAccounts}
           filteredParents={filteredParents}
           filteredMainAccounts={filteredMainAccounts}
@@ -121,8 +123,12 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={createAccount.isPending} onClick={form.handleSubmit((v) => createAccount.mutate(v))}>
-            {createAccount.isPending ? "Creating..." : "Create Account"}
+          <Button type="submit" disabled={createAccount.isPending}
+            onClick={form.handleSubmit((v) => {
+              createNewAccount(v)
+            })}
+          >
+            {isLoading ? "Creating..." : "Create Account"}
           </Button>
         </div>
       </DialogContent>
