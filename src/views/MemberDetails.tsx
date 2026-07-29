@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShareReceivablesTab } from "@/components/shares/ShareReceivablesTab";
 import { useQuery } from "@tanstack/react-query";
 import { useGetMemberByIdQuery } from "@/store/slices/memberSlice/api.member";
+import ProfilePage from "@/app/app/dashboard/profile/page";
 
 export default function MemberDetails() {
   const params = useParams();
@@ -161,146 +162,8 @@ export default function MemberDetails() {
         </div>
 
         {/* Profile Card with Payment Status */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-start gap-6">
-              {/* <Avatar className="h-24 w-24">
-                <AvatarImage src={member.photo_url} />
-                <AvatarFallback className="text-2xl">
-                  {member.full_name.charAt(0)}
-                </AvatarFallback>
-              </Avatar> */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <CardTitle className="text-2xl">{member.full_name}</CardTitle>
-                  {getStatusBadge(member.stage)}
-                  {financialSummary && (
-                    <PaymentStatusBadge status={financialSummary.payment_status} />
-                  )}
-                </div>
-                <div className="space-y-1 text-muted-foreground">
-                  <p className="text-lg font-medium text-foreground">
-                    {member.user_id || "Beneficiary ID Pending"}
-                  </p>
-                  <p className="capitalize">{member.member_type} Member</p>
-                  <p>Share Quantity: {member.share_quantity}</p>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Father's Name</p>
-                <p className="font-medium">{member.father_name || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Mother's Name</p>
-                <p className="font-medium">{member.mother_name || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Date of Birth</p>
-                <p className="font-medium">{member.date_of_birth || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Gender</p>
-                <p className="font-medium capitalize">{member.gender || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Blood Group</p>
-                <p className="font-medium">{member.blood_group || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">NID</p>
-                <p className="font-medium">{member.nid || "N/A"}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <p>{member.mobile || "N/A"}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <p>{member.email || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Present Address</p>
-                </div>
-                <p className="text-sm">{member.present_address || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Permanent Address</p>
-                </div>
-                <p className="text-sm">{member.permanent_address || "N/A"}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Professional Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Professional Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Profession</p>
-                <p className="font-medium">{member.profession || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Education</p>
-                <p className="font-medium">{member.education || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Nationality</p>
-                <p className="font-medium">{member.nationality || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Religion</p>
-                <p className="font-medium">{member.religion || "N/A"}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Nominee Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Nominee Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <p className="font-medium">{member.nominee_name || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Relation</p>
-                <p>{member.nominee_relation || "N/A"}</p>
-              </div>
-              <div className="grid gap-2">
-                <p className="text-sm text-muted-foreground">Nominee NID</p>
-                <p>{member.nominee_nid || "N/A"}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ProfilePage  memberProp={member} />
+        
 
         {/* Financial Summary Card */}
         <Card>
