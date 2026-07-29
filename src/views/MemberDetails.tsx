@@ -17,15 +17,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShareReceivablesTab } from "@/components/shares/ShareReceivablesTab";
 import { useQuery } from "@tanstack/react-query";
+import { useGetMemberByIdQuery } from "@/store/slices/memberSlice/api.member";
 
 export default function MemberDetails() {
   const params = useParams();
   const id = params.id as string;
+  const { data, isLoading:loading, error } = useGetMemberByIdQuery(id)
+  const member = data?.data
   const router = useRouter();
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
-  const [member, setMember] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Payment dialog state
@@ -55,26 +56,6 @@ export default function MemberDetails() {
     },
     enabled: !!id,
   });
-  const fetchMember = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("members")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch member details"
-      });
-      router.push("/members");
-    } else {
-      setMember(data);
-    }
-    setLoading(false);
-  };
 
   const fetchFinancialHistory = async () => {
     if (!id) return;
@@ -104,11 +85,6 @@ export default function MemberDetails() {
       .order("created_at", { ascending: false });
     setCharges(chargesData || []);
   };
-
-  useEffect(() => {
-    fetchMember();
-    fetchFinancialHistory();
-  }, [id]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -165,7 +141,7 @@ export default function MemberDetails() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => router.push("/members")}>
+          <Button variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Members
           </Button>
@@ -197,14 +173,14 @@ export default function MemberDetails() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <CardTitle className="text-2xl">{member.full_name}</CardTitle>
-                  {getStatusBadge(member.status)}
+                  {getStatusBadge(member.stage)}
                   {financialSummary && (
                     <PaymentStatusBadge status={financialSummary.payment_status} />
                   )}
                 </div>
                 <div className="space-y-1 text-muted-foreground">
                   <p className="text-lg font-medium text-foreground">
-                    {member.beneficiary_id || "Beneficiary ID Pending"}
+                    {member.user_id || "Beneficiary ID Pending"}
                   </p>
                   <p className="capitalize">{member.member_type} Member</p>
                   <p>Share Quantity: {member.share_quantity}</p>
@@ -558,7 +534,7 @@ export default function MemberDetails() {
       <SignupForm
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
-        onSuccess={fetchMember}
+        onSuccess={()=>{}}
         editMember={member}
         id={member?.user_id}
       />

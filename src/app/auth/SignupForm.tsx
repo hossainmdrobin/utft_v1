@@ -17,7 +17,6 @@ interface SignupFormProps {
 
 export default function SignupForm({ open, onOpenChange, onSuccess, editMember,id }: SignupFormProps) {
   const [updateAuthUser, {data:updatedData, isLoading: updateLoading }] = useUpdateAuthUserMutation();
-  console.log(updatedData,"updatedData")
   const route = useRouter();
   const [formData, setFormData] = useState({
     form_no: "",
@@ -93,7 +92,7 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
   }, [editMember, open]);
 
   useEffect(()=>{
-    if(updatedData) route.push("/dashboard")
+    if(updatedData) route.push("/app/dashboard")
 
   },[updatedData])
 
