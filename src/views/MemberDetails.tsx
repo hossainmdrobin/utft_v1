@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -159,18 +158,10 @@ export default function MemberDetails() {
     refetchSummary();
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-8">Loading...</div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!member) return null;
+  if (!member) return <div>No member</div>;
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -197,12 +188,12 @@ export default function MemberDetails() {
         <Card>
           <CardHeader>
             <div className="flex items-start gap-6">
-              <Avatar className="h-24 w-24">
+              {/* <Avatar className="h-24 w-24">
                 <AvatarImage src={member.photo_url} />
                 <AvatarFallback className="text-2xl">
                   {member.full_name.charAt(0)}
                 </AvatarFallback>
-              </Avatar>
+              </Avatar> */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <CardTitle className="text-2xl">{member.full_name}</CardTitle>
@@ -581,6 +572,6 @@ export default function MemberDetails() {
           onSuccess={handlePaymentSuccess}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 }
