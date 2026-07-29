@@ -221,7 +221,7 @@ export default function ShareManagement() {
   const totalRemaining = totalReceivable - totalPaid;
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -468,7 +468,7 @@ export default function ShareManagement() {
           }}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 }
 
