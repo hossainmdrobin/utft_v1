@@ -7,7 +7,7 @@ import { FileText, DollarSign } from "lucide-react";
 
 export default function Reports() {
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Reports</h2>
@@ -37,7 +37,7 @@ export default function Reports() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 
