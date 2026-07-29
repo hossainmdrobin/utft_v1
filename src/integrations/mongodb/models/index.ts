@@ -1,5 +1,5 @@
 import { Member } from "./Member";
-import { Account } from "./Account";
+import { Account } from "../../../models/Account";
 import { JournalEntry } from "./JournalEntry";
 import { JournalEntryLine } from "./JournalEntryLine";
 import { MonthlyDonation } from "./MonthlyDonation";
