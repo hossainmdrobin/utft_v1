@@ -14,6 +14,7 @@ interface MemberFilter {
   $or?: { full_name?: RegExp; father_name?: RegExp; mother_name?: RegExp; nid?: RegExp; mobile?: RegExp; nominee_nid?: RegExp }[];
 }
 
+// GETTING FILTERED MEMBER
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
@@ -85,17 +86,20 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// 
 export async function PATCH(req: NextRequest) {
   await connectDB();
   const user = await getCurrentMember(req);
+  console.log(user, "the user")
   const body = await req.json();
   const { id, ...updateData } = body;
-
+console.log(id, updateData,user._id, "Updagitng member")
   if (!id) {
     return NextResponse.json({ error: "Member id is required" }, { status: 400 });
   }
+  console.log(String(user._id) != id)
 
-  if (!['admin', 'president', 'director'].includes(user.role) || user._id != id) return NextResponse.json(
+  if (!(['admin', 'president', 'director'].includes(user.role) || String(user._id) === id)) return NextResponse.json(
     { error: "Failed to update member" },
     { status: 400 }
   );

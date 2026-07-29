@@ -1,27 +1,21 @@
 import { Plus, Users as UsersIcon } from "lucide-react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PaymentStatusBadge } from "@/components/members/PaymentStatusBadge";
 import { MemberActionMenu } from "@/components/members/MemberActionMenu";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { useUpdateMemberMutation } from "@/store/slices/memberSlice/api.member";
 
 interface MembersTableProps {
   members: any[];
   receivables: Record<string, { amount: number; status: string }>;
   loading: boolean;
   isAdmin: boolean;
-  onMemberClick: (memberId: string) => void;
-  onFinancialReportClick: (memberId: string) => void;
   onAddMember: () => void;
-  onBulkUpload: () => void;
-  // onApprove: (memberId: string) => void;
-  // onReject: (memberId: string) => void;
-  // onStatusChange: (memberId: string, newStatus: string) => void;
 }
 
 export function MembersTable({
@@ -29,13 +23,7 @@ export function MembersTable({
   receivables,
   loading,
   isAdmin,
-  onMemberClick,
-  onFinancialReportClick,
   onAddMember,
-  onBulkUpload,
-  // onApprove,
-  // onReject,
-  // onStatusChange,
 }: MembersTableProps) {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -47,29 +35,12 @@ export function MembersTable({
     return <Badge variant={variants[status] || "default"}>{status}</Badge>;
   };
 
-  const {data,} = useGetCurrentUserQuery()
+  const { data, } = useGetCurrentUserQuery()
+  const [updateMember, { data: updatedMember, isLoading, error }] = useUpdateMemberMutation()
   const updateAccess = ["admin", "president", "director"]
-
+  console.log(data, "updated error")
   return (
     <div className="space-y-4">
-      <Card className="shadow-soft">
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or Beneficiary ID..."
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">Filter by Type</Button>
-              <Button variant="outline">Export</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <Card className="shadow-soft">
         <CardHeader>
           <CardTitle>Member List ({members.length})</CardTitle>
@@ -115,40 +86,40 @@ export function MembersTable({
                 </TableHeader>
                 <TableBody>
                   {members.map((member) => (
-                    <TableRow key={member.id}>
+                    <TableRow key={member._id}>
                       <TableCell
                         className="font-medium cursor-pointer hover:underline"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         {member.beneficiary_id || "Pending"}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer hover:underline"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         {member.full_name}
                       </TableCell>
                       <TableCell
                         className="capitalize cursor-pointer"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         {member.member_type}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         {member.share_quantity}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         {getStatusBadge(member.stage)}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         <PaymentStatusBadge
                           status={receivables[member.id]?.status || "cleared"}
@@ -156,13 +127,13 @@ export function MembersTable({
                       </TableCell>
                       <TableCell
                         className="cursor-pointer"
-                        onClick={() => onMemberClick(member.id)}
+                      // onClick={() => onMemberClick(member.id)}
                       >
                         {member.mobile}
                       </TableCell>
                       <TableCell
                         className="font-semibold cursor-pointer text-primary hover:underline"
-                        onClick={() => onFinancialReportClick(member.id)}
+                      // onClick={() => onFinancialReportClick(member.id)}
                       >
                         ৳{(receivables[member.id]?.amount || 0).toFixed(2)}
                       </TableCell>
@@ -174,14 +145,14 @@ export function MembersTable({
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  // onClick={() => onApprove(member.id)}
+                                  onClick={() => updateMember({ id: member._id, ...{ stage: "approved" } })}
                                 >
                                   <Check className="h-4 w-4 text-green-600" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  // onClick={() => onReject(member.id)}
+                                  onClick={() => updateMember({ id: member._id, ...{ stage: "rejected" } })}
                                 >
                                   <X className="h-4 w-4 text-red-600" />
                                 </Button>
@@ -190,7 +161,7 @@ export function MembersTable({
                               <MemberActionMenu
                                 memberId={member.id}
                                 status={member.status}
-                                // onStatusChange={onStatusChange}
+                              // onStatusChange={onStatusChange}
                               />
                             )}
                           </div>

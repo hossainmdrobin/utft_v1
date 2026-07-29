@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AddMemberDialog } from "./AddMemberDialog";
 import { BulkUploadDialog } from "@/components/members/BulkUploadDialog";
 import { supabase } from "@/integrations/mongodb/client";
@@ -33,7 +33,6 @@ export default function Members() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
-  const router = useRouter();
 
   const { data, isLoading } = useGetMembersQuery(Object.keys(filters).length > 0 ? filters : undefined);
 
@@ -108,12 +107,7 @@ export default function Members() {
         <MemberFilter filters={filters} setFilters={setFilters} />
 
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">All Members</TabsTrigger>
-            <TabsTrigger value="pending">Pending Approval</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="deceased">Deceased</TabsTrigger>
-          </TabsList>
+          
 
           {data && <TabsContent value="all" className="space-y-4">
             <MembersTable
@@ -121,10 +115,7 @@ export default function Members() {
               receivables={receivables}
               loading={loading || isLoading}
               isAdmin={isAdmin}
-              onMemberClick={(memberId) => router.push(`/members/${memberId}`)}
-              onFinancialReportClick={(memberId) => router.push(`/members/${memberId}/financial-report`)}
               onAddMember={() => setAddDialogOpen(true)}
-              onBulkUpload={() => setBulkUploadOpen(true)}
               // onApprove={handleApprove}
               // onReject={handleReject}
               // onStatusChange={handleStatusChange}
