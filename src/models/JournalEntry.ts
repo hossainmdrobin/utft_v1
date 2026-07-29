@@ -1,4 +1,21 @@
-import { Schema, model, models } from "mongoose";
+import { Schema, model, models, Document } from "mongoose";
+
+interface IJournalEntry extends Document {
+  entry_number: string;
+  entry_date: string;
+  description?: string;
+  member_id?: string;
+  reference?: string;
+  status: string;
+  total_debit: number;
+  total_credit: number;
+  posted_at?: string;
+  posted_by?: string;
+  is_locked: boolean;
+  locked_at?: string;
+  locked_by?: string;
+  created_by?: string;
+}
 
 const journalEntrySchema = new Schema({
   entry_number: { type: String, required: true },
@@ -18,3 +35,4 @@ const journalEntrySchema = new Schema({
 }, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
 
 export const JournalEntry = models.JournalEntry || model("JournalEntry", journalEntrySchema);
+export type JournalEntryDoc = IJournalEntry;

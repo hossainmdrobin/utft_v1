@@ -1,4 +1,13 @@
-import { Schema, model, models } from "mongoose";
+import { Schema, model, models, Document } from "mongoose";
+
+interface IJournalEntryLine extends Document {
+  journal_entry_id: string;
+  account_id: string;
+  description?: string;
+  debit: number;
+  credit: number;
+  member_id?: string;
+}
 
 const journalEntryLineSchema = new Schema({
   journal_entry_id: { type: String, required: true },
@@ -10,3 +19,4 @@ const journalEntryLineSchema = new Schema({
 }, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
 
 export const JournalEntryLine = models.JournalEntryLine || model("JournalEntryLine", journalEntryLineSchema);
+export type JournalEntryLineDoc = IJournalEntryLine;
