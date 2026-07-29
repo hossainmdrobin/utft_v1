@@ -39,16 +39,21 @@ export function MembersTable({
   const { toast } = useToast()
 
   const { data, } = useGetCurrentUserQuery()
-  const [updateMember, { data: updatedMember }] = useUpdateMemberMutation()
+  const [updateMember, { data: updatedMember, error }] = useUpdateMemberMutation()
   const updateAccess = ["admin", "president", "director"]
   useEffect(() => {
     if (updatedMember) {
       toast({
-        title:"Success",
-        description:"Member Updated"
+        title: "Success",
+        description: "Member Updated"
       })
     }
-  }, [updatedMember])
+    if (error) toast({
+      variant: "destructive",
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to create member"
+    });
+  }, [updatedMember, error])
 
   const onStatusChange = (id, stage) => {
     updateMember({ id, stage })
