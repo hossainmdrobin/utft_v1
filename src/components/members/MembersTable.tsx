@@ -9,6 +9,8 @@ import { PaymentStatusBadge } from "@/components/members/PaymentStatusBadge";
 import { MemberActionMenu } from "@/components/members/MemberActionMenu";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 import { useUpdateMemberMutation } from "@/store/slices/memberSlice/api.member";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 interface MembersTableProps {
   members: any[];
@@ -34,10 +36,23 @@ export function MembersTable({
     };
     return <Badge variant={variants[status] || "default"}>{status}</Badge>;
   };
+  const { toast } = useToast()
 
   const { data, } = useGetCurrentUserQuery()
-  const [updateMember, { data: updatedMember, isLoading, error }] = useUpdateMemberMutation()
+  const [updateMember, { data: updatedMember }] = useUpdateMemberMutation()
   const updateAccess = ["admin", "president", "director"]
+  useEffect(() => {
+    if (updatedMember) {
+      toast({
+        title:"Success",
+        description:"Member Updated"
+      })
+    }
+  }, [updatedMember])
+
+  const onStatusChange = (id, stage) => {
+    updateMember({ id, stage })
+  }
   console.log(data, "updated error")
   return (
     <div className="space-y-4">
@@ -140,7 +155,7 @@ export function MembersTable({
                       {updateAccess.includes(data?.data.role) && (
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2">
-                            {member.status === "pending" ? (
+                            {member.stage === "pending" ? (
                               <>
                                 <Button
                                   size="sm"
@@ -159,9 +174,9 @@ export function MembersTable({
                               </>
                             ) : (
                               <MemberActionMenu
-                                memberId={member.id}
-                                status={member.status}
-                              // onStatusChange={onStatusChange}
+                                memberId={member._id}
+                                status={member.stage}
+                                onStatusChange={onStatusChange}
                               />
                             )}
                           </div>

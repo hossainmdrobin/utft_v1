@@ -93,12 +93,9 @@ export async function PATCH(req: NextRequest) {
   console.log(user, "the user")
   const body = await req.json();
   const { id, ...updateData } = body;
-console.log(id, updateData,user._id, "Updagitng member")
   if (!id) {
     return NextResponse.json({ error: "Member id is required" }, { status: 400 });
   }
-  console.log(String(user._id) != id)
-
   if (!(['admin', 'president', 'director'].includes(user.role) || String(user._id) === id)) return NextResponse.json(
     { error: "Failed to update member" },
     { status: 400 }

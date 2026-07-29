@@ -12,7 +12,7 @@ type MemberStatus = "pending" | "active" | "inactive" | "deceased";
 interface MemberActionMenuProps {
   memberId: string;
   status: MemberStatus;
-  // onStatusChange: (memberId: string, newStatus: string) => void;
+  onStatusChange: (memberId: string, newStatus: string) => void;
   showApproveReject?: boolean;
   onApprove?: (memberId: string) => void;
   onReject?: (memberId: string) => void;
@@ -21,7 +21,7 @@ interface MemberActionMenuProps {
 export function MemberActionMenu({
   memberId,
   status,
-  // onStatusChange,
+  onStatusChange,
   showApproveReject = false,
   onApprove,
   onReject,
@@ -46,21 +46,21 @@ export function MemberActionMenu({
         )}
         {status !== "active" && (
           <DropdownMenuItem
-            // onClick={() => onStatusChange(memberId, "active")}
+            onClick={() => onStatusChange(memberId, "active")}
           >
             Mark as Active
           </DropdownMenuItem>
         )}
         {status !== "deceased" && (
           <DropdownMenuItem
-            // onClick={() => onStatusChange(memberId, "deceased")}
+            onClick={() => onStatusChange(memberId, "deceased")}
           >
             Mark as Deceased
           </DropdownMenuItem>
         )}
         {status !== "inactive" && (
           <DropdownMenuItem
-            // onClick={() => onStatusChange(memberId, "inactive")}
+            onClick={() => onStatusChange(memberId, "inactive")}
           >
             Mark as Inactive
           </DropdownMenuItem>
