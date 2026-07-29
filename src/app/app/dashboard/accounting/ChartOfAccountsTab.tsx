@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateAccountDialog } from "./CreateAccountDialog";
 import { AccountsList } from "@/components/accounting/AccountsList";
 import { AccountingSummaryCards } from "./AccountingSummaryCards";
+import { AccountDoc } from "@/models/account";
 
 interface ChartOfAccountsTabProps {
   summary: {
@@ -11,10 +12,11 @@ interface ChartOfAccountsTabProps {
     equity: number;
     income: number;
     expenses: number;
-  };
+  },
+  accounts:AccountDoc[]
 }
 
-export function ChartOfAccountsTab({ summary }: ChartOfAccountsTabProps) {
+export function ChartOfAccountsTab({ summary,accounts }: ChartOfAccountsTabProps) {
   return (
     <div className="space-y-4">
       <AccountingSummaryCards summary={summary} />
@@ -24,7 +26,7 @@ export function ChartOfAccountsTab({ summary }: ChartOfAccountsTabProps) {
           <CreateAccountDialog />
         </CardHeader>
         <CardContent>
-          <AccountsList />
+          <AccountsList accounts={accounts} />
         </CardContent>
       </Card>
     </div>

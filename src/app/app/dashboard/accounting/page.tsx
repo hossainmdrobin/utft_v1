@@ -8,6 +8,7 @@ import { JournalEntriesTab } from "./JournalEntriesTab";
 
 export default function Page() {
   const { data: accountsData } = useGetAccountsQuery();
+  console.log(accountsData, "the account data")
   const accounts = accountsData?.data ?? [];
 
   const summary = accounts.reduce(
@@ -55,7 +56,7 @@ export default function Page() {
           </TabsList>
 
           <TabsContent value="accounts">
-            <ChartOfAccountsTab summary={summary} />
+            <ChartOfAccountsTab accounts={accounts} summary={summary} />
           </TabsContent>
 
           <TabsContent value="transactions">

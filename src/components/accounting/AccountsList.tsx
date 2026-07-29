@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Edit, ChevronRight, ChevronDown, Folder, FolderOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AccountDoc } from "@/models/account";
 
 type Account = {
   id: string;
@@ -55,24 +56,12 @@ const typeLabels: Record<string, string> = {
   expense: "Expenses",
 };
 
-export function AccountsList() {
+export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
     new Set(typeOrder)
   );
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
-
-  const { data: accounts, isLoading } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("*")
-        .order("code");
-      if (error) throw error;
-      return data as Account[];
-    },
-  });
 
   const toggleAccount = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
@@ -115,22 +104,22 @@ export function AccountsList() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="space-y-2">
+  //       {[...Array(5)].map((_, i) => (
+  //         <Skeleton key={i} className="h-12 w-full" />
+  //       ))}
+  //     </div>
+  //   );
+  // }
 
   // Group accounts by type
   const groupedAccounts = accounts?.reduce((acc, account) => {
     if (!acc[account.account_type]) {
       acc[account.account_type] = [];
     }
-    acc[account.account_type].push(account);
+    // acc[account.account_type].push(account);
     return acc;
   }, {} as Record<string, Account[]>);
 
