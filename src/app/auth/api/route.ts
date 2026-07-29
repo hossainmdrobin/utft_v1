@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest) {
     const { user_id, data } = body;
     delete data.password;
     delete data.user_id;
-    const member = await (Member as any).findOneAndUpdate({ user_id }, data, { new: true })
+    const member = await (Member as any).findOneAndUpdate({ user_id }, {...data,stage:"pending"}, { new: true })
     if (!member) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     let response = NextResponse.json({ data })
     const token = generateToken(member.user_id);

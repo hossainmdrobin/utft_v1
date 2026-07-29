@@ -22,11 +22,6 @@ async function getAdminUser(req: NextRequest) {
 export async function POST(req: NextRequest) {
   await connectDB();
 
-  // const adminId = await getAdminUser(req);
-  // if (!adminId) {
-  //   return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-  // }
-
   const body = await req.json();
   const { user_id, password } = body;
   console.log(body)

@@ -32,14 +32,22 @@ export const memberApi = injectEndpoint("memberApi", (builder) => ({
     },
     providesTags: ["Members"],
   }),
-  getMember: builder.query<any, string>({
+  createMember: builder.mutation<any, { user_id: string, password: string, member_type: string, share_quantity: number }>({
+    query: (body) => ({
+      url: "/app/dashboard/members/api",
+      method: "POST",
+      body,
+    }),
+    invalidatesTags: ["Members"],
+  }),
+  getMemberById: builder.query<any, string>({
     query: (id) => ({
-      url: `/app/dashboard/members/api?id=${id}`,
+      url: `/app/dashboard/members/api/${id}`,
       method: "GET",
     }),
     providesTags: (result, error, id) => [{ type: "Members", id }],
   }),
-  updateMember: builder.mutation<any, { id: string; [key: string]: any }>({
+  updateMember: builder.mutation<any, { id: string;[key: string]: any }>({
     query: (body) => ({
       url: "/app/dashboard/members/api",
       method: "PATCH",
@@ -51,6 +59,7 @@ export const memberApi = injectEndpoint("memberApi", (builder) => ({
 
 export const {
   useGetMembersQuery,
-  useGetMemberQuery,
+  useGetMemberByIdQuery,
   useUpdateMemberMutation,
+  useCreateMemberMutation
 } = memberApi;

@@ -10,13 +10,14 @@ import { ProfileCard } from "./ProfileCard";
 import { PersonalDetailsSection } from "./PersonalDetailsSection";
 import { ContactDetailsSection } from "./ContactDetailsSection";
 import { NomineeDetailsSection } from "./NomineeDetailsSection";
+import { MemberDoc } from "@/models/member";
 
-export default function ProfilePage() {
+export default function ProfilePage({memberProp}:{memberProp?:MemberDoc}) {
   const { toast } = useToast();
   const { data: currentUserData, isLoading: isAuthLoading, error: authError } = useGetCurrentUserQuery();
   const [updateMember, { isLoading: isUpdating }] = useUpdateMemberMutation();
 
-  const member = currentUserData?.data || null;
+  const member = memberProp || currentUserData?.data || null;
 
   const [formData, setFormData] = useState<any>({
     profile_photo: "",

@@ -1,24 +1,21 @@
 'use client'
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus } from "lucide-react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AddMemberDialog } from "./AddMemberDialog";
-import { BulkUploadDialog } from "@/components/members/BulkUploadDialog";
-import { supabase } from "@/integrations/mongodb/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAdmin } from "@/hooks/use-admin";
-import { useRouter } from "next/navigation";
 import { MembersTable } from "@/components/members/MembersTable";
 import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
 import type { MemberDoc } from "@/models/member";
 import MemberFilter from "./MemberFilter";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 
 type MemberDisplay = MemberDoc & { id: string };
 
 export default function Members() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [receivables, setReceivables] = useState<Record<string, { amount: number; status: string }>>({});
+
   const [filters, setFilters] = useState<{
     stage?: string;
     joinDateFrom?: string;
@@ -28,51 +25,9 @@ export default function Members() {
     member_type?: string;
     search?: string;
   }>({});
-  const [memberList, setMemberList] = useState<MemberDisplay[]>([]);
-  const [receivables, setReceivables] = useState<Record<string, { amount: number; status: string }>>({});
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const { isAdmin } = useAdmin();
-  const router = useRouter();
-
+  const { data: currentMember } = useGetCurrentUserQuery()
+  const isAdmin = ['admin', 'director', 'president']?.includes(currentMember?.role)
   const { data, isLoading } = useGetMembersQuery(Object.keys(filters).length > 0 ? filters : undefined);
-
-
-  const fetchReceivables = async (membersList: MemberDisplay[]) => {
-    const receivablesMap: Record<string, { amount: number; status: string }> = {};
-
-    for (const member of membersList) {
-      try {
-        const { data: financialData } = await supabase.rpc("get_member_financial_summary", {
-          p_member_id: member.id,
-        });
-
-        if (financialData && financialData.length > 0) {
-          receivablesMap[member.id] = {
-            amount: Number(financialData[0].grand_total_due) || 0,
-            status: financialData[0].payment_status || "cleared",
-          };
-        } else {
-          receivablesMap[member.id] = { amount: 0, status: "cleared" };
-        }
-      } catch {
-        receivablesMap[member.id] = { amount: 0, status: "cleared" };
-      }
-    }
-
-    setReceivables(receivablesMap);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (memberList.length > 0) {
-      fetchReceivables(memberList);
-    } else {
-      setLoading(false);
-    }
-  }, [memberList]);
-
-  const hasActiveFilters = Object.keys(filters).length > 0;
 
   return (
     <>
@@ -87,10 +42,10 @@ export default function Members() {
           <div className="flex gap-2">
             {isAdmin ? (
               <>
-                <Button variant="outline" className="gap-2" onClick={() => setBulkUploadOpen(true)}>
+                {/* <Button variant="outline" className="gap-2" onClick={() => setBulkUploadOpen(true)}>
                   <Upload className="h-4 w-4" />
                   Bulk Upload
-                </Button>
+                </Button> */}
                 <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Add Member
@@ -108,26 +63,15 @@ export default function Members() {
         <MemberFilter filters={filters} setFilters={setFilters} />
 
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">All Members</TabsTrigger>
-            <TabsTrigger value="pending">Pending Approval</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="deceased">Deceased</TabsTrigger>
-          </TabsList>
+
 
           {data && <TabsContent value="all" className="space-y-4">
             <MembersTable
               members={data.data}
+              loading={isLoading}
               receivables={receivables}
-              loading={loading || isLoading}
               isAdmin={isAdmin}
-              onMemberClick={(memberId) => router.push(`/members/${memberId}`)}
-              onFinancialReportClick={(memberId) => router.push(`/members/${memberId}/financial-report`)}
               onAddMember={() => setAddDialogOpen(true)}
-              onBulkUpload={() => setBulkUploadOpen(true)}
-              // onApprove={handleApprove}
-              // onReject={handleReject}
-              // onStatusChange={handleStatusChange}
             />
           </TabsContent>}
 
@@ -136,13 +80,11 @@ export default function Members() {
       <AddMemberDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        onSuccess={() => {}}
       />
-      <BulkUploadDialog
+      {/* <BulkUploadDialog
         open={bulkUploadOpen}
         onOpenChange={setBulkUploadOpen}
-        onSuccess={() => {}}
-      />
+      /> */}
     </>
   );
 }
