@@ -11,6 +11,7 @@ import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 import { useUpdateMemberMutation } from "@/store/slices/memberSlice/api.member";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import Link from "next/link";
 
 interface MembersTableProps {
   members: any[];
@@ -106,12 +107,13 @@ export function MembersTable({
                 <TableBody>
                   {members.map((member) => (
                     <TableRow key={member._id}>
-                      <TableCell
-                        className="font-medium cursor-pointer hover:underline"
-                      // onClick={() => onMemberClick(member.id)}
-                      >
-                        {member.user_id || "Pending"}
-                      </TableCell>
+                      <Link href={`/app/dashboard/members/${member._id}`}>
+                        <TableCell
+                          className="font-medium cursor-pointer hover:underline"
+                        >
+                          {member.user_id || "Pending"}
+                        </TableCell>
+                      </Link>
                       <TableCell
                         className="cursor-pointer hover:underline"
                       // onClick={() => onMemberClick(member.id)}

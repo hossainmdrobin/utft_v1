@@ -95,7 +95,6 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
                 <Input
                   id="joinDate"
                   type="date"
-                  // value={String(joinDate)}
                   onChange={(e) => setJoinDate(new Date(e.target.value))}
                   placeholder="Enter unique code"
                   required
