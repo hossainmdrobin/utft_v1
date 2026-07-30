@@ -23,21 +23,7 @@ import { MoreVertical, Edit, ChevronRight, ChevronDown, Folder, FolderOpen, File
 import { cn } from "@/lib/utils";
 import { AccountDoc } from "@/models/account";
 
-type Account = {
-  id: string;
-  code: string;
-  name: string;
-  account_type: string;
-  parent_id: string | null;
-  description: string | null;
-  is_active: boolean;
-  is_system: boolean;
-  is_contra: boolean;
-  opening_balance: number;
-  current_balance: number;
-};
-
-type AccountWithChildren = Account & { children: AccountWithChildren[] };
+type AccountWithChildren = AccountDoc & { children: AccountWithChildren[] };
 
 const typeColors: Record<string, string> = {
   asset: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
@@ -119,23 +105,26 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
     if (!acc[account.account_type]) {
       acc[account.account_type] = [];
     }
-    // acc[account.account_type].push(account);
+    acc[account.account_type].push(account);
     return acc;
-  }, {} as Record<string, Account[]>);
+  }, {} as Record<string, AccountDoc[]>);
 
   // Build tree structure with unlimited depth
-  const buildTree = (accountsList: Account[]): AccountWithChildren[] => {
+  const buildTree = (accountsList: AccountDoc[]): AccountWithChildren[] => {
     const map = new Map<string, AccountWithChildren>();
     const roots: AccountWithChildren[] = [];
 
     // First pass: create nodes
     accountsList.forEach((acc) => {
-      map.set(acc.id, { ...acc, children: [] });
+      map.set(
+        String(acc._id),
+        { ...acc, children: [] } as AccountWithChildren
+      );
     });
 
     // Second pass: build tree
     accountsList.forEach((acc) => {
-      const node = map.get(acc.id)!;
+      const node = map.get(String(acc._id))!;
       if (acc.parent_id && map.has(acc.parent_id)) {
         map.get(acc.parent_id)!.children.push(node);
       } else {
@@ -161,12 +150,12 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
   const renderAccountRow = (account: AccountWithChildren, depth: number): JSX.Element[] => {
     const rows: JSX.Element[] = [];
     const hasChildren = account.children.length > 0;
-    const isExpanded = expandedAccounts.has(account.id);
+    const isExpanded = expandedAccounts.has(String(account._id));
     const indentPx = depth * 24 + 16;
 
     rows.push(
       <TableRow 
-        key={account.id} 
+        key={String(account._id)} 
         className={cn(
           !account.is_active && "opacity-50",
           hasChildren && "bg-muted/30 hover:bg-muted/50",
@@ -176,7 +165,7 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
         <TableCell 
           className="font-mono cursor-pointer" 
           style={{ paddingLeft: `${indentPx}px` }}
-          onClick={() => hasChildren && toggleAccountExpand(account.id)}
+          onClick={() => hasChildren && toggleAccountExpand(String(account._id))}
         >
           <div className="flex items-center gap-2">
             {hasChildren ? (
@@ -203,7 +192,7 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
         </TableCell>
         <TableCell 
           className={cn("cursor-pointer", hasChildren && "font-semibold")}
-          onClick={() => hasChildren && toggleAccountExpand(account.id)}
+          onClick={() => hasChildren && toggleAccountExpand(String(account._id))}
         >
           {account.name}
         </TableCell>
@@ -243,7 +232,7 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
-                    toggleAccount.mutate({ id: account.id, is_active: !account.is_active })
+                    toggleAccount.mutate({ id: String(account._id), is_active: !account.is_active })
                   }
                 >
                   {account.is_active ? "Deactivate" : "Activate"}
