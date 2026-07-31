@@ -14,14 +14,12 @@ import SignupForm from "@/app/auth/SignupForm";
 export default function Auth() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
   const [user_id, setUserid] = useState("");
   const [password, setPassword] = useState("");
-  const [open,setOpen] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const [verifyCredentials, { data: verifyData, isLoading: isSignUpLoading, error: verifiedError }] = useVerifyCredentialsMutation();
-  const [login, { isLoading: isSignInLoading, error: signInError }] = useLoginMutation();
-
+  const [login, {data:loginData, isLoading: isSignInLoading, error: signInError }] = useLoginMutation();
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     await verifyCredentials({ user_id, password }).unwrap();
@@ -29,7 +27,7 @@ export default function Auth() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ email, password }).unwrap();
+    await login({ user_id, password }).unwrap();
   };
 
   useEffect(() => {
@@ -52,7 +50,8 @@ export default function Auth() {
         description: signInError?.data?.error || "Login failed",
       });
     }
-  }, [verifyData, verifiedError, signInError,])
+    if(loginData) router.replace('/app/dashboard');
+  }, [verifyData, verifiedError, signInError,loginData])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -73,13 +72,13 @@ export default function Auth() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="user_id">Email</Label>
+                  <Label htmlFor="signup-email">User ID</Label>
                   <Input
-                    id="user_id"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="signup-email"
+                    type="text"
+                    placeholder="User ID"
+                    value={user_id}
+                    onChange={(e) => setUserid(e.target.value)}
                     required
                   />
                 </div>
