@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -32,6 +30,9 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useCreateJournalEntryMutation } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
+import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
 
 const journalLineSchema = z.object({
   account_id: z.string().min(1, "Account required"),
@@ -56,7 +57,11 @@ interface JournalEntryDialogProps {
 
 export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [createJournalEntry, { data: entryData, isLoading: entryLoading, error: entryError }] = useCreateJournalEntryMutation()
+  const { data: accounts,isLoading:accountLoading } = useGetAccountsQuery()
+  const { data: members, isLoading:memberLoading } = useGetMembersQuery()
+  console.log(accounts, "the accounts")
+
 
   const form = useForm<JournalEntryFormValues>({
     resolver: zodResolver(journalEntrySchema),
@@ -77,99 +82,19 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
     name: "lines",
   });
 
-  const { data: accounts } = useQuery({
-    queryKey: ["accounts-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("id, code, name, account_type")
-        .eq("is_active", true)
-        .eq("is_system", false)
-        .order("code");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: members } = useQuery({
-    queryKey: ["members-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, full_name, beneficiary_id")
-        .eq("status", "active")
-        .order("full_name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const createEntry = useMutation({
-    mutationFn: async (values: JournalEntryFormValues) => {
-      const { data: user } = await supabase.auth.getUser();
-      
-      // Generate entry number
-      const { data: entryNumber } = await supabase.rpc("generate_entry_number");
-      
-      const totalDebit = values.lines.reduce((sum, l) => sum + (l.debit || 0), 0);
-      const totalCredit = values.lines.reduce((sum, l) => sum + (l.credit || 0), 0);
-
-      if (Math.abs(totalDebit - totalCredit) > 0.01) {
-        throw new Error("Debits must equal credits");
-      }
-
-      // Create journal entry
-      const { data: entry, error: entryError } = await supabase
-        .from("journal_entries")
-        .insert({
-          entry_number: entryNumber,
-          entry_date: values.entry_date,
-          reference: values.reference || null,
-          description: values.description || null,
-          member_id: values.member_id || null,
-          total_debit: totalDebit,
-          total_credit: totalCredit,
-          created_by: user.user?.id,
-        })
-        .select()
-        .single();
-
-      if (entryError) throw entryError;
-
-      // Create journal entry lines
-      const lines = values.lines
-        .filter((l) => l.debit > 0 || l.credit > 0)
-        .map((l) => ({
-          journal_entry_id: entry.id,
-          account_id: l.account_id,
-          description: l.description || null,
-          debit: l.debit || 0,
-          credit: l.credit || 0,
-        }));
-
-      const { error: linesError } = await supabase
-        .from("journal_entry_lines")
-        .insert(lines);
-
-      if (linesError) throw linesError;
-
-      return entry;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journal-entries"] });
-      toast.success("Journal entry created successfully");
-      form.reset();
-      setOpen(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create journal entry");
-    },
-  });
-
   const lines = form.watch("lines");
   const totalDebit = lines.reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
   const totalCredit = lines.reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
+
+  useEffect(() => {
+    if (entryData) {
+      toast.success("Journal entry created successfully");
+      form.reset();
+      setOpen(false);
+    }
+    if (entryError) toast.error(entryError?.message || "Failed to create journal entry");
+  }, [entryData, entryError])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -187,7 +112,7 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((v) => createEntry.mutate(v))}
+            onSubmit={form.handleSubmit((v) => createJournalEntry(v))}
             className="space-y-4"
           >
             <div className="grid grid-cols-3 gap-4">
@@ -223,8 +148,8 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Member</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(value === "none" ? "" : value)} 
+                    <Select
+                      onValueChange={(value) => field.onChange(value === "none" ? "" : value)}
                       value={field.value || "none"}
                     >
                       <FormControl>
@@ -305,7 +230,7 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                   {accounts?.map((acc) => (
-                                    <SelectItem key={acc.id} value={acc.id}>
+                                    <SelectItem key={acc._id} value={acc._id}>
                                       {acc.code} - {acc.name}
                                     </SelectItem>
                                   ))}
@@ -404,9 +329,9 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={createEntry.isPending || !isBalanced}
+                disabled={entryLoading || !isBalanced}
               >
-                {createEntry.isPending ? "Creating..." : "Create Entry"}
+                {entryLoading ? "Creating..." : "Create Entry"}
               </Button>
             </div>
           </form>
