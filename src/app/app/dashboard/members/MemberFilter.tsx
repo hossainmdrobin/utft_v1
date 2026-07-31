@@ -4,6 +4,23 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
+export const roles = [
+    { name: "Admin", value: "admin" },
+    { name: "President", value: "president" },
+    { name: "Director", value: "director" },
+    { name: "Auditor", value: "auditor" },
+    { name: "Accountant", value: "accountant" },
+    { name: "Member", value: "member" },
+]
+
+export const status = [
+    { name: "Initiated", value: 'initiated' },
+    { name: "Pending", value: 'pending' },
+    { name: "Approved", value: 'approved' },
+    { name: "Rejected", value: 'rejected' },
+    { name: "Deceased", value: 'deceased' },
+    { name: "Inactive", value: 'inactive' }
+]
 
 export default function MemberFilter({ filters, setFilters }) {
     const updateFilter = (key: string, value: string) => {
@@ -40,10 +57,7 @@ export default function MemberFilter({ filters, setFilters }) {
                         <SelectValue placeholder="All stages" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="initiated">Initiated</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
+                        {status.map((item) => <SelectItem value={item.name}>{item.value}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -57,12 +71,7 @@ export default function MemberFilter({ filters, setFilters }) {
                         <SelectValue placeholder="All roles" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="president">President</SelectItem>
-                        <SelectItem value="director">Director</SelectItem>
-                        <SelectItem value="accountant">Accountant</SelectItem>
-                        <SelectItem value="auditor">Auditor</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
+                        {roles.map((item) => <SelectItem value={item.name}>{item.value}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>

@@ -33,6 +33,7 @@ import { format } from "date-fns";
 import { useCreateJournalEntryMutation } from "@/store/slices/journalEntrySlice/api.journalEntry";
 import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
 import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
+import { MemberFilterWithKeyTypeRole, memberFilterWithKeyTypeRoleType } from "@/app/app/dashboard/accounting/filters";
 
 const journalLineSchema = z.object({
   account_id: z.string().min(1, "Account required"),
@@ -57,10 +58,10 @@ interface JournalEntryDialogProps {
 
 export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState<memberFilterWithKeyTypeRoleType>({})
   const [createJournalEntry, { data: entryData, isLoading: entryLoading, error: entryError }] = useCreateJournalEntryMutation()
-  const { data: accounts,isLoading:accountLoading } = useGetAccountsQuery()
-  const { data: members, isLoading:memberLoading } = useGetMembersQuery()
-  console.log(accounts, "the accounts")
+  const { data: accounts, isLoading: accountLoading } = useGetAccountsQuery()
+  const { data: members, isLoading: memberLoading } = useGetMembersQuery(filter)
 
 
   const form = useForm<JournalEntryFormValues>({
@@ -158,8 +159,10 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+
                         <SelectItem value="none">No Member</SelectItem>
-                        {members?.map((m) => (
+                        <MemberFilterWithKeyTypeRole filter={filter} setFilter={setFilter} />
+                        {members?.data?.map((m) => (
                           <SelectItem key={m.id} value={m.id}>
                             {m.beneficiary_id} - {m.full_name}
                           </SelectItem>
@@ -229,7 +232,7 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {accounts?.map((acc) => (
+                                  {accounts?.data?.map((acc) => (
                                     <SelectItem key={acc._id} value={acc._id}>
                                       {acc.code} - {acc.name}
                                     </SelectItem>
