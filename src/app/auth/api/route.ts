@@ -6,6 +6,7 @@ import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 
 export const dynamic = "force-dynamic";
 
+// GET LOGGED IN USER
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// VERIFY USER ID AND PASSWORD
 export async function PATCH(req: NextRequest) {
   try {
     await connectDB();
@@ -43,6 +45,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+// FIRST PROFILE UPLOAD AFTER SIGNUP
 export async function PUT(req: NextRequest) {
   try {
     await connectDB();
@@ -68,19 +71,20 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+
+// LOSING WITH USER ID AND PASSWORD
 export async function POST(req: NextRequest) {
   await connectDB();
 
   const body = await req.json();
-  const { email, password } = body;
+  const { user_id, password } = body;
 
-  if (!email || !password) {
-    return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+  if (!user_id || !password) {
+    return NextResponse.json({ error: "User ID and password are required" }, { status: 400 });
   }
 
   try {
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const member = await (Member as any).findOne({ email: normalizedEmail });
+    const member = await (Member as any).findOne({ user_id });
     if (!member) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
