@@ -109,66 +109,29 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+  console.log("POST body:", body);
   const { type, lines, ...data } = body;
 
   try {
-    if (type === "line") {
-      const newLine = await JournalEntryLine.create({
-        journal_entry_id: data.journal_entry_id,
-        account_id: data.account_id,
-        description: data.description || "",
-        debit: data.debit || 0,
-        credit: data.credit || 0,
-        member_id: data.member_id || null,
-      });
-
-      await Activity.create({
-        table_name: "JournalEntryLine",
-        record_id: newLine._id,
-        description: `Journal entry line created for account: ${data.account_id}`,
-        action: "create",
-      });
-
-      return NextResponse.json({ data: newLine }, { status: 201 });
-    }
-
-    // Default: create journal entry with optional lines
-    const { entry_number, entry_date, ...entryData } = data;
-
-    if (!entry_number || !entry_date) {
-      return NextResponse.json(
-        { error: "entry_number and entry_date are required" },
-        { status: 400 }
-      );
-    }
-
-    const newEntry = await JournalEntry.create({
-      ...entryData,
-      entry_number,
-      entry_date,
-      created_by: user._id,
-    });
-
-    if (lines && Array.isArray(lines) && lines.length > 0) {
-      const lineDocs = lines.map((line: any) => ({
-        journal_entry_id: newEntry._id.toString(),
-        account_id: line.account_id,
-        description: line.description || "",
-        debit: line.debit || 0,
-        credit: line.credit || 0,
-        member_id: line.member_id || entryData.member_id || null,
-      }));
-      await JournalEntryLine.insertMany(lineDocs);
-    }
-
+    const entry = await JournalEntry.create({ ...data, created_by: user._id });
+    const entrylines = await JournalEntryLine.insertMany(
+      (lines || []).map((line: any) => ({
+        ...line,
+        journal_entry_id: entry._id,
+        created_by: user._id,
+      }))
+    );
+    entry.lines = entrylines.map((line) => line._id);
+    console.log("Created entry:", entry);
+    await entry.save();
     await Activity.create({
       table_name: "JournalEntry",
-      record_id: newEntry._id,
-      description: `Journal entry created: ${entry_number}`,
+      record_id: entry._id,
+      description: `Journal entry created: ${entry.entry_number}`,
       action: "create",
     });
+    return NextResponse.json({ data: entry, lines: entrylines });
 
-    return NextResponse.json({ data: newEntry }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error)?.message || "Failed to create journal entry" },

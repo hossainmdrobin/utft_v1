@@ -63,7 +63,7 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
   const { data: accounts, isLoading: accountLoading } = useGetAccountsQuery()
   const { data: members, isLoading: memberLoading } = useGetMembersQuery(filter)
 
-
+console.log(entryData, "entry data", entryError, "entry error")
   const form = useForm<JournalEntryFormValues>({
     resolver: zodResolver(journalEntrySchema),
     defaultValues: {
@@ -159,12 +159,11 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-
-                        <SelectItem value="none">No Member</SelectItem>
                         <MemberFilterWithKeyTypeRole filter={filter} setFilter={setFilter} />
+                        {/* <SelectItem value="none">No Member</SelectItem> */}
                         {members?.data?.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.beneficiary_id} - {m.full_name}
+                          <SelectItem key={m._id} value={m._id}>
+                            {m.user_id} - {m.full_name}
                           </SelectItem>
                         ))}
                       </SelectContent>

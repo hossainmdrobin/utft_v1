@@ -1,8 +1,9 @@
 import { Schema, model, models, Document } from "mongoose";
 
 interface IJournalEntry extends Document {
-  entry_number: string;
-  entry_date: string;
+  lines?: string[];
+  entry_number?: string;
+  entry_date?: string;
   description?: string;
   member_id?: string;
   reference?: string;
@@ -18,8 +19,9 @@ interface IJournalEntry extends Document {
 }
 
 const journalEntrySchema = new Schema({
-  entry_number: { type: String, required: true },
-  entry_date: { type: String, required: true },
+  lines: [{ type: Schema.Types.ObjectId, ref: "JournalEntryLine" }],
+  entry_number: { type: String, required: false },
+  entry_date: { type: String, required: true,default: new Date().toISOString() },
   description: { type: String },
   member_id: { type: String },
   reference: { type: String },
