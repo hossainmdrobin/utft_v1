@@ -90,6 +90,7 @@ export function JournalEntriesList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
+  //REDUX RTK QUERY
   const {data:journalEntries, isLoading:entryLoading, error:entryError} = useGetJournalEntriesQuery()
   const {data:entryData, count } = journalEntries || {}
   const { data: members } = useGetMembersQuery();
