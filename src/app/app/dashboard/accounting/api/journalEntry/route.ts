@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 
     const entries = await JournalEntry.find(filter)
       .sort({ entry_date: sortOrder })
-      .lean();
+      .lean().populate("lines").populate("member_id");
 
     return NextResponse.json({ data: entries, count: entries.length });
   } catch (error) {

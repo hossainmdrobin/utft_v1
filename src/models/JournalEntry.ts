@@ -1,11 +1,13 @@
 import { Schema, model, models, Document } from "mongoose";
+import { JournalEntryLineDoc } from "./JournalEntryLine";
+import { MemberDoc } from "./member";
 
 interface IJournalEntry extends Document {
-  lines?: string[];
+  lines?: string[] | JournalEntryLineDoc[];
   entry_number?: string;
   entry_date?: string;
   description?: string;
-  member_id?: string;
+  member_id?: string | MemberDoc;
   reference?: string;
   status: string;
   total_debit: number;

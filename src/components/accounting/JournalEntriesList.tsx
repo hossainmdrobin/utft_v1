@@ -1,8 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
-import { toast } from "sonner";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
-import {useGetJournalEntriesQuery} from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { useJournalEntries } from "./useJournalEntries";
+import { statusColors } from "./constants";
+import { dateRangeOptions } from "./constants";
 import {
   Table,
   TableBody,
@@ -36,238 +34,37 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { MoreVertical, Eye, CheckCircle, XCircle, Filter, Download, Printer, CalendarIcon } from "lucide-react";
-import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
-import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
-
-type JournalEntry = {
-  id: string;
-  entry_number: string;
-  entry_date: string;
-  reference: string | null;
-  description: string | null;
-  status: string;
-  total_debit: number;
-  total_credit: number;
-  created_at: string;
-  member: { full_name: string; beneficiary_id: string } | null;
-};
-
-type JournalLine = {
-  id: string;
-  description: string | null;
-  debit: number;
-  credit: number;
-  account: { code: string; name: string };
-};
-
-const statusColors: Record<string, string> = {
-  draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  posted: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  voided: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-};
-
-const dateRangeOptions = [
-  { value: "all", label: "All Time" },
-  { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
-  { value: "last_3_months", label: "Last 3 Months" },
-  { value: "last_6_months", label: "Last 6 Months" },
-  { value: "this_year", label: "This Year" },
-  { value: "custom", label: "Custom Range" },
-];
+import { format } from "date-fns";
 
 export function JournalEntriesList() {
-  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState("all");
-  const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
-  const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
-  const [memberFilter, setMemberFilter] = useState("all");
-  const [accountFilter, setAccountFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const queryClient = useQueryClient();
-
-  //REDUX RTK QUERY
-  const {data:journalEntries, isLoading:entryLoading, error:entryError} = useGetJournalEntriesQuery()
-  const {data:entryData, count } = journalEntries || {}
-  const { data: members } = useGetMembersQuery();
-  const {data:accounts} = useGetAccountsQuery()
-
-
-  const { data: entryLines } = useQuery({
-    queryKey: ["journal-entry-lines", selectedEntry],
-    queryFn: async () => {
-      if (!selectedEntry) return null;
-      const { data, error } = await supabase
-        .from("journal_entry_lines")
-        .select(`
-          *,
-          account:accounts(code, name)
-        `)
-        .eq("journal_entry_id", selectedEntry)
-        .order("debit", { ascending: false });
-      if (error) throw error;
-      return data as JournalLine[];
-    },
-    enabled: !!selectedEntry,
-  });
-
-  const { data: allEntryLines } = useQuery({
-    queryKey: ["all-journal-entry-lines"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("journal_entry_lines")
-        .select("journal_entry_id, account_id");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const filteredEntries = useMemo(() => {
-    if (!entryData) return [];
-
-    let filtered = [...entryData];
-
-    // Date range filter
-    if (dateRange !== "all") {
-      const now = new Date();
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
-
-      switch (dateRange) {
-        case "this_month":
-          startDate = startOfMonth(now);
-          endDate = endOfMonth(now);
-          break;
-        case "last_month":
-          startDate = startOfMonth(subMonths(now, 1));
-          endDate = endOfMonth(subMonths(now, 1));
-          break;
-        case "last_3_months":
-          startDate = startOfMonth(subMonths(now, 2));
-          endDate = endOfMonth(now);
-          break;
-        case "last_6_months":
-          startDate = startOfMonth(subMonths(now, 5));
-          endDate = endOfMonth(now);
-          break;
-        case "this_year":
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date(now.getFullYear(), 11, 31);
-          break;
-        case "custom":
-          startDate = customStartDate;
-          endDate = customEndDate;
-          break;
-      }
-
-      if (startDate && endDate) {
-        filtered = filtered.filter((entry) => {
-          const entryDate = new Date(entry.entry_date);
-          return entryDate >= startDate! && entryDate <= endDate!;
-        });
-      }
-    }
-
-    // Member filter
-    if (memberFilter !== "all") {
-      filtered = filtered.filter((entry) => entry.member?.beneficiary_id === memberFilter);
-    }
-
-    // Account filter
-    if (accountFilter !== "all" && allEntryLines) {
-      const entryIdsWithAccount = allEntryLines
-        .filter((line) => line.account_id === accountFilter)
-        .map((line) => line.journal_entry_id);
-      filtered = filtered.filter((entry) => entryIdsWithAccount.includes(entry.id));
-    }
-
-    // Status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((entry) => entry.status === statusFilter);
-    }
-
-    return filtered;
-  }, [entryData, dateRange, customStartDate, customEndDate, memberFilter, accountFilter, statusFilter, allEntryLines]);
-
-  const postEntry = useMutation({
-    mutationFn: async (id: string) => {
-      const { data: user } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from("journal_entries")
-        .update({
-          status: "posted",
-          posted_by: user.user?.id,
-          posted_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journal-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success("Journal entry posted");
-    },
-    onError: () => {
-      toast.error("Failed to post entry");
-    },
-  });
-
-  const voidEntry = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("journal_entries")
-        .update({ status: "voided" })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journal-entries"] });
-      toast.success("Journal entry voided");
-    },
-    onError: () => {
-      toast.error("Failed to void entry");
-    },
-  });
-
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.text("Journal Entries Report", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${format(new Date(), "dd MMM yyyy HH:mm")}`, 14, 30);
-
-    const tableData = filteredEntries.map((entry) => [
-      entry.entry_number,
-      format(new Date(entry.entry_date), "dd MMM yyyy"),
-      entry.description || entry.reference || "-",
-      entry.member?.beneficiary_id || "-",
-      `BDT ${Number(entry.total_debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-      entry.status,
-    ]);
-
-    autoTable(doc, {
-      head: [["Entry #", "Date", "Description", "Member", "Amount", "Status"]],
-      body: tableData,
-      startY: 38,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [59, 130, 246] },
-    });
-
-    doc.save("journal-entries.pdf");
-    toast.success("PDF exported successfully");
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const selectedEntryData = entryData?.find((e) => e.id === selectedEntry);
-
+  const {
+    entryLoading,
+    filteredEntries,
+    selectedEntry,
+    setSelectedEntry,
+    dateRange,
+    setDateRange,
+    customStartDate,
+    setCustomStartDate,
+    customEndDate,
+    setCustomEndDate,
+    memberFilter,
+    setMemberFilter,
+    accountFilter,
+    setAccountFilter,
+    statusFilter,
+    setStatusFilter,
+    members,
+    accounts,
+    entryLines,
+    selectedEntryData,
+    postEntry,
+    voidEntry,
+    exportToPDF,
+    handlePrint,
+  } = useJournalEntries();
+console.log("Sfdasefa",selectedEntry)
   if (entryLoading) {
     return (
       <div className="space-y-2">
@@ -411,8 +208,8 @@ export function JournalEntriesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.map((entry) => (
-                <TableRow key={entry.id}>
+              {filteredEntries.map((entry,i) => (
+                <TableRow key={entry._id}>
                   <TableCell className="font-mono">{entry.entry_number}</TableCell>
                   <TableCell>{format(new Date(entry.entry_date), "dd MMM yyyy")}</TableCell>
                   <TableCell className="max-w-[200px] truncate">
@@ -443,7 +240,7 @@ export function JournalEntriesList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedEntry(entry.id)}>
+                        <DropdownMenuItem onClick={() => setSelectedEntry(entry)}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
@@ -476,37 +273,39 @@ export function JournalEntriesList() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              Journal Entry: {selectedEntryData?.entry_number}
+              Journal Entry: {String(selectedEntry?._id)}
             </DialogTitle>
           </DialogHeader>
-          {selectedEntryData && (
+          {selectedEntry && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Date:</span>{" "}
-                  {format(new Date(selectedEntryData.entry_date), "dd MMM yyyy")}
+                  {format(new Date(selectedEntry.entry_date), "dd MMM yyyy")}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Status:</span>{" "}
-                  <Badge variant="outline" className={statusColors[selectedEntryData.status]}>
-                    {selectedEntryData.status}
+                  <Badge variant="outline" className={statusColors[selectedEntry.status]}>
+                    {selectedEntry.status}
                   </Badge>
                 </div>
-                {selectedEntryData.reference && (
+                {selectedEntry.reference && (
                   <div>
                     <span className="text-muted-foreground">Reference:</span>{" "}
-                    {selectedEntryData.reference}
+                    {selectedEntry.reference}
                   </div>
                 )}
-                {selectedEntryData.member && (
+                {selectedEntry.member_id && (
                   <div>
                     <span className="text-muted-foreground">Member:</span>{" "}
-                    {selectedEntryData.member.full_name}
+                    {typeof selectedEntry.member_id === "string"
+                      ? selectedEntry.member_id
+                      : selectedEntry.member_id.full_name}
                   </div>
                 )}
               </div>
-              {selectedEntryData.description && (
-                <p className="text-sm">{selectedEntryData.description}</p>
+              {selectedEntry.description && (
+                <p className="text-sm">{selectedEntry.description}</p>
               )}
 
               <div className="border rounded-lg">
@@ -520,10 +319,11 @@ export function JournalEntriesList() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {entryLines?.map((line) => (
+                    {selectedEntry?.lines?.map((line) => (
                       <TableRow key={line.id}>
                         <TableCell className="font-mono text-sm">
-                          {line.account.code} - {line.account.name}
+                          ACCOUNT NUMBER
+                          {/* {line.account.code} - {line.account.name} */}
                         </TableCell>
                         <TableCell className="text-sm">{line.description || "-"}</TableCell>
                         <TableCell className="text-right font-mono">
@@ -545,10 +345,10 @@ export function JournalEntriesList() {
                         Totals:
                       </td>
                       <td className="p-2 text-right font-mono">
-                        ৳{Number(selectedEntryData.total_debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        ৳{Number(selectedEntry?.total_debit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                       <td className="p-2 text-right font-mono">
-                        ৳{Number(selectedEntryData.total_credit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        ৳{Number(selectedEntry?.total_credit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   </tfoot>
