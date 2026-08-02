@@ -8,7 +8,6 @@ import { JournalEntriesTab } from "./JournalEntriesTab";
 
 export default function Page() {
   const { data: accountsData } = useGetAccountsQuery();
-  console.log(accountsData, "the account data")
   const accounts = accountsData?.data ?? [];
 
   const summary = accounts.reduce(

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import {useGetJournalEntriesQuery} from "@/store/slices/journalEntrySlice/api.journalEntry";
 import {
   Table,
   TableBody,
@@ -39,6 +40,8 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
+import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
 
 type JournalEntry = {
   id: string;
@@ -87,47 +90,11 @@ export function JournalEntriesList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
-  const { data: entries, isLoading } = useQuery({
-    queryKey: ["journal-entries"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("journal_entries")
-        .select(`
-          *,
-          member:members(full_name, beneficiary_id)
-        `)
-        .order("entry_date", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as JournalEntry[];
-    },
-  });
+  const {data:journalEntries, isLoading:entryLoading, error:entryError} = useGetJournalEntriesQuery()
+  const {data:entryData, count } = journalEntries || {}
+  const { data: members } = useGetMembersQuery();
+  const {data:accounts} = useGetAccountsQuery()
 
-  const { data: members } = useQuery({
-    queryKey: ["members-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, full_name, beneficiary_id")
-        .eq("status", "active")
-        .order("full_name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: accounts } = useQuery({
-    queryKey: ["accounts-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("id, code, name")
-        .eq("is_active", true)
-        .order("code");
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const { data: entryLines } = useQuery({
     queryKey: ["journal-entry-lines", selectedEntry],
@@ -159,9 +126,9 @@ export function JournalEntriesList() {
   });
 
   const filteredEntries = useMemo(() => {
-    if (!entries) return [];
+    if (!entryData) return [];
 
-    let filtered = [...entries];
+    let filtered = [...entryData];
 
     // Date range filter
     if (dateRange !== "all") {
@@ -223,7 +190,7 @@ export function JournalEntriesList() {
     }
 
     return filtered;
-  }, [entries, dateRange, customStartDate, customEndDate, memberFilter, accountFilter, statusFilter, allEntryLines]);
+  }, [entryData, dateRange, customStartDate, customEndDate, memberFilter, accountFilter, statusFilter, allEntryLines]);
 
   const postEntry = useMutation({
     mutationFn: async (id: string) => {
@@ -298,9 +265,9 @@ export function JournalEntriesList() {
     window.print();
   };
 
-  const selectedEntryData = entries?.find((e) => e.id === selectedEntry);
+  const selectedEntryData = entryData?.find((e) => e.id === selectedEntry);
 
-  if (isLoading) {
+  if (entryLoading) {
     return (
       <div className="space-y-2">
         {[...Array(5)].map((_, i) => (
@@ -378,7 +345,7 @@ export function JournalEntriesList() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Members</SelectItem>
-            {members?.map((m) => (
+            {members?.data?.map((m) => (
               <SelectItem key={m.id} value={m.beneficiary_id || m.id}>
                 {m.beneficiary_id} - {m.full_name}
               </SelectItem>
@@ -392,7 +359,7 @@ export function JournalEntriesList() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Accounts</SelectItem>
-            {accounts?.map((a) => (
+            {accounts?.data?.map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.code} - {a.name}
               </SelectItem>

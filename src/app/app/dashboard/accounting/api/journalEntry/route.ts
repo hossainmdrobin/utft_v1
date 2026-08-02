@@ -109,7 +109,6 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  console.log("POST body:", body);
   const { type, lines, ...data } = body;
 
   try {
@@ -122,7 +121,6 @@ export async function POST(req: NextRequest) {
       }))
     );
     entry.lines = entrylines.map((line) => line._id);
-    console.log("Created entry:", entry);
     await entry.save();
     await Activity.create({
       table_name: "JournalEntry",

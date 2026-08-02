@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
-import { Account } from "@/models/account";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { Activity } from "@/models/activities";
+import { Account } from "@/models/account";
 
 // GET all accounts with optional filtering
 export async function GET(req: NextRequest) {
