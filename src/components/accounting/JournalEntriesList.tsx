@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -33,7 +34,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { MoreVertical, Eye, CheckCircle, XCircle, Filter, Download, Printer, CalendarIcon } from "lucide-react";
+import { MoreVertical, Eye, CheckCircle, XCircle, Filter, Download, Printer, CalendarIcon, Search } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -65,6 +67,8 @@ export function JournalEntriesList() {
     handlePrint,
   } = useJournalEntries();
 console.log("Sfdasefa",selectedEntry)
+  const [memberSearch, setMemberSearch] = useState("")
+
   if (entryLoading) {
     return (
       <div className="space-y-2">
@@ -142,8 +146,27 @@ console.log("Sfdasefa",selectedEntry)
             <SelectValue placeholder="Filter by Member" />
           </SelectTrigger>
           <SelectContent>
+            <div className="p-1">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                <Input
+                  placeholder="Search members..."
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className="h-8 pl-7"
+                />
+              </div>
+            </div>
             <SelectItem value="all">All Members</SelectItem>
-            {members?.data?.map((m) => (
+            {members?.data?.filter((m) => {
+              const q = memberSearch.toLowerCase()
+              return (
+                !q ||
+                m.full_name?.toLowerCase().includes(q) ||
+                String(m.beneficiary_id || "").toLowerCase().includes(q)
+              )
+            }).map((m) => (
               <SelectItem key={m.id} value={m.beneficiary_id || m.id}>
                 {m.beneficiary_id} - {m.full_name}
               </SelectItem>
