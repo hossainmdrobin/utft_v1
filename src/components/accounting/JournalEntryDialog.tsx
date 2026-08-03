@@ -62,8 +62,8 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
   const [createJournalEntry, { data: entryData, isLoading: entryLoading, error: entryError }] = useCreateJournalEntryMutation()
   const { data: accounts, isLoading: accountLoading } = useGetAccountsQuery()
   const { data: members, isLoading: memberLoading } = useGetMembersQuery(filter)
+  const [accountSearch, setAccountSearch] = useState<Record<number, string>>({})
 
-console.log(entryData, "entry data", entryError, "entry error")
   const form = useForm<JournalEntryFormValues>({
     resolver: zodResolver(journalEntrySchema),
     defaultValues: {
@@ -219,27 +219,59 @@ console.log(entryData, "entry data", entryError, "entry error")
                     {fields.map((field, index) => (
                       <tr key={field.id} className="border-t">
                         <td className="p-2">
-                          <FormField
-                            control={form.control}
-                            name={`lines.${index}.account_id`}
-                            render={({ field }) => (
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                              >
-                                <SelectTrigger className="h-8">
-                                  <SelectValue placeholder="Select account" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {accounts?.data?.map((acc) => (
-                                    <SelectItem key={acc._id} value={acc._id}>
-                                      {acc.code} - {acc.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
+                           <FormField
+                             control={form.control}
+                             name={`lines.${index}.account_id`}
+                             render={({ field }) => {
+                               const search = accountSearch[index] || ""
+                               const selectedAccountIds = lines
+                                 .map((l) => l.account_id)
+                                 .filter((id): id is string => Boolean(id) && id !== field.value)
+                               const filteredAccounts = accounts?.data?.filter((acc) => {
+                                 const matchesSearch =
+                                   !search ||
+                                   acc.code.toLowerCase().includes(search.toLowerCase()) ||
+                                   acc.name.toLowerCase().includes(search.toLowerCase())
+                                 return matchesSearch && !selectedAccountIds.includes(acc._id)
+                               }) || []
+                               return (
+                                 <Select
+                                   onValueChange={field.onChange}
+                                   value={field.value}
+                                 >
+                                   <SelectTrigger className="h-8">
+                                     <SelectValue placeholder="Select account" />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                     <div className="p-1">
+                                       <Input
+                                         placeholder="Search accounts..."
+                                         value={search}
+                                         onChange={(e) =>
+                                           setAccountSearch((prev) => ({
+                                             ...prev,
+                                             [index]: e.target.value,
+                                           }))
+                                         }
+                                         onKeyDown={(e) => e.stopPropagation()}
+                                         className="h-8 mb-1"
+                                       />
+                                     </div>
+                                     {filteredAccounts.length === 0 && (
+                                       <p className="text-sm text-muted-foreground p-2">
+                                         No accounts found
+                                       </p>
+                                     )}
+                                     {filteredAccounts.map((acc) => (
+                                       <SelectItem key={acc._id} value={acc._id}>
+                                         {acc.code} - {acc.name}
+                                       </SelectItem>
+                                     ))}
+                                   </SelectContent>
+                                 </Select>
+                               )
+                             }}
+                           />
                         </td>
                         <td className="p-2">
                           <FormField
