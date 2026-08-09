@@ -1,10 +1,8 @@
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Reports from "@/views/Reports";
+import ShareManagement from "@/views/ShareManagement";
 
 export default function Page() {
   return (
-    <ProtectedRoute>
-      <Reports />
-    </ProtectedRoute>
+      <ShareManagement />
   );
 }

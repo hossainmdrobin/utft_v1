@@ -1,10 +1,8 @@
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Accounting from "@/views/Accounting";
+import Reports from "@/views/Reports";
 
 export default function Page() {
   return (
-    <ProtectedRoute>
-      <Accounting />
-    </ProtectedRoute>
+      <Reports />
   );
 }

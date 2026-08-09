@@ -1,7 +1,7 @@
 import { Member } from "./Member";
-import { Account } from "./Account";
-import { JournalEntry } from "./JournalEntry";
-import { JournalEntryLine } from "./JournalEntryLine";
+import { Account } from "@/models/account";
+import { JournalEntry } from "../../../models/JournalEntry";
+import { JournalEntryLine } from "../../../models/JournalEntryLine";
 import { MonthlyDonation } from "./MonthlyDonation";
 import { MemberCharge } from "./MemberCharge";
 import { FineRule } from "./FineRule";
