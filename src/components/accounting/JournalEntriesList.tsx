@@ -167,8 +167,8 @@ console.log("Sfdasefa",selectedEntry)
                 String(m.beneficiary_id || "").toLowerCase().includes(q)
               )
             }).map((m) => (
-              <SelectItem key={m.id} value={m.beneficiary_id || m.id}>
-                {m.beneficiary_id} - {m.full_name}
+              <SelectItem key={m.id} value={m.user_id || m.user_id}>
+                {m.user_id} - {m.full_name}
               </SelectItem>
             ))}
           </SelectContent>
