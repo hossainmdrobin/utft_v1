@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateAccountDialog } from "./CreateAccountDialog";
 import { AccountsList } from "@/components/accounting/AccountsList";
 import { AccountingSummaryCards } from "./AccountingSummaryCards";
-import { AccountDoc } from "@/models/account";
+import { AccountDoc } from "@/models/Account";
 
 interface ChartOfAccountsTabProps {
   summary: {

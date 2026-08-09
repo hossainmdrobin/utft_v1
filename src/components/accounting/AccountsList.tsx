@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Edit, ChevronRight, ChevronDown, Folder, FolderOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AccountDoc } from "@/models/account";
+import { AccountDoc } from "@/models/Account";
 
 type AccountWithChildren = AccountDoc & { children: AccountWithChildren[] };
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { Activity } from "@/models/activities";
-import { Account } from "@/models/account";
+import { Account } from "@/models/Account";
 
 // GET all accounts with optional filtering
 export async function GET(req: NextRequest) {
