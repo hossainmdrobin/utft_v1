@@ -15,6 +15,7 @@ import { TrustSetting } from "./TrustSetting";
 import { ReportTemplate } from "./ReportTemplate";
 import { UserRole } from "./UserRole";
 import { AccountingPeriod } from "./AccountingPeriod";
+import { Setting } from "./Setting";
 
 export const models = {
   Member,
@@ -34,4 +35,5 @@ export const models = {
   ReportTemplate,
   UserRole,
   AccountingPeriod,
+  Setting,
 };
