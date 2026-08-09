@@ -68,6 +68,7 @@ export function JournalEntriesList() {
   } = useJournalEntries();
 console.log("Sfdasefa",selectedEntry)
   const [memberSearch, setMemberSearch] = useState("")
+  const [accountSearch, setAccountSearch] = useState("")
 
   if (entryLoading) {
     return (
@@ -178,9 +179,28 @@ console.log("Sfdasefa",selectedEntry)
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by Account" />
           </SelectTrigger>
-          <SelectContent>
+           <SelectContent>
+            <div className="p-1">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                <Input
+                  placeholder="Search accounts..."
+                  value={accountSearch}
+                  onChange={(e) => setAccountSearch(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className="h-8 pl-7"
+                />
+              </div>
+            </div>
             <SelectItem value="all">All Accounts</SelectItem>
-            {accounts?.data?.map((a) => (
+            {accounts?.data?.filter((a) => {
+              const q = accountSearch.toLowerCase()
+              return (
+                !q ||
+                a.code?.toLowerCase().includes(q) ||
+                a.name?.toLowerCase().includes(q)
+              )
+            }).map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.code} - {a.name}
               </SelectItem>
