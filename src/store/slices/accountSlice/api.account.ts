@@ -1,5 +1,5 @@
 import { injectEndpoint } from "@/store/baseApi";
-import { AccountDoc } from "@/models/account";
+import { AccountDoc } from "@/models/Account";
 
 export interface AccountFilters {
   account_type?: string;
