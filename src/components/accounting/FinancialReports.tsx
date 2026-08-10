@@ -21,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Download, Printer, CalendarIcon, TrendingUp, TrendingDown, DollarSign, Wallet, Settings2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
@@ -29,6 +29,7 @@ import { CustomReportBuilder } from "./CustomReportBuilder";
 import autoTable from "jspdf-autotable";
 import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
 import { useGetJournalEntriesQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { getDateLimit } from "./fn";
 
 type Account = {
   id: string;
@@ -59,70 +60,12 @@ export function FinancialReports() {
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
 
   // Fetch accounts data using the custom hook
-  const {data:accountData, isLoading} = useGetAccountsQuery();
-  const {data:accounts} = accountData || {};
+  const { data: accountData, isLoading } = useGetAccountsQuery();
+  const { data: accounts } = accountData || {};
 
   // Fetch journal entries based on the selected period and report type
-  const {data:entryData} = useGetJournalEntriesQuery()
-  const {data:journalEntries} = entryData || {};
-  
-  // const { data: journalEntries } = useQuery({
-  //   queryKey: ["journal-entries-for-reports", period, customStartDate, customEndDate],
-  //   queryFn: async () => {
-  //     let query = supabase
-  //       .from("journal_entries")
-  //       .select(`
-  //         *,
-  //         member:members(full_name, beneficiary_id),
-  //         journal_entry_lines(*, account:accounts(code, name))
-  //       `)
-  //       .eq("status", "posted")
-  //       .order("entry_date", { ascending: false });
-
-  //     const now = new Date();
-  //     let startDate: Date | undefined;
-  //     let endDate: Date | undefined;
-
-  //     switch (period) {
-  //       case "this_month":
-  //         startDate = startOfMonth(now);
-  //         endDate = endOfMonth(now);
-  //         break;
-  //       case "last_month":
-  //         startDate = startOfMonth(subMonths(now, 1));
-  //         endDate = endOfMonth(subMonths(now, 1));
-  //         break;
-  //       case "last_3_months":
-  //         startDate = startOfMonth(subMonths(now, 2));
-  //         endDate = endOfMonth(now);
-  //         break;
-  //       case "last_6_months":
-  //         startDate = startOfMonth(subMonths(now, 5));
-  //         endDate = endOfMonth(now);
-  //         break;
-  //       case "this_year":
-  //         startDate = new Date(now.getFullYear(), 0, 1);
-  //         endDate = new Date(now.getFullYear(), 11, 31);
-  //         break;
-  //       case "custom":
-  //         startDate = customStartDate;
-  //         endDate = customEndDate;
-  //         break;
-  //     }
-
-  //     if (startDate) {
-  //       query = query.gte("entry_date", format(startDate, "yyyy-MM-dd"));
-  //     }
-  //     if (endDate) {
-  //       query = query.lte("entry_date", format(endDate, "yyyy-MM-dd"));
-  //     }
-
-  //     const { data, error } = await query;
-  //     if (error) throw error;
-  //     return data;
-  //   },
-  //   enabled: activeReport === "journal_report" || activeReport === "cash_flow",
-  // });
+  const { data: entryData } = useGetJournalEntriesQuery({ ...getDateLimit(period, customStartDate, customEndDate)})
+  const { data: journalEntries } = entryData || {};
 
   const getPeriodLabel = () => {
     const option = periodOptions.find((o) => o.value === period);
@@ -146,7 +89,7 @@ export function FinancialReports() {
 
   const exportReportToPDF = (title: string, tableData: any[][], headers: string[]) => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(18);
     doc.text(title, 14, 22);
     doc.setFontSize(10);
@@ -239,7 +182,7 @@ export function FinancialReports() {
         const balance = Number(acc.current_balance);
         const debit = isDebitNormal && balance > 0 ? balance : (!isDebitNormal && balance < 0 ? Math.abs(balance) : 0);
         const credit = !isDebitNormal && balance > 0 ? balance : (isDebitNormal && balance < 0 ? Math.abs(balance) : 0);
-        
+
         totalDebit += debit;
         totalCredit += credit;
 
@@ -607,8 +550,8 @@ export function FinancialReports() {
   const renderCashFlow = () => {
     if (!accounts) return null;
 
-    const cashAccounts = accounts.filter((a) => 
-      a.account_type === "asset" && 
+    const cashAccounts = accounts.filter((a) =>
+      a.account_type === "asset" &&
       (a.name.toLowerCase().includes("cash") || a.name.toLowerCase().includes("bank"))
     );
 
@@ -626,7 +569,7 @@ export function FinancialReports() {
           </div>
         </div>
         {renderPeriodSelector()}
-        
+
         <div className="space-y-4">
           <div className="border rounded-lg p-4">
             <h4 className="font-semibold mb-3 flex items-center gap-2">
@@ -718,7 +661,7 @@ export function FinancialReports() {
           </div>
         </div>
         {renderPeriodSelector()}
-        
+
         <div className="border rounded-lg">
           <Table>
             <TableHeader>
@@ -883,7 +826,7 @@ export function FinancialReports() {
       <Button variant="outline" onClick={() => setActiveReport(null)}>
         ← Back to Reports
       </Button>
-      
+
       {isLoading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
