@@ -26,7 +26,6 @@ export async function PATCH(req: NextRequest) {
     const { user_id, password } = body;
     if (!user_id || !password) return NextResponse.json({ error: "Required data is not provided" }, { status: 400 })
     const member = await (Member as any).findOne({ user_id })
-    console.log(member)
     if (!member) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     const valid = await verifyPassword(password, member.password);
     if (!valid) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
@@ -45,7 +44,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// FIRST PROFILE UPLOAD AFTER SIGNUP
+// FIRST PROFILE UPDATE AFTER SIGNUP
 export async function PUT(req: NextRequest) {
   try {
     await connectDB();
@@ -72,7 +71,7 @@ export async function PUT(req: NextRequest) {
 }
 
 
-// LOSING WITH USER ID AND PASSWORD
+// LOGIN WITH USER ID AND PASSWORD
 export async function POST(req: NextRequest) {
   await connectDB();
 
@@ -84,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const member = await (Member as any).findOne({ user_id });
+    const member = await (Member as any).findOne({ user_id,stage:{$ne:"initiated"} });
     if (!member) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }

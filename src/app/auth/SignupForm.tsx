@@ -256,20 +256,22 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile</Label>
+                <Label htmlFor="mobile">Mobile *</Label>
                 <Input
                   id="mobile"
                   type="tel"
                   value={formData.mobile}
                   onChange={(e) => handleChange("mobile", e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
+                  required
                   onChange={(e) => handleChange("email", e.target.value)}
                 />
               </div>
