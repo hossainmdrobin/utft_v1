@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import { CustomReportBuilder } from "./CustomReportBuilder";
 import autoTable from "jspdf-autotable";
+import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
+import { useGetJournalEntriesQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
 
 type Account = {
   id: string;
@@ -56,78 +58,71 @@ export function FinancialReports() {
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
 
-  const { data: accounts, isLoading } = useQuery({
-    queryKey: ["accounts-for-reports"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("id, code, name, account_type, current_balance, is_system, is_contra, parent_account_id")
-        .eq("is_active", true)
-        .eq("is_system", false)
-        .order("code");
-      if (error) throw error;
-      return data as Account[];
-    },
-    enabled: !!activeReport,
-  });
+  // Fetch accounts data using the custom hook
+  const {data:accountData, isLoading} = useGetAccountsQuery();
+  const {data:accounts} = accountData || {};
 
-  const { data: journalEntries } = useQuery({
-    queryKey: ["journal-entries-for-reports", period, customStartDate, customEndDate],
-    queryFn: async () => {
-      let query = supabase
-        .from("journal_entries")
-        .select(`
-          *,
-          member:members(full_name, beneficiary_id),
-          journal_entry_lines(*, account:accounts(code, name))
-        `)
-        .eq("status", "posted")
-        .order("entry_date", { ascending: false });
+  // Fetch journal entries based on the selected period and report type
+  const {data:entryData} = useGetJournalEntriesQuery()
+  const {data:journalEntries} = entryData || {};
+  
+  // const { data: journalEntries } = useQuery({
+  //   queryKey: ["journal-entries-for-reports", period, customStartDate, customEndDate],
+  //   queryFn: async () => {
+  //     let query = supabase
+  //       .from("journal_entries")
+  //       .select(`
+  //         *,
+  //         member:members(full_name, beneficiary_id),
+  //         journal_entry_lines(*, account:accounts(code, name))
+  //       `)
+  //       .eq("status", "posted")
+  //       .order("entry_date", { ascending: false });
 
-      const now = new Date();
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
+  //     const now = new Date();
+  //     let startDate: Date | undefined;
+  //     let endDate: Date | undefined;
 
-      switch (period) {
-        case "this_month":
-          startDate = startOfMonth(now);
-          endDate = endOfMonth(now);
-          break;
-        case "last_month":
-          startDate = startOfMonth(subMonths(now, 1));
-          endDate = endOfMonth(subMonths(now, 1));
-          break;
-        case "last_3_months":
-          startDate = startOfMonth(subMonths(now, 2));
-          endDate = endOfMonth(now);
-          break;
-        case "last_6_months":
-          startDate = startOfMonth(subMonths(now, 5));
-          endDate = endOfMonth(now);
-          break;
-        case "this_year":
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date(now.getFullYear(), 11, 31);
-          break;
-        case "custom":
-          startDate = customStartDate;
-          endDate = customEndDate;
-          break;
-      }
+  //     switch (period) {
+  //       case "this_month":
+  //         startDate = startOfMonth(now);
+  //         endDate = endOfMonth(now);
+  //         break;
+  //       case "last_month":
+  //         startDate = startOfMonth(subMonths(now, 1));
+  //         endDate = endOfMonth(subMonths(now, 1));
+  //         break;
+  //       case "last_3_months":
+  //         startDate = startOfMonth(subMonths(now, 2));
+  //         endDate = endOfMonth(now);
+  //         break;
+  //       case "last_6_months":
+  //         startDate = startOfMonth(subMonths(now, 5));
+  //         endDate = endOfMonth(now);
+  //         break;
+  //       case "this_year":
+  //         startDate = new Date(now.getFullYear(), 0, 1);
+  //         endDate = new Date(now.getFullYear(), 11, 31);
+  //         break;
+  //       case "custom":
+  //         startDate = customStartDate;
+  //         endDate = customEndDate;
+  //         break;
+  //     }
 
-      if (startDate) {
-        query = query.gte("entry_date", format(startDate, "yyyy-MM-dd"));
-      }
-      if (endDate) {
-        query = query.lte("entry_date", format(endDate, "yyyy-MM-dd"));
-      }
+  //     if (startDate) {
+  //       query = query.gte("entry_date", format(startDate, "yyyy-MM-dd"));
+  //     }
+  //     if (endDate) {
+  //       query = query.lte("entry_date", format(endDate, "yyyy-MM-dd"));
+  //     }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: activeReport === "journal_report" || activeReport === "cash_flow",
-  });
+  //     const { data, error } = await query;
+  //     if (error) throw error;
+  //     return data;
+  //   },
+  //   enabled: activeReport === "journal_report" || activeReport === "cash_flow",
+  // });
 
   const getPeriodLabel = () => {
     const option = periodOptions.find((o) => o.value === period);
