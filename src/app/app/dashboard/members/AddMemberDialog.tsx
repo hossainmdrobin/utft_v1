@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateMemberMutation } from "@/store/slices/memberSlice/api.member";
+import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -26,6 +27,8 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
   const [copied, setCopied] = useState(false);
 
   const [createMember, { data, isLoading: loading, error }] = useCreateMemberMutation()
+  const { data: settings, isLoading,error:e } = useGetSettingsQuery();
+  console.log(settings, "asdfasd",e)
 
   useEffect(() => {
     const date = new Date(joinDate)
