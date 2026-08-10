@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { hashPassword } from "@/integrations/mongodb/lib/auth";
 import { Member } from "@/models/member";
+import { Setting } from "@/models/settingAndStates";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { Activity } from "@/models/activities";
 
@@ -75,7 +76,18 @@ export async function POST(req: NextRequest) {
   if (!member) return NextResponse.json({ error: "Access Denied! Only Admin, President and Director can add members" })
   const body = await req.json();
   try {
-    const newMember = await Member.create({ ...body, createdBy: member._id, password: await hashPassword(body.password) });
+    let setting = await Setting.findOne({}).sort({ created_at: 1 }).lean();
+    if (!setting) {
+      setting = await Setting.create({});
+    }
+    const count = await Setting.countDocuments({});
+    if (count > 1) {
+      await Setting.deleteMany({ _id: { $ne: setting._id } });
+    }
+    const nextSerial = setting.next_member_serial;
+    await Setting.findByIdAndUpdate(setting._id, { $inc: { next_member_serial: 1 } });
+
+    const newMember = await Member.create({ ...body, createdBy: member._id, password: await hashPassword(body.password), serial: nextSerial });
     await Activity.create({ table_name: "Member", record_id: newMember._id, updatedBy: member._id, description: `A member is created with ID:${newMember.user_id}`, action: "create" })
     return NextResponse.json({ data: newMember }, { status: 201 });
   } catch (error) {

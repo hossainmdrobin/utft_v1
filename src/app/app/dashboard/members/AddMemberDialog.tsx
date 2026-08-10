@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateMemberMutation } from "@/store/slices/memberSlice/api.member";
+import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -26,15 +27,19 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
   const [copied, setCopied] = useState(false);
 
   const [createMember, { data, isLoading: loading, error }] = useCreateMemberMutation()
+  const { data: settings, isLoading, error: e } = useGetSettingsQuery();
+  console.log(settings?.data?.next_member_serial, "asdfasd", e)
 
   useEffect(() => {
     const date = new Date(joinDate)
     const dd = String(date.getDate()).padStart(2, "0");
     const mm = String(date.getMonth() + 1).padStart(2, "0");
     const yyyy = date.getFullYear();
-    setUniqueCode(`${member_type == "founding" ? "FM" : "GM"}${dd}${mm}${yyyy}`)
+    const nextSerial =  (settings?.data?.next_member_serial || 0).toString().padStart(3, "0");
 
-  }, [joinDate, member_type])
+    setUniqueCode(`${member_type == "founding" ? "FM" : "GM"}${dd}${mm}${yyyy}${nextSerial}`);
+
+  }, [joinDate, member_type, settings])
 
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -88,6 +93,7 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
                   onChange={(e) => setUniqueCode(e.target.value)}
                   placeholder="Enter unique code"
                   required
+                  disabled
                 />
               </div>
               <div className="space-y-2">

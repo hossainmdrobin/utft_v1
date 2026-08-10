@@ -25,6 +25,7 @@ interface IMember extends Document {
   mobile?: string;
   email?: string;
   member_type?: string;
+  serial?: number;
   share_quantity?: number;
   nominee_name?: string;
   nominee_relation?: string;
@@ -59,6 +60,7 @@ const memberSchema = new Schema(
     mobile: { type: String },
     email: { type: String },
     member_type: { type: String,default:"founding" },
+    serial: { type: Number },
     share_quantity: { type: Number, default: 0 },
     nominee_name: { type: String },
     nominee_relation: { type: String },
