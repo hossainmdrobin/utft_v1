@@ -1,7 +1,6 @@
 import { Schema, model, models, Document } from "mongoose";
 
 interface ISetting extends Document {
-  organization_name: string;
   organization_address?: string;
   organization_phone?: string;
   organization_email?: string;
@@ -24,7 +23,6 @@ interface ISetting extends Document {
 
 const settingSchema = new Schema(
   {
-    organization_name: { type: String, required: true, default: "" },
     organization_address: { type: String, default: "" },
     organization_phone: { type: String, default: "" },
     organization_email: { type: String, default: "" },
@@ -40,7 +38,7 @@ const settingSchema = new Schema(
     fine_enabled: { type: Boolean, default: true },
     next_member_serial: { type: Number, required: true, default: 1 },
     share_value: { type: Number, required: true, default: 0 },
-    updated_by: { type: String },
+    updated_by: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
