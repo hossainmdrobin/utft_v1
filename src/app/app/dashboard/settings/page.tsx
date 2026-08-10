@@ -15,7 +15,6 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useGetSettingsQuery();
   const [updateSettings, { isLoading: saving }] = useUpdateSettingsMutation();
   const isAdmin = ["admin", "president", "director"].includes(data?.data?.role);
-console.log(settings, "settings", isLoading, adminLoading, data, isAdmin);
   const handleUpdate = async (patch: Record<string, any>) => {
     try {
       await updateSettings(patch).unwrap();
