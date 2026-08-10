@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAdmin } from "@/hooks/use-admin";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "@/store/slices/settingSlice/api.setting";
 import { OrganizationInfoSection } from "./components/OrganizationInfoSection";
 import { FiscalYearSection } from "./components/FiscalYearSection";
@@ -9,11 +8,15 @@ import { CurrencySection } from "./components/CurrencySection";
 import { SerialShareSection } from "./components/SerialShareSection";
 import { ContributionSection } from "./components/ContributionSection";
 import { FineSection } from "./components/FineSection";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 
 export default function SettingsPage() {
-  const { isAdmin, loading: adminLoading } = useAdmin();
-  const { data: settings, isLoading, isFetching } = useGetSettingsQuery();
+  const { data, isLoading: adminLoading } = useGetCurrentUserQuery();
+  const { data: settings, isLoading } = useGetSettingsQuery();
   const [updateSettings, { isLoading: saving }] = useUpdateSettingsMutation();
+  const isAdmin = ["admin", "president", "director"].includes(data?.data?.role);
+
+  console.log(data, settings);
 
   const handleUpdate = async (patch: Record<string, any>) => {
     try {
