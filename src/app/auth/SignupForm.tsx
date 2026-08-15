@@ -287,9 +287,8 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
                 <Input
                   id="share_quantity"
                   type="number"
-                  min="0"
                   value={formData.share_quantity}
-                  onChange={(e) => handleChange("share_quantity", e.target.value)}
+                  disabled
                 />
               </div>
             </div>

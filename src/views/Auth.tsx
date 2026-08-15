@@ -19,6 +19,7 @@ export default function Auth() {
   const [open, setOpen] = useState(false)
 
   const [verifyCredentials, { data: verifyData, isLoading: isSignUpLoading, error: verifiedError }] = useVerifyCredentialsMutation();
+  console.log(verifyData)
   const [login, {data:loginData, isLoading: isSignInLoading, error: signInError }] = useLoginMutation();
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
