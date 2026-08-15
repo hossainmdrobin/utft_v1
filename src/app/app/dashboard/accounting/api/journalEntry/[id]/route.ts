@@ -19,6 +19,8 @@ export async function GET(
         const entry = await JournalEntry.findById(id)
             .lean()
             .populate("created_by")
+            .populate("approved_by")
+            .populate("voided_by")
             .populate({
                 path: "lines",
                 populate: {

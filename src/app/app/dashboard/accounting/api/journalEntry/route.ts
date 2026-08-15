@@ -108,6 +108,8 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
   const { id, type, ...updateData } = body;
+  if(updateData.status=="approved") updateData.approved_by = user._id;
+  else if(updateData.status=="voided") updateData.voided_by = user._id;
 
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
