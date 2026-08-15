@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { JournalEntryLinesTable } from "./JournalEntryLinesTable";
 import { statusColors } from "./constants";
 import { format } from "date-fns";
-import { useGetEntryByIdQuery, useGetJournalEntryLinesQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { useGetEntryByIdQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
 
 interface JournalEntryDetailProps {
   _id: string;
@@ -81,51 +81,7 @@ const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWit
         <p className="text-sm">{entry.description}</p>
       )}
 
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Account</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Debit</TableHead>
-              <TableHead className="text-right">Credit</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entry?.lines?.map((line: JournalEntryLineWithAccount) => (
-              <TableRow key={line.id || line._id}>
-                <TableCell className="font-mono text-sm">
-                  {line.account_id ? `${line.account_id.code} - ${line.account_id.name}` : "ACCOUNT NUMBER"}
-                </TableCell>
-                <TableCell className="text-sm">{line.description || "-"}</TableCell>
-                <TableCell className="text-right font-mono">
-                  {Number(line.debit) > 0
-                    ? `৳${Number(line.debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                    : "-"}
-                </TableCell>
-                <TableCell className="text-right font-mono">
-                  {Number(line.credit) > 0
-                    ? `৳${Number(line.credit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                    : "-"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <tr>
-              <td colSpan={2} className="p-2 text-right">
-                Totals:
-              </td>
-              <td className="p-2 text-right font-mono">
-                ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              </td>
-              <td className="p-2 text-right font-mono">
-                ৳{Number(totalCredit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              </td>
-            </tr>
-          </TableFooter>
-        </Table>
-      </div>
+      <JournalEntryLinesTable lines={entry?.lines} totalDebit={totalDebit} totalCredit={totalCredit} />
     </div>
   );
 }
