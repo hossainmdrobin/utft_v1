@@ -315,7 +315,7 @@ export function JournalEntriesList() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              Journal Entry: {String(selectedEntry?._id)}
+              Journal Entry
             </DialogTitle>
           </DialogHeader>
           <JournalEntryDetail _id={String(selectedEntry?._id)} />

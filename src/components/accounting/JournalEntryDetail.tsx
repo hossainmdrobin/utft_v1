@@ -25,8 +25,8 @@ export function JournalEntryDetail({ _id }: JournalEntryDetailProps) {
 
   const { data, isLoading: entryLoading } = useGetEntryByIdQuery({id:_id});
   const {data:entry} = data || {};
-  console.log(entry,"asdfasd;flkasjdfl");
-  
+const totalDebit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.debit || 0), 0) || 0;
+const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.credit || 0), 0) || 0;  
 
   if (entryLoading) {
     return (
@@ -121,10 +121,10 @@ export function JournalEntryDetail({ _id }: JournalEntryDetailProps) {
                 Totals:
               </td>
               <td className="p-2 text-right font-mono">
-                ৳{Number(entry?.total_debit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </td>
               <td className="p-2 text-right font-mono">
-                ৳{Number(entry?.total_credit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                ৳{Number(totalCredit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </td>
             </tr>
           </TableFooter>
