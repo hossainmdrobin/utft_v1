@@ -35,7 +35,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
     nid: "",
     mobile: "",
     email: "",
-    share_quantity: "0",
     nominee_name: "",
     nominee_relation: "",
     nominee_nid: ""
@@ -60,7 +59,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
         nid: editMember.nid || "",
         mobile: editMember.mobile || "",
         email: editMember.email || "",
-        share_quantity: String(editMember.share_quantity || 0),
         nominee_name: editMember.nominee_name || "",
         nominee_relation: editMember.nominee_relation || "",
         nominee_nid: editMember.nominee_nid || ""
@@ -83,7 +81,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
         nid: "",
         mobile: "",
         email: "",
-        share_quantity: "0",
         nominee_name: "",
         nominee_relation: "",
         nominee_nid: ""
@@ -287,7 +284,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
                 <Input
                   id="share_quantity"
                   type="number"
-                  value={formData.share_quantity}
                   disabled
                 />
               </div>
