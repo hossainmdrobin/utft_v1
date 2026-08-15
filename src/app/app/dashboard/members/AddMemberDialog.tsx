@@ -47,6 +47,10 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
       setPassword("");
     }
   };
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false);
+    handleOpenChange(false);
+  }
 
   useEffect(() => {
     if (data) {
@@ -165,7 +169,7 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
           </form>
         </DialogContent>
       </Dialog>
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+      <Dialog open={showSuccessDialog} onOpenChange={handleSuccessDialogClose}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Member Created</DialogTitle>
