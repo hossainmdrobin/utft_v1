@@ -11,64 +11,17 @@ function getSortOrder(order: string | null): 1 | -1 {
   return order === "asc" ? 1 : -1;
 }
 
-// GET - List journal entries or journal entry lines
-// Query params:
-//   type=lines       -> fetch journal entry lines instead of entries
-//   dateFrom         -> filter by entry_date (entries) or parent entry date (lines)
-//   dateTo           -> filter by entry_date (entries) or parent entry date (lines)
-//   order=asc|desc   -> sort order (default: desc)
-//   account_id       -> filter lines by account_id (type=lines only)
-//   entry_id         -> filter lines by journal_entry_id (type=lines only)
-//   member_id        -> filter by member_id
-//   status           -> filter entries by status
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
 
-  const type = searchParams.get("type");
   const dateFrom = searchParams.get("dateFrom");
   const dateTo = searchParams.get("dateTo");
   const sortOrder = getSortOrder(searchParams.get("order"));
-  const accountId = searchParams.get("account_id");
-  const entryId = searchParams.get("entry_id");
   const memberId = searchParams.get("member_id");
   const status = searchParams.get("status");
 
   try {
-    if (type === "lines") {
-      const filter: Record<string, any> = {};
-
-      // Date filtering for lines requires looking up parent journal entries first,
-      // because entry_date lives on the JournalEntry model.
-      if (dateFrom || dateTo) {
-        const entryFilter: Record<string, any> = {};
-        if (dateFrom) {
-          entryFilter.entry_date = { ...(entryFilter.entry_date || {}), $gte: dateFrom };
-        }
-        if (dateTo) {
-          entryFilter.entry_date = { ...(entryFilter.entry_date || {}), $lte: dateTo };
-        }
-        if (entryId) {
-          entryFilter._id = entryId;
-        }
-
-        const entriesInDateRange = await JournalEntry.find(entryFilter).lean();
-        const entryIds = entriesInDateRange.map((e: any) => e._id);
-        filter.journal_entry_id = { $in: entryIds };
-      } else if (entryId) {
-        filter.journal_entry_id = entryId;
-      }
-
-      if (accountId) filter.account_id = accountId;
-      if (memberId) filter.member_id = memberId;
-
-      const lines = await JournalEntryLine.find(filter)
-        .sort({ created_at: sortOrder })
-        .lean();
-
-      return NextResponse.json({ data: lines, count: lines.length });
-    }
-
     // Default: list journal entries
     const filter: Record<string, any> = {};
 
@@ -83,10 +36,9 @@ export async function GET(req: NextRequest) {
 
     const entries = await JournalEntry.find(filter)
       .sort({ entry_date: sortOrder })
-      .lean().populate("lines").populate("member_id");
-
     return NextResponse.json({ data: entries, count: entries.length });
   } catch (error) {
+    console.log("Error fetching journal entries:", error);
     return NextResponse.json(
       { error: (error as Error)?.message || "Failed to fetch journal entries" },
       { status: 500 }

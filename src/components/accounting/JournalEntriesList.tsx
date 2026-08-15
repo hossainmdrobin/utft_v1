@@ -1,3 +1,4 @@
+import { JournalEntryDetail } from "./JournalEntryDetail";
 import { useJournalEntries } from "./useJournalEntries";
 import { statusColors } from "./constants";
 import { dateRangeOptions } from "./constants";
@@ -66,10 +67,8 @@ export function JournalEntriesList() {
     exportToPDF,
     handlePrint,
   } = useJournalEntries();
-console.log("Sfdasefa",selectedEntry)
   const [memberSearch, setMemberSearch] = useState("")
   const [accountSearch, setAccountSearch] = useState("")
-
   if (entryLoading) {
     return (
       <div className="space-y-2">
@@ -168,7 +167,7 @@ console.log("Sfdasefa",selectedEntry)
                 String(m.beneficiary_id || "").toLowerCase().includes(q)
               )
             }).map((m) => (
-              <SelectItem key={m.id} value={m.user_id || m.user_id}>
+              <SelectItem key={m._id} value={m.user_id || m.user_id}>
                 {m.user_id} - {m.full_name}
               </SelectItem>
             ))}
@@ -179,7 +178,7 @@ console.log("Sfdasefa",selectedEntry)
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by Account" />
           </SelectTrigger>
-           <SelectContent>
+          <SelectContent>
             <div className="p-1">
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
@@ -201,7 +200,7 @@ console.log("Sfdasefa",selectedEntry)
                 a.name?.toLowerCase().includes(q)
               )
             }).map((a) => (
-              <SelectItem key={a.id} value={a.id}>
+              <SelectItem key={a._id} value={a.id}>
                 {a.code} - {a.name}
               </SelectItem>
             ))}
@@ -234,7 +233,7 @@ console.log("Sfdasefa",selectedEntry)
 
       {!filteredEntries?.length ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p>No journal entries found</p>
+          <p>No journal entries found jlhgi</p>
         </div>
       ) : (
         <div className="border rounded-lg">
@@ -251,7 +250,7 @@ console.log("Sfdasefa",selectedEntry)
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.map((entry,i) => (
+              {filteredEntries.map((entry, i) => (
                 <TableRow key={entry._id}>
                   <TableCell className="font-mono">{entry.entry_number}</TableCell>
                   <TableCell>{format(new Date(entry.entry_date), "dd MMM yyyy")}</TableCell>
@@ -319,86 +318,7 @@ console.log("Sfdasefa",selectedEntry)
               Journal Entry: {String(selectedEntry?._id)}
             </DialogTitle>
           </DialogHeader>
-          {selectedEntry && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Date:</span>{" "}
-                  {format(new Date(selectedEntry.entry_date), "dd MMM yyyy")}
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Status:</span>{" "}
-                  <Badge variant="outline" className={statusColors[selectedEntry.status]}>
-                    {selectedEntry.status}
-                  </Badge>
-                </div>
-                {selectedEntry.reference && (
-                  <div>
-                    <span className="text-muted-foreground">Reference:</span>{" "}
-                    {selectedEntry.reference}
-                  </div>
-                )}
-                {selectedEntry.member_id && (
-                  <div>
-                    <span className="text-muted-foreground">Member:</span>{" "}
-                    {typeof selectedEntry.member_id === "string"
-                      ? selectedEntry.member_id
-                      : selectedEntry.member_id.full_name}
-                  </div>
-                )}
-              </div>
-              {selectedEntry.description && (
-                <p className="text-sm">{selectedEntry.description}</p>
-              )}
-
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Account</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Debit</TableHead>
-                      <TableHead className="text-right">Credit</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedEntry?.lines?.map((line) => (
-                      <TableRow key={line.id}>
-                        <TableCell className="font-mono text-sm">
-                          ACCOUNT NUMBER
-                          {/* {line.account.code} - {line.account.name} */}
-                        </TableCell>
-                        <TableCell className="text-sm">{line.description || "-"}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          {Number(line.debit) > 0
-                            ? `৳${Number(line.debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {Number(line.credit) > 0
-                            ? `৳${Number(line.credit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                            : "-"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                  <tfoot className="bg-muted font-medium">
-                    <tr>
-                      <td colSpan={2} className="p-2 text-right">
-                        Totals:
-                      </td>
-                      <td className="p-2 text-right font-mono">
-                        ৳{Number(selectedEntry?.total_debit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="p-2 text-right font-mono">
-                        ৳{Number(selectedEntry?.total_credit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </Table>
-              </div>
-            </div>
-          )}
+          <JournalEntryDetail _id={String(selectedEntry?._id)} />
         </DialogContent>
       </Dialog>
     </>
