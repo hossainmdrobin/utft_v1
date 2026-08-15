@@ -30,7 +30,7 @@ interface JournalEntriesTableProps {
 }
 
 export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: JournalEntriesTableProps) {
-  const [updateEntry, { data, isLoading, error }] = useUpdateJournalEntryMutation();
+  const [updateEntry, { isLoading, error }] = useUpdateJournalEntryMutation();
 
   const totalDebit = entry.lines?.reduce((sum, line) => sum + line.debit, 0) || 0;
   return (
