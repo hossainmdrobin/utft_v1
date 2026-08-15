@@ -1,3 +1,4 @@
+import { JournalEntriesTable } from "./JournalEntriesTable";
 import { JournalEntryDetail } from "./JournalEntryDetail";
 import { useJournalEntries } from "./useJournalEntries";
 import { statusColors } from "./constants";
@@ -10,16 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { MoreVertical, Eye, CheckCircle, XCircle, Filter, Download, Printer, CalendarIcon, Search } from "lucide-react";
+import { Filter, Download, Printer, CalendarIcon, Search } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -60,10 +54,6 @@ export function JournalEntriesList() {
     setStatusFilter,
     members,
     accounts,
-    entryLines,
-    selectedEntryData,
-    postEntry,
-    voidEntry,
     exportToPDF,
     handlePrint,
   } = useJournalEntries();
@@ -250,64 +240,14 @@ export function JournalEntriesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.map((entry, i) => {
-                const totalDebit = entry?.lines?.reduce((sum, line) => sum + (line.debit || 0), 0) || 0;
-                return <TableRow key={entry._id}>
-                  <TableCell className="font-mono">{entry.entry_number}</TableCell>
-                  <TableCell>{format(new Date(entry.entry_date), "dd MMM yyyy")}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {entry.description || entry.reference || "-"}
-                  </TableCell>
-                  <TableCell>
-                    {entry.member ? (
-                      <span className="text-sm">
-                        {entry.member.beneficiary_id}
-                      </span>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={statusColors[entry.status]}>
-                      {entry.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="print:hidden">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedEntry(entry)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        {entry.status === "draft" && (
-                          <>
-                            <DropdownMenuItem onClick={() => postEntry.mutate(entry.id)}>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Post Entry
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => voidEntry.mutate(entry.id)}
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Void Entry
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              }
-              )}
+              {filteredEntries.map((entry) => (
+                <JournalEntriesTable
+                  key={entry._id}
+                  entry={entry}
+                  statusColors={statusColors}
+                  onSelectEntry={(selectedEntry) => setSelectedEntry(selectedEntry as any)}
+                />
+              ))}
             </TableBody>
           </Table>
         </div>

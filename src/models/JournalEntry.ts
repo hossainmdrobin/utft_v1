@@ -19,6 +19,7 @@ interface IJournalEntry extends Document {
   locked_by?: string;
   created_by?: string | MemberDoc;
   approved_by?: string | MemberDoc;
+  voided_by?: string | MemberDoc;
 }
 
 const journalEntrySchema = new Schema({
@@ -28,7 +29,7 @@ const journalEntrySchema = new Schema({
   description: { type: String },
   member_id: { type: Schema.Types.ObjectId, ref: "Member" },
   reference: { type: String },
-  status: { type: String, default: "draft" },
+  status: { type: String, default: "draft", enum: ["draft", "approved", "voided"] },
   total_debit: { type: Number, default: 0 },
   total_credit: { type: Number, default: 0 },
   posted_at: { type: String },
@@ -38,6 +39,7 @@ const journalEntrySchema = new Schema({
   locked_by: { type: String },
   created_by: { type: Schema.Types.ObjectId, ref: "Member" },
   approved_by: { type: Schema.Types.ObjectId, ref: "Member" },
+  voided_by: { type: Schema.Types.ObjectId, ref: "Member" },
 }, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
 
 export const JournalEntry = models.JournalEntry || model("JournalEntry", journalEntrySchema);
