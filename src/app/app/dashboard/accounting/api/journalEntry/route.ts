@@ -4,6 +4,7 @@ import { JournalEntry } from "@/models/JournalEntry";
 import { JournalEntryLine } from "@/models/JournalEntryLine";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { Activity } from "@/models/activities";
+import mongoose from "mongoose";
 
 const ADMIN_ROLES = ["admin", "president", "director"];
 
@@ -112,25 +113,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
+  const session = await mongoose.startSession();
+
   try {
-    if (type === "line") {
-      const line = await JournalEntryLine.findByIdAndUpdate(id, updateData, { new: true }).lean();
-      if (!line) {
-        return NextResponse.json({ error: "Journal entry line not found" }, { status: 404 });
-      }
-
-      await Activity.create({
-        table_name: "JournalEntryLine",
-        record_id: line._id,
-        description: `Journal entry line updated`,
-        action: "update",
-      });
-
-      return NextResponse.json({ data: line });
-    }
-
+    session.startTransaction();
     // Default: update journal entry
     const entry = await JournalEntry.findByIdAndUpdate(id, updateData, { new: true }).lean();
+    await JournalEntryLine.updateMany({ journal_entry_id: id }, { status: updateData.status });
     if (!entry) {
       return NextResponse.json({ error: "Journal entry not found" }, { status: 404 });
     }
@@ -141,13 +130,17 @@ export async function PATCH(req: NextRequest) {
       description: `Journal entry updated: ${entry.entry_number}`,
       action: "update",
     });
+    session.commitTransaction();
 
     return NextResponse.json({ data: entry });
   } catch (error) {
+    session.abortTransaction();
     return NextResponse.json(
       { error: (error as Error)?.message || "Failed to update journal entry" },
       { status: 400 }
     );
+  } finally {
+    session.endSession();
   }
 }
 
