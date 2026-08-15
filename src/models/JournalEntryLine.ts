@@ -13,7 +13,7 @@ interface IJournalEntryLine extends Document {
 const journalEntryLineSchema = new Schema({
   member_id: { type: Schema.Types.ObjectId, ref: "Member" },
   journal_entry_id: { type: String, required: true },
-  account_id: { type: String, required: true },
+  account_id: { type: Schema.Types.ObjectId, ref: "Account", required: true },
   description: { type: String },
   debit: { type: Number, default: 0 },
   credit: { type: Number, default: 0 },

@@ -20,6 +20,7 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
   const { toast } = useToast();
   const [uniqueCode, setUniqueCode] = useState("");
   const [member_type, setMemberType] = useState("general")
+  const [name,setName] = useState("")
   const [password, setPassword] = useState("");
   const [share_quantity, setShare_quantity] = useState(0)
   const [joinDate, setJoinDate] = useState(new Date())
@@ -28,7 +29,6 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
 
   const [createMember, { data, isLoading: loading, error }] = useCreateMemberMutation()
   const { data: settings, isLoading, error: e } = useGetSettingsQuery();
-  console.log(settings?.data?.next_member_serial, "asdfasd", e)
 
   useEffect(() => {
     const date = new Date(joinDate)
@@ -37,9 +37,9 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
     const yyyy = date.getFullYear();
     const nextSerial =  (settings?.data?.next_member_serial || 0).toString().padStart(3, "0");
 
-    setUniqueCode(`${member_type == "founding" ? "FM" : "GM"}${dd}${mm}${yyyy}${nextSerial}`);
+    setUniqueCode(`${member_type == "founding" ? "FM" : "GM"}${dd}${mm}${yyyy}${nextSerial}-${name.split(" ").join("").toUpperCase()}`);
 
-  }, [joinDate, member_type, settings])
+  }, [joinDate, member_type, settings, name])
 
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -47,6 +47,10 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
       setPassword("");
     }
   };
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false);
+    handleOpenChange(false);
+  }
 
   useEffect(() => {
     if (data) {
@@ -107,6 +111,16 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="password">Password *</Label>
                 <Input
                   id="password"
@@ -155,7 +169,7 @@ export function AddMemberDialog({ open, onOpenChange }: AddMemberDialogProps) {
           </form>
         </DialogContent>
       </Dialog>
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+      <Dialog open={showSuccessDialog} onOpenChange={handleSuccessDialogClose}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Member Created</DialogTitle>

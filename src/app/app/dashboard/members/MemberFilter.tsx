@@ -54,7 +54,7 @@ export default function MemberFilter({ filters, setFilters }) {
                     onValueChange={(v) => updateFilter("stage", v)}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="All stages" />
+                        <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
                         {status.map((item) => <SelectItem value={item.name}>{item.value}</SelectItem>)}
@@ -86,6 +86,7 @@ export default function MemberFilter({ filters, setFilters }) {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="founding">Founding</SelectItem>
+                        <SelectItem value="general">General</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

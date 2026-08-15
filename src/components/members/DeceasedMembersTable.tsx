@@ -31,7 +31,7 @@ export function DeceasedMembersTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Beneficiary ID</TableHead>
+                <TableHead>User ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Member Type</TableHead>
                 <TableHead>Deceased Date</TableHead>

@@ -35,7 +35,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
     nid: "",
     mobile: "",
     email: "",
-    share_quantity: "0",
     nominee_name: "",
     nominee_relation: "",
     nominee_nid: ""
@@ -60,7 +59,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
         nid: editMember.nid || "",
         mobile: editMember.mobile || "",
         email: editMember.email || "",
-        share_quantity: String(editMember.share_quantity || 0),
         nominee_name: editMember.nominee_name || "",
         nominee_relation: editMember.nominee_relation || "",
         nominee_nid: editMember.nominee_nid || ""
@@ -83,7 +81,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
         nid: "",
         mobile: "",
         email: "",
-        share_quantity: "0",
         nominee_name: "",
         nominee_relation: "",
         nominee_nid: ""
@@ -170,7 +167,6 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -256,20 +252,22 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile</Label>
+                <Label htmlFor="mobile">Mobile *</Label>
                 <Input
                   id="mobile"
                   type="tel"
                   value={formData.mobile}
                   onChange={(e) => handleChange("mobile", e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
+                  required
                   onChange={(e) => handleChange("email", e.target.value)}
                 />
               </div>
@@ -285,9 +283,7 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
                 <Input
                   id="share_quantity"
                   type="number"
-                  min="0"
-                  value={formData.share_quantity}
-                  onChange={(e) => handleChange("share_quantity", e.target.value)}
+                  disabled
                 />
               </div>
             </div>
@@ -298,27 +294,30 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
             <h3 className="font-semibold text-lg">Nominee Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nominee_name">Nominee Name</Label>
+                <Label htmlFor="nominee_name">Nominee Name *</Label>
                 <Input
                   id="nominee_name"
                   value={formData.nominee_name}
                   onChange={(e) => handleChange("nominee_name", e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nominee_relation">Nominee Relation</Label>
+                <Label htmlFor="nominee_relation">Nominee Relation *</Label>
                 <Input
                   id="nominee_relation"
                   value={formData.nominee_relation}
                   onChange={(e) => handleChange("nominee_relation", e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="nominee_nid">Nominee NID</Label>
+                <Label htmlFor="nominee_nid">Nominee NID *</Label>
                 <Input
                   id="nominee_nid"
                   value={formData.nominee_nid}
                   onChange={(e) => handleChange("nominee_nid", e.target.value)}
+                  required
                 />
               </div>
             </div>

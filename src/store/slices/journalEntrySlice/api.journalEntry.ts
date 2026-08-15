@@ -40,6 +40,13 @@ export const journalEntryApi = injectEndpoint("journalEntryApi", (builder) => ({
     },
     providesTags: ["JournalEntries"],
   }),
+  getEntryById: builder.query<JournalEntryDoc, { id: string }>({
+    query: ({ id }) => ({
+      url: `/app/dashboard/accounting/api/journalEntry/${id}`,
+      method: "GET",
+    }),
+    providesTags: ["JournalEntries"],
+  }),
 
   // Fetch journal entry lines with optional date filtering, ordering, and account_id filter
   getJournalEntryLines: builder.query<{ data: JournalEntryLineDoc[]; count: number }, Partial<JournalEntryLineFilters> | void>({
@@ -128,6 +135,7 @@ export const journalEntryApi = injectEndpoint("journalEntryApi", (builder) => ({
 export const {
   useGetJournalEntriesQuery,
   useGetJournalEntryLinesQuery,
+  useGetEntryByIdQuery,
   useCreateJournalEntryMutation,
   useCreateJournalEntryLineMutation,
   useUpdateJournalEntryMutation,
