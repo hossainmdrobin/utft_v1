@@ -130,7 +130,7 @@ export default function MemberFinancialReport() {
 
     let csv = `Member Financial Report\n`;
     csv += `Name: ${member.full_name}\n`;
-    csv += `Beneficiary ID: ${member.beneficiary_id}\n`;
+    csv += `User ID: ${member.beneficiary_id}\n`;
     csv += `Member Type: ${member.member_type}\n\n`;
 
     csv += `Financial Summary\n`;

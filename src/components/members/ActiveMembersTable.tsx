@@ -33,7 +33,7 @@ export function ActiveMembersTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Beneficiary ID</TableHead>
+                <TableHead>User ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Member Type</TableHead>
                 <TableHead>Share Qty</TableHead>
