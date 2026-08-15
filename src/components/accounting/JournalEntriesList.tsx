@@ -261,7 +261,7 @@ export function JournalEntriesList() {
                   <TableCell>
                     {entry.member ? (
                       <span className="text-sm">
-                        {entry.member.beneficiary_id}
+                        {entry.member.user_id}
                       </span>
                     ) : (
                       "-"
