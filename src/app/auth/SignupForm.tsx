@@ -295,27 +295,30 @@ export default function SignupForm({ open, onOpenChange, onSuccess, editMember,i
             <h3 className="font-semibold text-lg">Nominee Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nominee_name">Nominee Name</Label>
+                <Label htmlFor="nominee_name">Nominee Name *</Label>
                 <Input
                   id="nominee_name"
                   value={formData.nominee_name}
                   onChange={(e) => handleChange("nominee_name", e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nominee_relation">Nominee Relation</Label>
+                <Label htmlFor="nominee_relation">Nominee Relation *</Label>
                 <Input
                   id="nominee_relation"
                   value={formData.nominee_relation}
                   onChange={(e) => handleChange("nominee_relation", e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="nominee_nid">Nominee NID</Label>
+                <Label htmlFor="nominee_nid">Nominee NID *</Label>
                 <Input
                   id="nominee_nid"
                   value={formData.nominee_nid}
                   onChange={(e) => handleChange("nominee_nid", e.target.value)}
+                  required
                 />
               </div>
             </div>
