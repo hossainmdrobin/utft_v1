@@ -10,6 +10,8 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { MoreVertical, Eye, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useUpdateJournalEntryMutation } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface JournalEntryListItem {
   _id: string;
@@ -31,6 +33,12 @@ interface JournalEntriesTableProps {
 
 export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: JournalEntriesTableProps) {
   const [updateEntry, { isLoading, error }] = useUpdateJournalEntryMutation();
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to update entry");
+    }
+  }, [error]);
 
   const totalDebit = entry.lines?.reduce((sum, line) => sum + line.debit, 0) || 0;
   return (
