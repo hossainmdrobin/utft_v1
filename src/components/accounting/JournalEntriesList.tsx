@@ -54,10 +54,6 @@ export function JournalEntriesList() {
     setStatusFilter,
     members,
     accounts,
-    entryLines,
-    selectedEntryData,
-    postEntry,
-    voidEntry,
     exportToPDF,
     handlePrint,
   } = useJournalEntries();
@@ -250,8 +246,6 @@ export function JournalEntriesList() {
                   entry={entry}
                   statusColors={statusColors}
                   onSelectEntry={(selectedEntry) => setSelectedEntry(selectedEntry as any)}
-                  onPostEntry={(id) => postEntry.mutate(id)}
-                  onVoidEntry={(id) => voidEntry.mutate(id)}
                 />
               ))}
             </TableBody>
