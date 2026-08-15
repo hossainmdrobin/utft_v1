@@ -53,9 +53,10 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
         ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className={statusColors[entry.status]}>
+        {isLoading && <span className="text-sm bg-gray-300 animate-pulse"></span>}
+        {!isLoading &&<Badge variant="outline" className={statusColors[entry.status]}>
           {entry.status}
-        </Badge>
+        </Badge>}
       </TableCell>
       <TableCell className="print:hidden">
         <DropdownMenu>
@@ -69,7 +70,7 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
               <Eye className="h-4 w-4 mr-2" />
               View Details
             </DropdownMenuItem>
-            {entry.status === "draft" && (
+            {entry.status === "draft" && !isLoading && (
               <>
                 <DropdownMenuItem onClick={() => updateEntry({ id: entry._id, status: "approved" })}>
                   <CheckCircle className="h-4 w-4 mr-2" />
