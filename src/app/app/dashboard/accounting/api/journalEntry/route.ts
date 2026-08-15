@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
 
     const entries = await JournalEntry.find(filter)
       .sort({ entry_date: sortOrder })
+      .populate('lines')
     return NextResponse.json({ data: entries, count: entries.length });
   } catch (error) {
     console.log("Error fetching journal entries:", error);

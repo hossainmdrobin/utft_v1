@@ -250,8 +250,9 @@ export function JournalEntriesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.map((entry, i) => (
-                <TableRow key={entry._id}>
+              {filteredEntries.map((entry, i) => {
+                const totalDebit = entry?.lines?.reduce((sum, line) => sum + (line.debit || 0), 0) || 0;
+                return <TableRow key={entry._id}>
                   <TableCell className="font-mono">{entry.entry_number}</TableCell>
                   <TableCell>{format(new Date(entry.entry_date), "dd MMM yyyy")}</TableCell>
                   <TableCell className="max-w-[200px] truncate">
@@ -267,7 +268,7 @@ export function JournalEntriesList() {
                     )}
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    ৳{Number(entry.total_debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={statusColors[entry.status]}>
@@ -305,7 +306,8 @@ export function JournalEntriesList() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              }
+              )}
             </TableBody>
           </Table>
         </div>

@@ -1,7 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
-import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
-import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { statusColors } from "./constants";
