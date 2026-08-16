@@ -22,10 +22,11 @@ export async function GET(req: NextRequest) {
 
     const memberId = searchParams.get("member_id");
     if (memberId) filter.member_id = memberId;
+    console.log(filter, "filter")
 
     try {
         const lines = await JournalEntryLine.find(filter).sort({ created_at: -1 }).lean();
-
+        console.log(lines, "lines")
         const totalDebit = lines.reduce((sum, line) => sum + (line.debit || 0), 0);
         const totalCredit = lines.reduce((sum, line) => sum + (line.credit || 0), 0);
 

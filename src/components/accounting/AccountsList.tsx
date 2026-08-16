@@ -22,10 +22,11 @@ import {
 import { MoreVertical, Edit, ChevronRight, ChevronDown, Folder, FolderOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AccountDoc } from "@/models/Account";
+import { AccountTypeRow } from "./AccountTypeRow";
 
 type AccountWithChildren = AccountDoc & { children: AccountWithChildren[] };
 
-const typeColors: Record<string, string> = {
+export const typeColors: Record<string, string> = {
   asset: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   liability: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   equity: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -34,7 +35,7 @@ const typeColors: Record<string, string> = {
 };
 
 const typeOrder = ["asset", "liability", "equity", "income", "expense"];
-const typeLabels: Record<string, string> = {
+export const typeLabels: Record<string, string> = {
   asset: "Assets",
   liability: "Liabilities",
   equity: "Equity",
@@ -281,31 +282,15 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
             );
 
             return (
-              <React.Fragment key={type}>
-                <TableRow
-                  className="bg-primary/10 cursor-pointer hover:bg-primary/20"
-                  onClick={() => toggleType(type)}
-                >
-                  <TableCell colSpan={3} className="font-bold">
-                    <div className="flex items-center gap-2">
-                      {isExpanded ? (
-                        <ChevronDown className="h-5 w-5" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5" />
-                      )}
-                      <span className="text-base">{typeLabels[type]}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        {typeAccounts.length}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-bold font-mono">
-                    ৳{totalBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-                {isExpanded && tree.map((acc) => renderAccountRow(acc, 0))}
-              </React.Fragment>
+              <AccountTypeRow
+                type={type}
+                typeAccounts={typeAccounts}
+                isExpanded={isExpanded}
+                totalBalance={totalBalance}
+                toggleType={toggleType}
+                tree={tree}
+                renderAccountRow={renderAccountRow}
+              />
             );
           })}
         </TableBody>
