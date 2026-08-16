@@ -9,7 +9,7 @@ export interface EntryLineFilters {
 }
 
 export const entryLineApi = injectEndpoint("entryLineApi", (builder) => ({
-  getEntryLines: builder.query<{ data: JournalEntryLineDoc[]; count: number }, Partial<EntryLineFilters> | void>({
+  getEntryLines: builder.query<{ data: JournalEntryLineDoc[]; count: number; totalDebit: number; totalCredit: number }, Partial<EntryLineFilters> | void>({
     query: (filters) => {
       const params = new URLSearchParams();
       if (filters) {
