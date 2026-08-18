@@ -19,8 +19,9 @@ import { useGetEntryLinesQuery } from "@/store/slices/entryLineSlice/api.entryLi
 
 export default ({ account }: { account: AccountDoc }): JSX.Element => {
     const hasChildren = false; // account.children && account.children.length > 0;
-    const {data} = useGetEntryLinesQuery({ account_id: account._id });
-    console.log(data, "data")
+    const {data: entryLines} = useGetEntryLinesQuery({ account_id: String(account._id) });
+    const subResult = (entryLines?.totalDebit - entryLines?.totalCredit) || 0;
+    console.log(entryLines, "Entry line data")
 
     return (
         <TableRow
@@ -79,11 +80,13 @@ export default ({ account }: { account: AccountDoc }): JSX.Element => {
                     </div>
                 )}
             </TableCell>
-            <TableCell className="text-right font-mono">
-                {!hasChildren && (
-                    <>৳{Number(account.current_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</>
-                )}
-            </TableCell>
+            {entryLines && (
+                <TableCell className="text-right font-mono">
+                    { (
+                        <>৳{Number(subResult).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</>
+                    )}
+                </TableCell>
+            )}
             <TableCell>
                 {account.is_system ? (
                     <Badge variant="secondary">System</Badge>
