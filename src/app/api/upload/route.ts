@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     const url = await uploadToCloudinary(file, "utft/profile");
     return NextResponse.json({ url });
   } catch (error) {
+    console.error("Error uploading file:", error);
     return NextResponse.json({ error: (error as Error)?.message || "Upload failed" }, { status: 500 });
   }
 }

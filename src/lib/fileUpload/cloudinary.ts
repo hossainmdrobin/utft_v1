@@ -18,10 +18,18 @@ export async function uploadToCloudinary(file: File | Blob | Buffer, folder = "u
 
   const stringToSign = Object.keys(params)
     .sort()
-    .map((key) => `${key}=${params[key]}`)
+    .map((key) => `${key}=${encodeURIComponent(params[key])}`)
     .join("&");
 
   const signature = createHmac("sha1", CLOUDINARY_API_SECRET).update(stringToSign).digest("hex");
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Cloudinary upload debug:", {
+      cloudName: CLOUDINARY_CLOUD_NAME,
+      stringToSign,
+      signature,
+    });
+  }
 
   const formData = new FormData();
   formData.append("file", file as any);
