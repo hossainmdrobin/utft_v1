@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
             cus_add1: "Dhaka",
             cus_city: "Dhaka",
             cus_country: "Bangladesh",
-            success_url: `${baseUrl}/api/aamarpay/callback?status=success`,
+            success_url: `${baseUrl}/api/aamarpay/callback?status=success&transactionId=${transactionId}&amount=${amount.toFixed(2)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&description=${encodeURIComponent(description)}`,
             fail_url: `${baseUrl}/api/aamarpay/callback?status=fail`,
             cancel_url: `${baseUrl}/api/aamarpay/callback?status=cancel`,
             type: "json",
@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     });
 
     const result = await gatewayResponse.json().catch(() => null);
-    console.log("AamarPay response:", result);
     if (!gatewayResponse.ok || !result?.payment_url) {
         return NextResponse.json({ error: result?.error || "AamarPay did not return a payment URL." }, { status: 502 });
     }

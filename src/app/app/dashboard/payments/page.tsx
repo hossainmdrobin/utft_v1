@@ -27,13 +27,14 @@ type PaymentForm = {
 export default function Payments() {
     const { toast } = useToast();
     const { data: currentUserData, isLoading: isUserLoading } = useGetCurrentUserQuery();
-    const [createPayment, { isLoading: isPaymentLoading }] = useCreateAamarPayPaymentMutation();
+    const [createPayment, {data, isLoading: isPaymentLoading }] = useCreateAamarPayPaymentMutation();
+    console.log("consoling payament data",data);
     const [form, setForm] = useState<PaymentForm>({
-      amount: "",
+      amount: "500",
       description: "Membership payment",
-      name: "",
-      email: "",
-      phone: "",
+      name: "Robin",
+      email: "hossaim@gmail.com",
+      phone: "56456u745",
     });
 
     useEffect(() => {
@@ -94,7 +95,7 @@ export default function Payments() {
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="space-y-2 text-sm font-medium">
                   Amount (BDT)
-                  <Input required min="1" step="0.01" type="number" value={form.amount} onChange={(event) => updateField("amount", event.target.value)} placeholder="0.00" />
+                  <Input required min="1" step="0.01" type="number" value={200} onChange={(event) => updateField("amount", event.target.value)} placeholder="0.00" />
                 </label>
                 <label className="space-y-2 text-sm font-medium">
                   Payment purpose
@@ -106,11 +107,11 @@ export default function Payments() {
                 </label>
                 <label className="space-y-2 text-sm font-medium">
                   Email address
-                  <Input required type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} placeholder="you@example.com" />
+                  <Input required type="email" value="hossainmdrobin9@gmail.com" onChange={(event) => updateField("email", event.target.value)} placeholder="you@example.com" />
                 </label>
                 <label className="space-y-2 text-sm font-medium md:col-span-2">
                   Mobile number
-                  <Input required type="tel" value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="01XXXXXXXXX" />
+                  <Input required type="tel" value='01772784031' onChange={(event) => updateField("phone", event.target.value)} placeholder="01XXXXXXXXX" />
                 </label>
               </div>
               <div className="flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
