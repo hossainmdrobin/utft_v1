@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { CreditCard, Loader2, ShieldCheck } from "lucide-react";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,10 +17,17 @@ type PaymentForm = {
     phone: string;
 };
 
+  function getPaymentErrorMessage(error: unknown) {
+    if (error instanceof Error) return error.message;
+
+    const apiError = error as { data?: { error?: string } };
+    return apiError?.data?.error || "Please try again.";
+  }
+
 export default function Payments() {
     const { toast } = useToast();
     const { data: currentUserData, isLoading: isUserLoading } = useGetCurrentUserQuery();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [createPayment, { isLoading: isPaymentLoading }] = useCreateAamarPayPaymentMutation();
     const [form, setForm] = useState<PaymentForm>({
       amount: "",
       description: "Membership payment",
@@ -57,27 +65,15 @@ export default function Payments() {
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      setIsSubmitting(true);
       try {
-        const token = localStorage.getItem("access_token");
-        const response = await fetch("/api/aamarpay", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify(form),
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Unable to start payment");
+        const result = await createPayment(form).unwrap();
         window.location.assign(result.paymentUrl);
       } catch (error) {
         toast({
           variant: "destructive",
           title: "Payment could not start",
-          description: error instanceof Error ? error.message : "Please try again.",
+          description: getPaymentErrorMessage(error),
         });
-        setIsSubmitting(false);
       }
     };
 
@@ -119,8 +115,8 @@ export default function Payments() {
               </div>
               <div className="flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="flex items-center gap-2 text-sm text-muted-foreground"><ShieldCheck className="h-4 w-4 text-accent" /> You will be redirected to AamarPay to complete payment.</p>
-                <Button type="submit" disabled={isSubmitting || isUserLoading} className="sm:min-w-44">
-                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isPaymentLoading || isUserLoading} className="sm:min-w-44">
+                  {isPaymentLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   Continue to AamarPay
                 </Button>
               </div>
