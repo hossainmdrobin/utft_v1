@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   calculateFinancialSummary,
+  calculatePerInstallmentFine,
   getInstallmentStatus,
   applyInstallmentPayment,
   type InstallmentRecord,
@@ -49,6 +50,22 @@ describe("installment logic", () => {
     assert.equal(summary.totalDueAmount, 2000);
     assert.equal(summary.dueInstallments, 2);
     assert.equal(summary.upcomingInstallments, 0);
+  });
+
+  it("adds a fixed fine for each due or overdue installment", () => {
+    const installment: InstallmentRecord = {
+      id: "inst-fine",
+      memberId: "member-1",
+      period: "2026-08",
+      dueDate: "2026-08-25",
+      amount: 1000,
+      status: "UNPAID",
+      createdAt: "2026-08-01T00:00:00.000Z",
+      updatedAt: "2026-08-01T00:00:00.000Z",
+    };
+
+    assert.equal(calculatePerInstallmentFine(installment, "2026-08-26T12:00:00.000Z"), 100);
+    assert.equal(calculatePerInstallmentFine(installment, "2026-08-20T12:00:00.000Z"), 0);
   });
 
   it("marks selected future installments as paid when a payment is confirmed", () => {

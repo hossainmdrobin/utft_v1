@@ -10,6 +10,7 @@ interface IInstallment extends Document {
   account: string;
   method:string;
   month:string;
+  status:string;
   created_at?: string;
   updated_at?: string;
 }
@@ -22,6 +23,7 @@ const installmentSchema = new Schema(
     description: { type: String, },
     cus_name: { type: String },
     month:{type:String},
+    status:{type:String, default:"regular", emun:["regular", "due", "advance"]},
     method: {type:String,default:'aamarpay' },
     member: { type: Schema.Types.ObjectId, ref: "Member" },
     account: { type: Schema.Types.ObjectId, ref: "Account" },

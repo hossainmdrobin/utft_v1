@@ -9,6 +9,7 @@ import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 import {
   applyInstallmentPayment,
   calculateFinancialSummary,
+  calculatePerInstallmentFine,
   getInstallmentStatus,
   INSTALLMENT_WARNING_DAYS,
   type InstallmentRecord,
@@ -63,6 +64,11 @@ export default function PaymentsPage() {
 
   const dueInstallments = useMemo(
     () => installments.filter((installment) => installment.status !== "PAID" && ["DUE", "OVERDUE"].includes(getInstallmentStatus(installment, currentDate))),
+    [installments, currentDate],
+  );
+
+  const fineInstallments = useMemo(
+    () => installments.filter((installment) => installment.status !== "PAID" && calculatePerInstallmentFine(installment, currentDate) > 0),
     [installments, currentDate],
   );
 
@@ -229,26 +235,57 @@ export default function PaymentsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5 text-primary" /> Due installments</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5 text-primary" /> Fine section</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {dueInstallments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No installments are currently due.</p>
+            {fineInstallments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No fine is currently due for unpaid installments.</p>
             ) : (
-              dueInstallments.map((installment) => (
-                <div key={installment.id} className="rounded-lg border p-3">
-                  <p className="font-medium">{formatMonthLabel(installment.period)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="font-semibold">{currency(installment.amount)}</p>
-                    <Button size="sm">Pay</Button>
+              fineInstallments.map((installment) => {
+                const fineAmount = calculatePerInstallmentFine(installment, currentDate);
+                return (
+                  <div key={installment.id} className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/60 dark:bg-red-950/20">
+                    <p className="font-medium">{formatMonthLabel(installment.period)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-red-700 dark:text-red-300">Fine: {currency(fineAmount)}</p>
+                        <p className="text-xs text-muted-foreground">{getInstallmentStatus(installment, currentDate)}</p>
+                      </div>
+                      <Button size="sm" variant="destructive">Pay fine</Button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5 text-primary" /> Due installments</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {dueInstallments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No installments are currently due.</p>
+          ) : (
+            dueInstallments.map((installment) => (
+              <div key={installment.id} className="rounded-lg border p-3">
+                <p className="font-medium">{formatMonthLabel(installment.period)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{currency(installment.amount)}</p>
+                    <p className="text-xs text-red-600">Fine: {currency(calculatePerInstallmentFine(installment, currentDate))}</p>
+                  </div>
+                  <Button size="sm">Pay</Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -348,9 +385,11 @@ export default function PaymentsPage() {
             <p>Total Installments Generated: {summary.totalInstallmentsGenerated}</p>
             <p>Paid Installments: {summary.paidInstallments}</p>
             <p>Due Installments: {summary.dueInstallments}</p>
+            <p>Fine Installments: {summary.fineInstallments}</p>
             <p>Upcoming Installments: {summary.upcomingInstallments}</p>
             <p>Total Amount Paid: {currency(summary.totalPaidAmount)}</p>
             <p>Total Amount Due: {currency(summary.totalDueAmount)}</p>
+            <p>Fine Amount: {currency(summary.totalFineAmount)}</p>
             <p>Upcoming Amount: {currency(summary.upcomingAmount)}</p>
           </CardContent>
         </Card>

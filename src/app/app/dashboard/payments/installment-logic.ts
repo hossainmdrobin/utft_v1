@@ -22,10 +22,13 @@ export type FinancialSummary = {
   totalPaidAmount: number;
   totalDueAmount: number;
   upcomingAmount: number;
+  totalFineAmount: number;
+  fineInstallments: number;
 };
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 export const INSTALLMENT_WARNING_DAYS = 5;
+export const FINE_PER_INSTALLMENT = 100;
 
 export function normalizeDate(date: string | Date): Date {
   const value = typeof date === "string" ? new Date(date) : date;
@@ -54,6 +57,19 @@ export function getInstallmentStatus(installment: InstallmentRecord, currentDate
   return "OVERDUE";
 }
 
+export function calculatePerInstallmentFine(installment: InstallmentRecord, currentDate: string | Date = new Date()): number {
+  if (installment.status === "PAID") {
+    return 0;
+  }
+
+  const status = getInstallmentStatus(installment, currentDate);
+  if (status === "DUE" || status === "OVERDUE") {
+    return FINE_PER_INSTALLMENT;
+  }
+
+  return 0;
+}
+
 export function calculateFinancialSummary(installments: InstallmentRecord[], currentDate: string | Date = new Date()): FinancialSummary {
   const monthlyInstallment = installments[0]?.amount ?? 0;
   const paidInstallments = installments.filter((installment) => installment.status === "PAID").length;
@@ -80,6 +96,8 @@ export function calculateFinancialSummary(installments: InstallmentRecord[], cur
       return status === "UPCOMING" || status === "DUE_SOON";
     })
     .reduce((total, installment) => total + installment.amount, 0);
+  const fineInstallments = installments.filter((installment) => calculatePerInstallmentFine(installment, currentDate) > 0).length;
+  const totalFineAmount = installments.reduce((total, installment) => total + calculatePerInstallmentFine(installment, currentDate), 0);
 
   return {
     monthlyInstallment,
@@ -90,6 +108,8 @@ export function calculateFinancialSummary(installments: InstallmentRecord[], cur
     totalPaidAmount,
     totalDueAmount,
     upcomingAmount,
+    totalFineAmount,
+    fineInstallments,
   };
 }
 
