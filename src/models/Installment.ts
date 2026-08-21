@@ -1,6 +1,6 @@
 import { Document, Schema, model, models } from "mongoose";
 
-interface IOnlineTransaction extends Document {
+interface IInstallment extends Document {
   transaction_id: string;
   amount: number;
   currency: string;
@@ -12,7 +12,7 @@ interface IOnlineTransaction extends Document {
   updated_at?: string;
 }
 
-const onlineTransactionSchema = new Schema(
+const installmentSchema = new Schema(
   {
     transaction_id: { type: String, required: true, unique: true },
     amount: { type: Number, required: true },
@@ -25,6 +25,6 @@ const onlineTransactionSchema = new Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-export const OnlineTransaction =
-  models.OnlineTransaction || model("OnlineTransaction", onlineTransactionSchema);
-export type OnlineTransactionDoc = IOnlineTransaction;
+export const Installment =
+  models.Installment || model("OnlineTransaction", installmentSchema);
+export type InstallmentDoc = IInstallment;

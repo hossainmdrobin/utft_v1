@@ -1,4 +1,4 @@
-import { OnlineTransaction } from "@/models/OnlineTransaction";
+import { Installment } from "@/models/Installment";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       const amount = url.searchParams.get('amount')
       const member = url.searchParams.get('user_id')
 
-      await OnlineTransaction.create({ transaction_id, amount, member })
+      await Installment.create({ transaction_id, amount, member })
     }
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");
     return NextResponse.redirect("https://utft-v1.vercel.app", 303);
