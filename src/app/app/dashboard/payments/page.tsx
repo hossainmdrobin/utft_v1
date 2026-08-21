@@ -15,7 +15,7 @@ import {
   type InstallmentRecord,
 } from "./installment-logic";
 import { memberInstallments, paymentTransactions } from "./installment-data";
-import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
+import { useCreateAamarPayPaymentMutation, useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
@@ -52,6 +52,7 @@ export default function PaymentsPage() {
   const { data: currentUserData } = useGetCurrentUserQuery();
   const {data:setting} = useGetSettingsQuery();
   const [createPayment,{data:aamarpayPaymentData,}] = useCreateAamarPayPaymentMutation()
+  const {data:installmentData} = useGetInstallmentsQuery({})
 
   const [selectedInstallmentIds, setSelectedInstallmentIds] = useState<string[]>([]);
   const [filter, setFilter] = useState<FilterStatus>("ALL");
