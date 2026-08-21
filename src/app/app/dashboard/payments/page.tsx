@@ -14,6 +14,8 @@ import {
   type InstallmentRecord,
 } from "./installment-logic";
 import { memberInstallments, paymentTransactions } from "./installment-data";
+import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
+import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
 
@@ -45,7 +47,11 @@ function getStatusBadgeVariant(status: string) {
 }
 
 export default function PaymentsPage() {
+  //RTK QUERY
   const { data: currentUserData } = useGetCurrentUserQuery();
+  const {data:setting} = useGetSettingsQuery();
+  const [createPayment,{data:aamarpayPaymentData,}] = useCreateAamarPayPaymentMutation()
+
   const [selectedInstallmentIds, setSelectedInstallmentIds] = useState<string[]>([]);
   const [filter, setFilter] = useState<FilterStatus>("ALL");
   const [installments, setInstallments] = useState<InstallmentRecord[]>(memberInstallments);

@@ -8,6 +8,7 @@ interface IInstallment extends Document {
   cus_name: string;
   member: string;
   account: string;
+  method:string;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,6 +20,7 @@ const installmentSchema = new Schema(
     currency: { type: String ,default:'BDT'},
     description: { type: String, },
     cus_name: { type: String },
+    method: {type:String,default:'aamarpay' },
     member: { type: Schema.Types.ObjectId, ref: "Member" },
     account: { type: Schema.Types.ObjectId, ref: "Account" },
   },
