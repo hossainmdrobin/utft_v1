@@ -8,7 +8,7 @@ function getBaseUrl(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const user = getCurrentMember(request);
+    const user = await getCurrentMember(request);
     if (!user) {
         return NextResponse.json({ error: "You must be logged in to make a payment." }, { status: 401 });
     }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
             cus_add1: "Dhaka",
             cus_city: "Dhaka",
             cus_country: "Bangladesh",
-            success_url: `${baseUrl}/api/aamarpay/callback?status=success&transactionId=${transactionId}&amount=${amount.toFixed(2)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&description=${encodeURIComponent(description)}`,
+            success_url: `${baseUrl}/api/aamarpay/callback?status=success&transactionId=${transactionId}&amount=${amount.toFixed(2)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&description=${encodeURIComponent(description)}&user_id=${user._id}`,
             fail_url: `${baseUrl}/api/aamarpay/callback?status=fail`,
             cancel_url: `${baseUrl}/api/aamarpay/callback?status=cancel`,
             type: "json",

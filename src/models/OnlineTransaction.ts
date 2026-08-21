@@ -16,11 +16,11 @@ const onlineTransactionSchema = new Schema(
   {
     transaction_id: { type: String, required: true, unique: true },
     amount: { type: Number, required: true },
-    currency: { type: String, required: true },
-    description: { type: String, required: true },
-    cus_name: { type: String, required: true },
-    member: { type: Schema.Types.ObjectId, ref: "Member", required: true },
-    account: { type: Schema.Types.ObjectId, ref: "Account", required: true },
+    currency: { type: String ,default:'BDT'},
+    description: { type: String, },
+    cus_name: { type: String },
+    member: { type: Schema.Types.ObjectId, ref: "Member" },
+    account: { type: Schema.Types.ObjectId, ref: "Account" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
