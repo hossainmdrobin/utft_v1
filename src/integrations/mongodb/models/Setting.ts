@@ -14,6 +14,8 @@ interface ISetting extends Document {
   default_contribution_amount: number;
   default_due_day: number;
   fine_enabled: boolean;
+  fine_per_share:boolean;
+  amount:number;
   next_member_serial: number;
   share_value: number;
   updated_by?: string;
@@ -36,6 +38,8 @@ const settingSchema = new Schema(
     default_contribution_amount: { type: Number, required: true, default: 0 },
     default_due_day: { type: Number, required: true, min: 1, max: 28, default: 10 },
     fine_enabled: { type: Boolean, default: true },
+    fine_per_share:{type:Boolean, default:false},
+    amount:{type:Number, default:200},
     next_member_serial: { type: Number, required: true, default: 1 },
     share_value: { type: Number, required: true, default: 0 },
     updated_by: { type: Schema.Types.ObjectId, ref: "User" },

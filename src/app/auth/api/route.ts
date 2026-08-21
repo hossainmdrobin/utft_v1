@@ -71,6 +71,18 @@ export async function PUT(req: NextRequest) {
 }
 
 
+// LOGOUT - CLEAR TOKEN COOKIE
+export async function DELETE(req: NextRequest) {
+  try {
+    const response = NextResponse.json({ data: { success: true } });
+    response.cookies.delete("token");
+    return response;
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error)?.message || "Logout failed" }, { status: 400 });
+  }
+}
+
+
 // LOGIN WITH USER ID AND PASSWORD
 export async function POST(req: NextRequest) {
   await connectDB();

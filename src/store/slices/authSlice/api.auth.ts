@@ -57,11 +57,18 @@ export const authApi = injectEndpoint("authApi", (builder) => ({
       method: "GET",
     }),
   }),
+  logout: builder.mutation<{ data: { success: boolean } }, void>({
+    query: () => ({
+      url: "/auth/api",
+      method: "DELETE",
+    }),
+  }),
 }));
 
 export const {
   useVerifyCredentialsMutation,
   useLoginMutation,
   useUpdateAuthUserMutation,
-  useGetCurrentUserQuery
+  useGetCurrentUserQuery,
+  useLogoutMutation
 } = authApi;

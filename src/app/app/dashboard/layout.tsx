@@ -3,12 +3,16 @@ import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import {
   Menu,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Sidebar, { navigation } from "./Sidebar";
+import { useGetCurrentUserQuery, useLogoutMutation } from "@/store/slices/authSlice/api.auth";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,6 +22,29 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+  const { data: currentUserData } = useGetCurrentUserQuery();
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
+
+  const currentUser = currentUserData?.data;
+
+  const handleLogout = async () => {
+    try {
+      await logout(undefined).unwrap();
+      localStorage.removeItem("access_token");
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+      router.replace("/auth");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Logout failed. Please try again.",
+      });
+    }
+  };
 
   return (
     <>
@@ -65,16 +92,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="border-t border-sidebar-border p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-semibold">A</span>
+                <span className="text-primary-foreground font-semibold">
+                  {currentUser?.full_name?.charAt(0).toUpperCase() || currentUser?.email?.charAt(0).toUpperCase() || "A"}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  Admin User
+                  {currentUser?.full_name || "User"}
                 </p>
                 <p className="text-xs text-sidebar-foreground/60 truncate">
-                  admin@trustapp.com
+                  {currentUser?.email || ""}
                 </p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-sidebar-foreground hover:bg-sidebar-accent"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

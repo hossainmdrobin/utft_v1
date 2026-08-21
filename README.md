@@ -72,3 +72,16 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 # utft_v1
+
+## AamarPay configuration
+
+Add these server environment variables before using the payment form:
+
+```env
+AAMARPAY_STORE_ID=your-store-id
+AAMARPAY_SIGNATURE_KEY=your-signature-key
+AAMARPAY_SANDBOX=true
+NEXT_PUBLIC_APP_URL=https://your-domain.example
+```
+
+Set `AAMARPAY_SANDBOX=false` for live payments. `NEXT_PUBLIC_APP_URL` must be a public URL in deployed environments so AamarPay can reach the callback endpoint.
