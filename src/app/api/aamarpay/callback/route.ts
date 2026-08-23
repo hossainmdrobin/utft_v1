@@ -1,4 +1,5 @@
 import { Installment } from "@/models/Installment";
+import { getCurrentDhakaDate } from "@/lib/date/dhaka";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +18,17 @@ export async function POST(request: NextRequest) {
       const transaction_id = url.searchParams.get("transactionId");
       const amount = url.searchParams.get('amount')
       const member = url.searchParams.get('user_id')
+      const { month, year } = getCurrentDhakaDate();
 
-      await Installment.create({ transaction_id, amount, member })
+      if (member) {
+        await Installment.findOneAndUpdate(
+          { member, month, year },
+          { transaction_id, amount, member, month, year, status: "regular" },
+          { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+      } else {
+        await Installment.create({ transaction_id, amount, member, month, year, status: "regular" });
+      }
     }
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");
     return NextResponse.redirect("https://utft-v1.vercel.app", 303);
