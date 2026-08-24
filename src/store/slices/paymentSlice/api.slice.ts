@@ -1,43 +1,42 @@
 import { injectEndpoint } from "@/store/baseApi";
 
 export interface Installment {
-  _id: string;
-  transaction_id: string;
-  amount: number;
-  currency: string;
-  description: string;
-  cus_name: string;
-  member: string;
-  account: string;
-  method: string;
+	_id: string;
+	transaction_id: string;
+	amount: number;
+	currency: string;
+	description: string;
+	cus_name: string;
+	member: string;
+	account: string;
+	method: string;
 	month?: number;
 	year?: number;
-  created_at?: string;
-  updated_at?: string;
+	created_at?: string;
+	updated_at?: string;
 }
 
 export interface GetInstallmentsParams {
-  member?: string;
-  method?: string;
-  currency?: string;
-  amount_min?: number;
-  amount_max?: number;
-  created_from?: string;
-  created_to?: string;
-  search?: string;
+	member?: string;
+	method?: string;
+	currency?: string;
+	amount_min?: number;
+	amount_max?: number;
+	created_from?: string;
+	created_to?: string;
+	search?: string;
 }
 
 export interface GetInstallmentsResponse {
-  data: Installment[];
-  count: number;
+	data: Installment[];
+	count: number;
 }
 
 export interface CreatePaymentRequest {
-	amount: string;
+	amount: number;
 	description: string;
 	name: string;
-	email: string;
-	phone: string;
+	installments:{year:number, month:number}
 }
 
 export interface CreatePaymentResponse {

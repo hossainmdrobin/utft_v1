@@ -17,6 +17,7 @@ import {
 import { memberInstallments, paymentTransactions } from "./installment-data";
 import { useCreateAamarPayPaymentMutation, useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
+import { getCurrentDhakaDate } from "@/lib/date/dhaka";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
 
@@ -48,6 +49,8 @@ function getStatusBadgeVariant(status: string) {
 }
 
 export default function PaymentsPage() {
+  // CUSTOM HOOKS
+  const {month, year} = getCurrentDhakaDate()
   //RTK QUERY
   const { data: currentUserData } = useGetCurrentUserQuery();
   const {data:setting} = useGetSettingsQuery();
@@ -106,6 +109,11 @@ export default function PaymentsPage() {
 
   const handleAdvancePay = () => {
     if (selectedInstallmentIds.length === 0) return;
+    createPayment({
+      amount:500, 
+      description:"Payment in advance",
+      installments:[]
+    })
     const nextInstallments = applyInstallmentPayment(installments, selectedInstallmentIds, "TXN-ADVANCE-NEW", currentDate.toISOString());
     setInstallments(nextInstallments);
     setSelectedInstallmentIds([]);
