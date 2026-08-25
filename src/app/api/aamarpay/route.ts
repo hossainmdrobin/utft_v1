@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
     const email = String(body.email || "").trim();
     const phone = String(body.phone || "").trim();
     const description = String(body.description || "Membership payment").trim();
+    const installments = body.installments
+    const status = body.status
 
     if (!Number.isFinite(amount) || amount <= 0 || !name || !email || !phone || !description) {
         return NextResponse.json({ error: "A valid amount and all customer details are required." }, { status: 400 });
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
             cus_add1: "Dhaka",
             cus_city: "Dhaka",
             cus_country: "Bangladesh",
-            success_url: `${baseUrl}/api/aamarpay/callback?status=success&transactionId=${transactionId}&amount=${amount.toFixed(2)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&description=${encodeURIComponent(description)}&user_id=${user._id}`,
+            success_url: `${baseUrl}/api/aamarpay/callback?status=success&installmentStatus=${status}&transactionId=${transactionId}&amount=${amount.toFixed(2)}&description=${encodeURIComponent(description)}&user_id=${user._id}`,
             fail_url: `${baseUrl}/api/aamarpay/callback?status=fail`,
             cancel_url: `${baseUrl}/api/aamarpay/callback?status=cancel`,
             type: "json",

@@ -298,14 +298,7 @@ export default function PaymentsPage() {
             </Card>
 
             <AdvanceInstallmentsCard
-                installments={advanceOptions}
-                selectedInstallmentIds={selectedInstallmentIds}
-                advanceTotal={advanceTotal}
                 currency={currency}
-                formatMonthLabel={formatMonthLabel}
-                formatDueDate={formatDueDate}
-                onToggleSelection={toggleInstallmentSelection}
-                onAdvancePay={handleAdvancePay}
             />
 
             <Card>

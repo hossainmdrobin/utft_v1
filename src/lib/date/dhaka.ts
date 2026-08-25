@@ -21,3 +21,5 @@ export function getCurrentDhakaDate(date = new Date()): DhakaDate {
     year: getPart("year"),
   };
 }
+
+export const monthArray = ["Jan", "Feb", "March", "April","May", "June","July", "Aug", "Sep","Oct","Nov","Dec"]

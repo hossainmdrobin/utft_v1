@@ -36,7 +36,7 @@ export interface CreatePaymentRequest {
 	amount: number;
 	description: string;
 	name: string;
-	installments:{year:number, month:number}
+	installments:[{year:number, month:number}]
 }
 
 export interface CreatePaymentResponse {
