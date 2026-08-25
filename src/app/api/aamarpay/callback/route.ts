@@ -73,9 +73,9 @@ export async function POST(request: NextRequest) {
       }
     }
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");
-    return NextResponse.redirect("https://utft-v1.vercel.app", 303);
+    return NextResponse.redirect("http://localhost:3000/app/dashboard/payments", 303);
   } catch (error) {
     console.error("Error processing AamarPay callback:", error);
-    return NextResponse.redirect("https://utft-v1.vercel.app", 303);
+    return NextResponse.redirect("http://localhost:3000/app/dashboard/payments", 303);
   }
 }
