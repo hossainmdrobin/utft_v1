@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         : [];
     const status = String(body.status || "");
 
-    if (!Number.isFinite(amount) || amount <= 0 || !name || !email || !phone || !description) {
+    if (!Number.isFinite(amount) || amount <= 0) {
         return NextResponse.json({ error: "A valid amount and all customer details are required." }, { status: 400 });
     }
 
@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
             amount: amount.toFixed(2),
             currency: "BDT",
             desc: description,
-            cus_name: name,
-            cus_email: email,
-            cus_phone: phone,
+            cus_name: 'name',
+            cus_email: 'email@gmail.com',
+            cus_phone: '012343544',
             cus_add1: "Dhaka",
             cus_city: "Dhaka",
             cus_country: "Bangladesh",

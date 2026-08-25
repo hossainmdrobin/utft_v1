@@ -2,30 +2,37 @@ import { CircleDollarSign, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
+import { url } from "inspector";
 
 type AdvanceInstallmentsCardProps = {
     currency: (amount: number) => string;
 };
 
-export function AdvanceInstallmentsCard({    
+export function AdvanceInstallmentsCard({
     currency,
 }: AdvanceInstallmentsCardProps) {
     const { month, year } = getCurrentDhakaDate()
     const { data: settings } = useGetSettingsQuery()
 
     const [installments, setInstallments] = useState([{ month: (month + 1) % 12, year: (month + 1) > 12 ? year + 1 : year }])
-    const [createInstallment,{data:newInstallmentData}] = useCreateAamarPayPaymentMutation()
-
-    const handleAdvancePayment = () =>{
-        createInstallment({installments, 
-            amount:installments.length*(settings?.data?.share_value || 0),
-            description:"Advanced Payment"
+    const [createInstallment, { data: newInstallmentData, error, isLoading }] = useCreateAamarPayPaymentMutation()
+    console.log('advacne payerror:', newInstallmentData, error, isLoading)
+    const handleAdvancePayment = () => {
+        createInstallment({
+            installments,
+            amount: installments.length * (settings?.data?.share_value || 0),
+            description: "Advanced Payment",
+            status: "advance",
         })
     }
-    console.log(month, year, "cuent month year")
+    useEffect(() => {
+        if (newInstallmentData) {
+            window.location.replace(newInstallmentData.paymentUrl);
+        }
+    }, [newInstallmentData])
     return (
         <Card>
             <CardHeader>
@@ -35,7 +42,7 @@ export function AdvanceInstallmentsCard({
                         Select unpaid future installments and pay them together. Only unpaid future records are eligible.
                     </CardDescription>
                     <Button
-                    onClick={()=>setInstallments([{ month: (month + 1) % 12, year: (month + 1) > 12 ? year + 1 : year }])}
+                        onClick={() => setInstallments([{ month: (month + 1) % 12, year: (month + 1) > 12 ? year + 1 : year }])}
                         className=""
                     >Reset</Button>
 
@@ -76,11 +83,11 @@ export function AdvanceInstallmentsCard({
                     </div>
                     <div className="text-left sm:text-right">
                         <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="text-2xl font-bold">{currency((settings?.data?.share_value || 0)*installments.length)}</p>
+                        <p className="text-2xl font-bold">{currency((settings?.data?.share_value || 0) * installments.length)}</p>
                     </div>
                     <Button
-                    onClick={handleAdvancePayment}
-                      disabled={installments.length === 0}>
+                        onClick={handleAdvancePayment}
+                        disabled={installments.length === 0}>
                         <ShieldCheck className="mr-2 h-4 w-4" />
                         Pay {currency((settings?.data?.share_value || 0) * installments.length)}
                     </Button>

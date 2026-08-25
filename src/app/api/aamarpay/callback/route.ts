@@ -18,17 +18,58 @@ export async function POST(request: NextRequest) {
       const transaction_id = url.searchParams.get("transactionId");
       const amount = url.searchParams.get('amount')
       const member = url.searchParams.get('user_id')
-      const installments = url.searchParams.get('installments')
+      const installmentStatus = url.searchParams.get('installmentStatus')
       const { month, year } = getCurrentDhakaDate();
+      const parsedInstallments = JSON.parse(url.searchParams.get('installments') || "[]");
+      const installments = Array.isArray(parsedInstallments)
+        ? parsedInstallments.filter(
+            (installment): installment is { month: number; year: number } =>
+              Number.isInteger(installment?.month) &&
+              installment.month >= 1 &&
+              installment.month <= 12 &&
+              Number.isInteger(installment?.year) &&
+              installment.year >= 2000,
+          )
+        : [];
+      const periods = Array.from(
+        new Map(
+          (installments.length > 0 ? installments : [{ month, year }]).map((installment) => [
+            `${installment.year}-${installment.month}`,
+            installment,
+          ]),
+        ).values(),
+      );
+      const installmentAmount = Number(amount) / periods.length;
+      const status = installmentStatus === "regular" || installments.length === 0 ? "regular" : "advance";
 
       if (member) {
-        await Installment.findOneAndUpdate(
-          { member, month, year },
-          { transaction_id, amount, member, month, year, status: "regular" },
-          { upsert: true, new: true, setDefaultsOnInsert: true },
+        await Promise.all(
+          periods.map(({ month: installmentMonth, year: installmentYear }) =>
+            Installment.findOneAndUpdate(
+              { member, month: installmentMonth, year: installmentYear },
+              {
+                transaction_id,
+                amount: installmentAmount,
+                member,
+                month: installmentMonth,
+                year: installmentYear,
+                status,
+              },
+              { upsert: true, new: true, setDefaultsOnInsert: true },
+            ),
+          ),
         );
       } else {
-        await Installment.create({ transaction_id, amount, member, month, year, status: "regular" });
+        await Installment.create(
+          periods.map(({ month: installmentMonth, year: installmentYear }) => ({
+            transaction_id,
+            amount: installmentAmount,
+            member,
+            month: installmentMonth,
+            year: installmentYear,
+            status,
+          })),
+        );
       }
     }
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");

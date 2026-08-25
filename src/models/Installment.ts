@@ -36,5 +36,5 @@ const installmentSchema = new Schema(
 installmentSchema.index({ member: 1, month: 1, year: 1 }, { unique: true, sparse: true });
 
 export const Installment =
-  models.Installment || model("OnlineTransaction", installmentSchema);
+  models.Installment || model("Installment", installmentSchema);
 export type InstallmentDoc = IInstallment;
