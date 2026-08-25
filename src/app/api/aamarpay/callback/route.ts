@@ -1,4 +1,5 @@
 import { Installment } from "@/models/Installment";
+import { GatewayTransaction } from "@/models/GatewayTransaction";
 import { getCurrentDhakaDate } from "@/lib/date/dhaka";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
       const amount = url.searchParams.get('amount')
       const member = url.searchParams.get('user_id')
       const installmentStatus = url.searchParams.get('installmentStatus')
+      const description = url.searchParams.get('description')
       const { month, year } = getCurrentDhakaDate();
       const parsedInstallments = JSON.parse(url.searchParams.get('installments') || "[]");
       const installments = Array.isArray(parsedInstallments)
@@ -70,6 +72,16 @@ export async function POST(request: NextRequest) {
             status,
           })),
         );
+      }
+
+      if (transaction_id && member) {
+        await GatewayTransaction.create({
+          transaction_id,
+          member,
+          amount: Number(amount),
+          description: description || "",
+          status: "success",
+        });
       }
     }
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");

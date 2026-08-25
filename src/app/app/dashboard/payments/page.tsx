@@ -30,9 +30,6 @@ function formatMonthLabel(period: string) {
     return new Intl.DateTimeFormat("en-BD", { month: "long", year: "numeric" }).format(date);
 }
 
-function formatDueDate(date: string) {
-    return new Intl.DateTimeFormat("en-BD", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date));
-}
 
 function getStatusBadgeVariant(status: string) {
     switch (status) {
@@ -56,8 +53,8 @@ export default function PaymentsPage() {
     const { data: currentUserData } = useGetCurrentUserQuery();
     const { data: setting } = useGetSettingsQuery();
     const [createPayment, { data: aamarpayPaymentData, }] = useCreateAamarPayPaymentMutation()
-    const { data: installmentData } = useGetInstallmentsQuery({})
-
+    const { data: installmentData } = useGetInstallmentsQuery({member:String(currentUserData?.data?._id)})
+console.log(installmentData, currentUserData)
     const [selectedInstallmentIds, setSelectedInstallmentIds] = useState<string[]>([]);
     const [filter, setFilter] = useState<FilterStatus>("ALL");
     const [installments, setInstallments] = useState<InstallmentRecord[]>(memberInstallments);
@@ -77,48 +74,12 @@ export default function PaymentsPage() {
         [installments, currentDate],
     );
 
-    const upcomingInstallments = useMemo(
-        () => installments.filter((installment) => installment.status !== "PAID" && getInstallmentStatus(installment, currentDate) === "UPCOMING"),
-        [installments, currentDate],
-    );
-
     const warningItems = useMemo(
         () => installments.filter((installment) => installment.status !== "PAID" && ["DUE_SOON", "DUE", "OVERDUE"].includes(getInstallmentStatus(installment, currentDate))),
         [installments, currentDate],
     );
 
-    const filteredHistory = useMemo(() => {
-        if (filter === "ALL") return installments;
-        return installments.filter((installment) => getInstallmentStatus(installment, currentDate) === filter || (installment.status === "PAID" && filter === "PAID"));
-    }, [filter, installments, currentDate]);
 
-    const advanceOptions = useMemo(
-        () => upcomingInstallments.filter((installment) => !selectedInstallmentIds.includes(installment.id) || selectedInstallmentIds.includes(installment.id)),
-        [selectedInstallmentIds, upcomingInstallments],
-    );
-
-    const advanceTotal = useMemo(
-        () => installments.filter((installment) => selectedInstallmentIds.includes(installment.id)).reduce((total, installment) => total + installment.amount, 0),
-        [installments, selectedInstallmentIds],
-    );
-
-    const toggleInstallmentSelection = (installmentId: string) => {
-        setSelectedInstallmentIds((current) =>
-            current.includes(installmentId) ? current.filter((id) => id !== installmentId) : [...current, installmentId],
-        );
-    };
-
-    const handleAdvancePay = () => {
-        if (selectedInstallmentIds.length === 0) return;
-        createPayment({
-            amount: 500,
-            description: "Payment in advance",
-            installments: []
-        })
-        const nextInstallments = applyInstallmentPayment(installments, selectedInstallmentIds, "TXN-ADVANCE-NEW", currentDate.toISOString());
-        setInstallments(nextInstallments);
-        setSelectedInstallmentIds([]);
-    };
 
     const nextInstallment = installments.find((installment) => installment.status !== "PAID") ?? installments[0];
     const nextInstallmentStatus = nextInstallment ? getInstallmentStatus(nextInstallment, currentDate) : "PAID";
@@ -164,7 +125,7 @@ export default function PaymentsPage() {
                         <CardTitle className="text-3xl font-semibold">{currency(nextInstallment?.amount ?? 0)}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Due: {nextInstallment ? formatDueDate(nextInstallment.dueDate) : "N/A"}</p>
+                        {/* <p className="text-sm text-muted-foreground">Due: {nextInstallment ? formatDueDate(nextInstallment.dueDate) : "N/A"}</p> */}
                         <p className="text-sm text-muted-foreground">{Math.abs(nextDueDays)} days remaining</p>
                         <Badge variant={getStatusBadgeVariant(nextInstallmentStatus)}>{nextInstallmentStatus}</Badge>
                     </CardContent>
@@ -256,7 +217,7 @@ export default function PaymentsPage() {
                                 return (
                                     <div key={installment.id} className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/60 dark:bg-red-950/20">
                                         <p className="font-medium">{formatMonthLabel(installment.period)}</p>
-                                        <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p>
+                                        {/* <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p> */}
                                         <div className="mt-2 flex items-center justify-between gap-3">
                                             <div>
                                                 <p className="font-semibold text-red-700 dark:text-red-300">Fine: {currency(fineAmount)}</p>
@@ -283,7 +244,7 @@ export default function PaymentsPage() {
                         dueInstallments.map((installment) => (
                             <div key={installment.id} className="rounded-lg border p-3">
                                 <p className="font-medium">{formatMonthLabel(installment.period)}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p>
+                                {/* <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p> */}
                                 <div className="mt-2 flex items-center justify-between gap-3">
                                     <div>
                                         <p className="font-semibold">{currency(installment.amount)}</p>
@@ -330,15 +291,15 @@ export default function PaymentsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredHistory.map((installment) => {
-                                    const status = getInstallmentStatus(installment, currentDate);
+                                {installmentData?.data?.map((installment) => {
                                     return (
-                                        <tr key={installment.id} className="border-b last:border-0">
-                                            <td className="py-3 pr-4">{formatMonthLabel(installment.period)}</td>
-                                            <td className="py-3 pr-4">{formatDueDate(installment.dueDate)}</td>
+                                        <tr key={installment._id} className="border-b last:border-0">
+                                            <td className="py-3 pr-4">{installment.month}</td>
+                                            <td className="py-3 pr-4">3/3/23</td>
                                             <td className="py-3 pr-4">{currency(installment.amount)}</td>
                                             <td className="py-3">
-                                                <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>
+                                                {installment?.status}
+                                                {/* <Badge variant={getStatusBadgeVariant(installment?.status)}>{installment?.status}</Badge> */}
                                             </td>
                                         </tr>
                                     );
