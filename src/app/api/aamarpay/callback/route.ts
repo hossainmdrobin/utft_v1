@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       const transaction_id = url.searchParams.get("transactionId");
       const amount = url.searchParams.get('amount')
       const member = url.searchParams.get('user_id')
+      const installments = url.searchParams.get('installments')
       const { month, year } = getCurrentDhakaDate();
 
       if (member) {
