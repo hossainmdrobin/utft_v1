@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-type InstallmentParam = { month: number; year: number };
+type InstallmentParam = { month: number; year: number; day?: number };
 
 function getBaseUrl(request: NextRequest) {
     return process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
             .filter((installment): installment is InstallmentParam =>
                 Number.isInteger(installment?.month) && Number.isInteger(installment?.year),
             )
-            .map(({ month, year }) => ({ month, year }))
+            .map(({ month, year, day }) => ({ month, year, day: Number.isInteger(day) ? day : undefined }))
         : [];
     const status = String(body.status || "");
 

@@ -1,17 +1,19 @@
 import { Document, Schema, model, models } from "mongoose";
 
 interface IInstallment extends Document {
-  transaction_id: string;
+  transaction_id?: string;
   amount: number;
-  currency: string;
-  description: string;
-  cus_name: string;
-  member: string;
-  account: string;
-  method:string;
-  month:number;
-  year:number;
-  status:string;
+  currency?: string;
+  description?: string;
+  cus_name?: string;
+  member?: string;
+  account?: string;
+  method?: string;
+  month?: number;
+  year?: number;
+  day?: number;
+  status?: string;
+  date?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -25,7 +27,9 @@ const installmentSchema = new Schema(
     cus_name: { type: String },
     month:{type:Number, min:1, max:12},
     year:{type:Number, min:2000},
+    day:{type:Number, min:1, max:31},
     status:{type:String, default:"regular", enum:["regular", "due", "advance"]},
+    date:{ type: String },
     method: {type:String,default:'aamarpay' },
     member: { type: Schema.Types.ObjectId, ref: "Member" },
     account: { type: Schema.Types.ObjectId, ref: "Account" },

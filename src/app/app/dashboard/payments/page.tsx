@@ -20,6 +20,7 @@ import {
 } from "@/store/slices/paymentSlice/api.slice";
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import { AdvanceInstallmentsCard } from "./advance-installments-card";
+import { DueInstallmentsCard } from "./due-installments-card";
 import { InstallmentHistoryCard } from "./installment-history-card";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
@@ -204,30 +205,7 @@ export default function PaymentsPage() {
                 </Card>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5 text-primary" /> Due installments</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    {dueInstallments.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No installments are currently due.</p>
-                    ) : (
-                        dueInstallments.map((installment) => (
-                            <div key={installment.id} className="rounded-lg border p-3">
-                                <p className="font-medium">{formatMonthLabel(installment.period)}</p>
-                                {/* <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p> */}
-                                <div className="mt-2 flex items-center justify-between gap-3">
-                                    <div>
-                                        <p className="font-semibold">{currency(installment.amount)}</p>
-                                        <p className="text-xs text-red-600">Fine: {currency(calculatePerInstallmentFine(installment, currentDate))}</p>
-                                    </div>
-                                    <Button size="sm">Pay</Button>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </CardContent>
-            </Card>
+            <DueInstallmentsCard currency={currency} />
 
             <AdvanceInstallmentsCard
                 currency={currency}

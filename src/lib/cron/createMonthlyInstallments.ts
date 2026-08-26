@@ -36,6 +36,7 @@ export async function createMonthlyInstallments(): Promise<MonthlyInstallmentRes
             member: member._id,
             month: today.month,
             year: today.year,
+            day: setting.default_due_day,
             status: "due",
             amount: setting.default_contribution_amount,
             currency: setting.currency_code,

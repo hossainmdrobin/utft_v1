@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       const parsedInstallments = JSON.parse(url.searchParams.get('installments') || "[]");
       const installments = Array.isArray(parsedInstallments)
         ? parsedInstallments.filter(
-            (installment): installment is { month: number; year: number } =>
+            (installment): installment is { month: number; year: number; day?: number } =>
               Number.isInteger(installment?.month) &&
               installment.month >= 1 &&
               installment.month <= 12 &&
@@ -35,41 +35,62 @@ export async function POST(request: NextRequest) {
         : [];
       const periods = Array.from(
         new Map(
-          (installments.length > 0 ? installments : [{ month, year }]).map((installment) => [
-            `${installment.year}-${installment.month}`,
+          (installments.length > 0 ? installments : [{ month, year, day: undefined }]).map((installment) => [
+            `${installment.year}-${installment.month}-${installment.day ?? "default"}`,
             installment,
           ]),
         ).values(),
       );
-      const installmentAmount = Number(amount) / periods.length;
-      const status = installmentStatus === "regular" || installments.length === 0 ? "regular" : "advance";
+      const normalizedStatus = installmentStatus === "due" || installmentStatus === "regular" || installmentStatus === "advance"
+        ? installmentStatus
+        : (installments.length === 0 ? "regular" : "advance");
+      const installmentAmount = Number(amount) / Math.max(periods.length, 1);
 
       if (member) {
         await Promise.all(
-          periods.map(({ month: installmentMonth, year: installmentYear }) =>
-            Installment.findOneAndUpdate(
-              { member, month: installmentMonth, year: installmentYear },
-              {
+          periods.map(({ month: installmentMonth, year: installmentYear, day: installmentDay }) => {
+            const query = {
+              member,
+              month: installmentMonth,
+              year: installmentYear,
+              ...(installmentDay !== undefined ? { day: installmentDay } : {}),
+            };
+
+            const update = {
+              $set: {
                 transaction_id,
                 amount: installmentAmount,
                 member,
                 month: installmentMonth,
                 year: installmentYear,
-                status,
+                day: installmentDay ?? undefined,
+                status: normalizedStatus,
+                date: new Date().toISOString(),
+                method: "aamarpay",
+                description: description || "Installment payment",
               },
-              { upsert: true, new: true, setDefaultsOnInsert: true },
-            ),
-          ),
+            };
+
+            return Installment.findOneAndUpdate(query, update, {
+              upsert: true,
+              new: true,
+              setDefaultsOnInsert: true,
+            });
+          }),
         );
       } else {
         await Installment.create(
-          periods.map(({ month: installmentMonth, year: installmentYear }) => ({
+          periods.map(({ month: installmentMonth, year: installmentYear, day: installmentDay }) => ({
             transaction_id,
             amount: installmentAmount,
             member,
             month: installmentMonth,
             year: installmentYear,
-            status,
+            day: installmentDay ?? undefined,
+            status: normalizedStatus,
+            date: new Date().toISOString(),
+            method: "aamarpay",
+            description: description || "Installment payment",
           })),
         );
       }

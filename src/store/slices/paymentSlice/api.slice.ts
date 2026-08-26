@@ -2,16 +2,19 @@ import { injectEndpoint } from "@/store/baseApi";
 
 export interface Installment {
 	_id: string;
-	transaction_id: string;
+	transaction_id?: string;
 	amount: number;
-	currency: string;
-	description: string;
-	cus_name: string;
-	member: string;
-	account: string;
-	method: string;
+	currency?: string;
+	description?: string;
+	cus_name?: string;
+	member?: string;
+	account?: string;
+	method?: string;
 	month?: number;
 	year?: number;
+	day?: number;
+	status?: string;
+	date?: string;
 	created_at?: string;
 	updated_at?: string;
 }
@@ -25,6 +28,10 @@ export interface GetInstallmentsParams {
 	created_from?: string;
 	created_to?: string;
 	search?: string;
+	status?: string;
+	month?: number;
+	year?: number;
+	day?: number;
 }
 
 export interface GetInstallmentsResponse {
@@ -57,7 +64,8 @@ export interface CreatePaymentRequest {
 	amount: number;
 	description: string;
 	name: string;
-	installments:[{year:number, month:number}]
+	status?: "regular" | "due" | "advance";
+	installments: Array<{ year: number; month: number; day?: number }>;
 }
 
 export interface CreatePaymentResponse {
@@ -85,6 +93,23 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 			if (params.created_from) searchParams.set("created_from", params.created_from);
 			if (params.created_to) searchParams.set("created_to", params.created_to);
 			if (params.search) searchParams.set("search", params.search);
+			if (params.status) searchParams.set("status", params.status);
+			if (params.month !== undefined) searchParams.set("month", String(params.month));
+			if (params.year !== undefined) searchParams.set("year", String(params.year));
+			if (params.day !== undefined) searchParams.set("day", String(params.day));
+			const qs = searchParams.toString();
+			return `/app/dashboard/payments/api${qs ? `?${qs}` : ""}`;
+		},
+	}),
+	getInstallment: builder.query<GetInstallmentsResponse, GetInstallmentsParams | void>({
+		query: (params) => {
+			if (!params) return "/app/dashboard/payments/api";
+			const searchParams = new URLSearchParams();
+			if (params.member) searchParams.set("member", params.member);
+			if (params.status) searchParams.set("status", params.status);
+			if (params.month !== undefined) searchParams.set("month", String(params.month));
+			if (params.year !== undefined) searchParams.set("year", String(params.year));
+			if (params.day !== undefined) searchParams.set("day", String(params.day));
 			const qs = searchParams.toString();
 			return `/app/dashboard/payments/api${qs ? `?${qs}` : ""}`;
 		},
@@ -97,5 +122,6 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 export const {
 	useCreateAamarPayPaymentMutation,
 	useGetInstallmentsQuery,
+	useGetInstallmentQuery,
 	useGetGatewayTransactionsQuery,
 } = paymentApi;
