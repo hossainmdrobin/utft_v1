@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 import {
-    applyInstallmentPayment,
     calculateFinancialSummary,
     calculatePerInstallmentFine,
     getInstallmentStatus,
@@ -16,13 +15,12 @@ import {
 } from "./installment-logic";
 import { memberInstallments } from "./installment-data";
 import {
-    useCreateAamarPayPaymentMutation,
     useGetGatewayTransactionsQuery,
     useGetInstallmentsQuery,
 } from "@/store/slices/paymentSlice/api.slice";
-import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import { AdvanceInstallmentsCard } from "./advance-installments-card";
+import { InstallmentHistoryCard } from "./installment-history-card";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
 
@@ -75,17 +73,10 @@ export default function PaymentsPage() {
         [installments, currentDate],
     );
 
-    const fineInstallments = useMemo(
-        () => installments.filter((installment) => installment.status !== "PAID" && calculatePerInstallmentFine(installment, currentDate) > 0),
-        [installments, currentDate],
-    );
-
     const warningItems = useMemo(
         () => installments.filter((installment) => installment.status !== "PAID" && ["DUE_SOON", "DUE", "OVERDUE"].includes(getInstallmentStatus(installment, currentDate))),
         [installments, currentDate],
     );
-
-
 
     const nextInstallment = installments.find((installment) => installment.status !== "PAID") ?? installments[0];
     const nextInstallmentStatus = nextInstallment ? getInstallmentStatus(nextInstallment, currentDate) : "PAID";
@@ -177,7 +168,7 @@ export default function PaymentsPage() {
                 </Card>
             )}
 
-            <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <div className="grid gap-6">
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between gap-2">
@@ -208,34 +199,6 @@ export default function PaymentsPage() {
                             </div>
                         )) : (
                             <p className="text-sm text-muted-foreground">No gateway transactions found.</p>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5 text-primary" /> Fine section</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {fineInstallments.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No fine is currently due for unpaid installments.</p>
-                        ) : (
-                            fineInstallments.map((installment) => {
-                                const fineAmount = calculatePerInstallmentFine(installment, currentDate);
-                                return (
-                                    <div key={installment.id} className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/60 dark:bg-red-950/20">
-                                        <p className="font-medium">{formatMonthLabel(installment.period)}</p>
-                                        {/* <p className="mt-1 text-sm text-muted-foreground">Due: {formatDueDate(installment.dueDate)}</p> */}
-                                        <div className="mt-2 flex items-center justify-between gap-3">
-                                            <div>
-                                                <p className="font-semibold text-red-700 dark:text-red-300">Fine: {currency(fineAmount)}</p>
-                                                <p className="text-xs text-muted-foreground">{getInstallmentStatus(installment, currentDate)}</p>
-                                            </div>
-                                            <Button size="sm" variant="destructive">Pay fine</Button>
-                                        </div>
-                                    </div>
-                                );
-                            })
                         )}
                     </CardContent>
                 </Card>
@@ -270,52 +233,14 @@ export default function PaymentsPage() {
                 currency={currency}
             />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Installment history</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                        {(["ALL", "PAID", "DUE", "OVERDUE", "UPCOMING"] as const).map((status) => (
-                            <Button
-                                key={status}
-                                variant={filter === status ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setFilter(status)}
-                            >
-                                {status}
-                            </Button>
-                        ))}
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-left text-sm">
-                            <thead>
-                                <tr className="border-b text-muted-foreground">
-                                    <th className="pb-3 pr-4 font-medium">Month</th>
-                                    <th className="pb-3 pr-4 font-medium">Due date</th>
-                                    <th className="pb-3 pr-4 font-medium">Amount</th>
-                                    <th className="pb-3 font-medium">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {installmentData?.data?.map((installment) => {
-                                    return (
-                                        <tr key={installment._id} className="border-b last:border-0">
-                                            <td className="py-3 pr-4">{installment.createdAt}</td>
-                                            <td className="py-3 pr-4">{monthArray[installment.month] + " " + installment.year}</td>
-                                            <td className="py-3 pr-4">{currency(installment.amount)}</td>
-                                            <td className="py-3">
-                                                <Badge variant={getStatusBadgeVariant(installment?.status)}>{installment?.status}</Badge>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </CardContent>
-            </Card>
+            <InstallmentHistoryCard
+                filter={filter}
+                onFilterChange={setFilter}
+                installmentData={installmentData}
+                currency={currency}
+                monthArray={monthArray}
+                getStatusBadgeVariant={getStatusBadgeVariant}
+            />
 
             <div className="grid gap-4 md:grid-cols-2">
                 <Card>
