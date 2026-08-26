@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,7 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
   const { day, month, year } = getCurrentDhakaDate();
   const { data: currentUserData } = useGetCurrentUserQuery();
   const memberId = currentUserData?.data?._id;
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const {
     data: dueInstallmentsData,
@@ -47,26 +48,52 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
     }
   }, [paymentData]);
 
-  const handlePayDueInstallment = (installment: DueInstallment) => {
-    if (!memberId) return;
+  const dueInstallments = dueInstallmentsData?.data ?? [];
 
-    const paymentAmount = Number(installment.amount ?? 0);
-    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) return;
+  const totalSelectedAmount = useMemo(
+    () =>
+      dueInstallments
+        .filter((installment) => selectedIds.includes(String(installment._id)))
+        .reduce((sum, installment) => sum + Number(installment.amount ?? 0), 0),
+    [dueInstallments, selectedIds],
+  );
 
-    const installmentMonth = Number(installment.month ?? month);
-    const installmentYear = Number(installment.year ?? year);
-    const installmentDay = Number(installment.day ?? day);
+  const toggleInstallmentSelection = (installmentId: string) => {
+    setSelectedIds((current) =>
+      current.includes(installmentId)
+        ? current.filter((id) => id !== installmentId)
+        : [...current, installmentId],
+    );
+  };
+
+  const handlePaySelectedDueInstallments = () => {
+    if (!memberId || selectedIds.length === 0) return;
+
+    const selectedInstallments = dueInstallments.filter((installment) =>
+      selectedIds.includes(String(installment._id)),
+    );
+
+    const validInstallments = selectedInstallments.filter((installment) => {
+      const amount = Number(installment.amount ?? 0);
+      return Number.isFinite(amount) && amount > 0;
+    });
+
+    if (validInstallments.length === 0) return;
+
+    const paymentAmount = validInstallments.reduce((sum, installment) => sum + Number(installment.amount ?? 0), 0);
 
     createAamarPayPayment({
       amount: paymentAmount,
-      description: `Due installment payment for ${monthArray[(installmentMonth - 1 + 12) % 12]} ${installmentYear}`,
+      description: `Due installment payment (${validInstallments.length} items)`,
       name: currentUserData?.data?.full_name || "Member",
       status: "due",
-      installments: [{ month: installmentMonth, year: installmentYear, day: installmentDay }],
+      installments: validInstallments.map((installment) => ({
+        month: Number(installment.month ?? month),
+        year: Number(installment.year ?? year),
+        day: Number(installment.day ?? day),
+      })),
     });
   };
-
-  const dueInstallments = dueInstallmentsData?.data ?? [];
 
   return (
     <Card>
@@ -76,7 +103,7 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
           Due installments
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading due installments...</p>
         ) : isError ? (
@@ -86,26 +113,55 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
         ) : dueInstallments.length === 0 ? (
           <p className="text-sm text-muted-foreground">No installments are currently due.</p>
         ) : (
-          dueInstallments.map((installment) => (
-            <div key={installment._id} className="rounded-lg border p-3">
-              <p className="font-medium">
-                {monthArray[(Number(installment.month ?? month) - 1 + 12) % 12]} {installment.year ?? year}
-              </p>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{currency(Number(installment.amount ?? 0))}</p>
-                  <p className="text-xs text-muted-foreground">Due day: {installment.day ?? day}</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => handlePayDueInstallment(installment)}
-                  disabled={isPaying || !memberId}
-                >
-                  {isPaying ? "Processing..." : "Pay"}
-                </Button>
-              </div>
+          <>
+            <div className="space-y-3">
+              {dueInstallments.map((installment) => {
+                const installmentId = String(installment._id ?? `${installment.month}-${installment.year}`);
+                const isSelected = selectedIds.includes(installmentId);
+
+                return (
+                  <label
+                    key={installmentId}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleInstallmentSelection(installmentId)}
+                        className="h-4 w-4"
+                      />
+                      <div>
+                        <p className="font-medium">
+                          {monthArray[(Number(installment.month ?? month) - 1 + 12) % 12]} {installment.year ?? year}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Due day: {installment.day ?? day}</p>
+                      </div>
+                    </div>
+                    <span className="font-semibold">{currency(Number(installment.amount ?? 0))}</span>
+                  </label>
+                );
+              })}
             </div>
-          ))
+
+            <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Selected installments</p>
+                <p className="text-xl font-semibold">{selectedIds.length} item(s)</p>
+              </div>
+              <div className="text-left sm:text-right">
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{currency(totalSelectedAmount)}</p>
+              </div>
+              <Button
+                onClick={handlePaySelectedDueInstallments}
+                disabled={selectedIds.length === 0 || isPaying || !memberId}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                {isPaying ? "Processing..." : `Pay ${currency(totalSelectedAmount)}`}
+              </Button>
+            </div>
+          </>
         )}
 
         {paymentError && (
