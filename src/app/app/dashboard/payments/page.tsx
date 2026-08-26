@@ -1,14 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, CreditCard, Landmark } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CreditCard, FileWarningIcon, Landmark, Loader, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 import {
     calculateFinancialSummary,
-    calculatePerInstallmentFine,
     getInstallmentStatus,
     INSTALLMENT_WARNING_DAYS,
     type InstallmentRecord,
@@ -22,17 +21,12 @@ import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import { AdvanceInstallmentsCard } from "./advance-installments-card";
 import { DueInstallmentsCard } from "./due-installments-card";
 import { InstallmentHistoryCard } from "./installment-history-card";
+import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
 
 const currency = (amount: number) => `৳${amount.toLocaleString()}`;
-
-function formatMonthLabel(period: string) {
-    const [year, month] = period.split("-");
-    const date = new Date(Number(year), Number(month) - 1, 1);
-    return new Intl.DateTimeFormat("en-BD", { month: "long", year: "numeric" }).format(date);
-}
-
 
 function getStatusBadgeVariant(status: string) {
     status = status.toUpperCase();
@@ -52,9 +46,10 @@ function getStatusBadgeVariant(status: string) {
 
 export default function PaymentsPage() {
     // CUSTOM HOOKS
-    const { month, year } = getCurrentDhakaDate()
+    const { day } = getCurrentDhakaDate()
     //RTK QUERY
-    const { data: currentUserData } = useGetCurrentUserQuery();
+    const { data: settings, isLoading: settingLoading } = useGetSettingsQuery()
+    const { data: currentUserData, isLaoding: userLoading } = useGetCurrentUserQuery();
     const memberId = currentUserData?.data?._id;
     const { data: installmentData } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
     const { data: gatewayTransactionData } = useGetGatewayTransactionsQuery(
@@ -69,19 +64,11 @@ export default function PaymentsPage() {
 
     const summary = useMemo(() => calculateFinancialSummary(installments, currentDate), [installments, currentDate]);
 
-    const dueInstallments = useMemo(
-        () => installments.filter((installment) => installment.status !== "PAID" && ["DUE", "OVERDUE"].includes(getInstallmentStatus(installment, currentDate))),
-        [installments, currentDate],
-    );
-
-    const warningItems = useMemo(
-        () => installments.filter((installment) => installment.status !== "PAID" && ["DUE_SOON", "DUE", "OVERDUE"].includes(getInstallmentStatus(installment, currentDate))),
-        [installments, currentDate],
-    );
-
     const nextInstallment = installments.find((installment) => installment.status !== "PAID") ?? installments[0];
     const nextInstallmentStatus = nextInstallment ? getInstallmentStatus(nextInstallment, currentDate) : "PAID";
     const nextDueDays = nextInstallment ? Math.ceil((new Date(nextInstallment.dueDate).getTime() - currentDate.getTime()) / 86400000) : 0;
+
+    if (settingLoading || userLoading) return <Skeleton />
 
     return (
         <div className="mx-auto max-w-6xl space-y-6 py-4">
@@ -90,10 +77,14 @@ export default function PaymentsPage() {
                     <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Member payment dashboard</p>
                     <h1 className="mt-1 text-3xl font-bold">{member?.full_name || "Member"} installment overview</h1>
                 </div>
-                <Button className="w-fit">
+                {settings?.data?.default_due_day < day && <div className="w-fit flex items-center justify-center text-red-400">
+                    <TriangleAlert className="mr-2 h-4 w-4" />
+                    Current month installment is due
+                </div>}
+                {settings?.data?.default_due_day >= day && <Button className="w-fit">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Pay current due
-                </Button>
+                    Pay Installment of this month
+                </Button>}
             </div>
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -139,35 +130,7 @@ export default function PaymentsPage() {
                     </CardContent>
                 </Card>
             </section>
-
-            {warningItems.length > 0 && (
-                <Card className="border-amber-500/40 bg-amber-500/5">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                            <AlertTriangle className="h-5 w-5" />
-                            Installment reminders
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {warningItems.map((item) => {
-                            const status = getInstallmentStatus(item, currentDate);
-                            const daysRemaining = Math.ceil((new Date(item.dueDate).getTime() - currentDate.getTime()) / 86400000);
-                            const message = status === "OVERDUE"
-                                ? `Your installment of ${currency(item.amount)} is overdue by ${Math.abs(daysRemaining)} day(s).`
-                                : status === "DUE"
-                                    ? `Your installment of ${currency(item.amount)} is due today.`
-                                    : `Your installment of ${currency(item.amount)} is due in ${daysRemaining} day(s).`;
-
-                            return (
-                                <p key={item.id} className="text-sm text-amber-800 dark:text-amber-200">
-                                    {status === "OVERDUE" || status === "DUE" ? "🔴 " : "⚠️ "}
-                                    {message}
-                                </p>
-                            );
-                        })}
-                    </CardContent>
-                </Card>
-            )}
+            <DueInstallmentsCard currency={currency} />
 
             <div className="grid gap-6">
                 <Card>
@@ -204,8 +167,6 @@ export default function PaymentsPage() {
                     </CardContent>
                 </Card>
             </div>
-
-            <DueInstallmentsCard currency={currency} />
 
             <AdvanceInstallmentsCard
                 currency={currency}
