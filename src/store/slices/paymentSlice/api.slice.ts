@@ -32,6 +32,27 @@ export interface GetInstallmentsResponse {
 	count: number;
 }
 
+export interface GatewayTransaction {
+	_id: string;
+	transaction_id: string;
+	member: string;
+	amount: number;
+	description?: string;
+	method: string;
+	currency: string;
+	status: string;
+	created_at?: string;
+	updated_at?: string;
+}
+
+export interface GetGatewayTransactionsResponse {
+	data: GatewayTransaction[];
+	count: number;
+	total: number;
+	page: number;
+	limit: number;
+}
+
 export interface CreatePaymentRequest {
 	amount: number;
 	description: string;
@@ -68,6 +89,13 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 			return `/app/dashboard/payments/api${qs ? `?${qs}` : ""}`;
 		},
 	}),
+	getGatewayTransactions: builder.query<GetGatewayTransactionsResponse, { member: string }>({
+		query: ({ member }) => `/api/aamarpay/transactions?member=${encodeURIComponent(member)}`,
+	}),
 }));
 
-export const { useCreateAamarPayPaymentMutation, useGetInstallmentsQuery } = paymentApi;
+export const {
+	useCreateAamarPayPaymentMutation,
+	useGetInstallmentsQuery,
+	useGetGatewayTransactionsQuery,
+} = paymentApi;

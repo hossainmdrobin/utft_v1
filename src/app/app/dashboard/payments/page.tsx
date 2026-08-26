@@ -14,10 +14,14 @@ import {
     INSTALLMENT_WARNING_DAYS,
     type InstallmentRecord,
 } from "./installment-logic";
-import { memberInstallments, paymentTransactions } from "./installment-data";
-import { useCreateAamarPayPaymentMutation, useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
+import { memberInstallments } from "./installment-data";
+import {
+    useCreateAamarPayPaymentMutation,
+    useGetGatewayTransactionsQuery,
+    useGetInstallmentsQuery,
+} from "@/store/slices/paymentSlice/api.slice";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
-import { getCurrentDhakaDate } from "@/lib/date/dhaka";
+import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import { AdvanceInstallmentsCard } from "./advance-installments-card";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
@@ -32,6 +36,7 @@ function formatMonthLabel(period: string) {
 
 
 function getStatusBadgeVariant(status: string) {
+    status = status.toUpperCase();
     switch (status) {
         case "PAID":
             return "default";
@@ -39,7 +44,7 @@ function getStatusBadgeVariant(status: string) {
             return "destructive";
         case "DUE":
             return "secondary";
-        case "DUE_SOON":
+        case "ADVANCE":
             return "outline";
         default:
             return "outline";
@@ -51,11 +56,12 @@ export default function PaymentsPage() {
     const { month, year } = getCurrentDhakaDate()
     //RTK QUERY
     const { data: currentUserData } = useGetCurrentUserQuery();
-    const { data: setting } = useGetSettingsQuery();
-    const [createPayment, { data: aamarpayPaymentData, }] = useCreateAamarPayPaymentMutation()
-    const { data: installmentData } = useGetInstallmentsQuery({member:String(currentUserData?.data?._id)})
-console.log(installmentData, currentUserData)
-    const [selectedInstallmentIds, setSelectedInstallmentIds] = useState<string[]>([]);
+    const memberId = currentUserData?.data?._id;
+    const { data: installmentData } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
+    const { data: gatewayTransactionData } = useGetGatewayTransactionsQuery(
+        { member: String(memberId) },
+        { skip: !memberId },
+    );
     const [filter, setFilter] = useState<FilterStatus>("ALL");
     const [installments, setInstallments] = useState<InstallmentRecord[]>(memberInstallments);
 
@@ -180,27 +186,29 @@ console.log(installmentData, currentUserData)
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        {paymentTransactions.map((transaction) => (
-                            <div key={transaction.id} className="rounded-lg border p-4">
+                        {gatewayTransactionData?.data?.length ? gatewayTransactionData.data.map((transaction) => (
+                            <div key={transaction._id} className="rounded-lg border p-4">
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <p className="font-semibold">{transaction.transactionId}</p>
-                                        <p className="text-sm text-muted-foreground">{new Intl.DateTimeFormat("en-BD", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(transaction.paidAt))}</p>
+                                        <p className="font-semibold">{transaction.transaction_id}</p>
+                                        <p className="text-sm text-muted-foreground">{transaction.created_at ? new Intl.DateTimeFormat("en-BD", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(transaction.created_at)) : "Date unavailable"}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold">{currency(transaction.amount)}</p>
-                                        <p className="text-sm text-muted-foreground">{transaction.installmentIds.length} installments</p>
+                                        <p className="text-sm text-muted-foreground">{transaction.description || "Gateway payment"}</p>
                                     </div>
                                 </div>
                                 <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <span>{transaction.paymentMethod}</span>
+                                    <span>{transaction.method}</span>
                                     <span>•</span>
                                     <span>{transaction.status}</span>
                                     <span>•</span>
                                     <span>{transaction.currency}</span>
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <p className="text-sm text-muted-foreground">No gateway transactions found.</p>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -294,12 +302,11 @@ console.log(installmentData, currentUserData)
                                 {installmentData?.data?.map((installment) => {
                                     return (
                                         <tr key={installment._id} className="border-b last:border-0">
-                                            <td className="py-3 pr-4">{installment.month}</td>
-                                            <td className="py-3 pr-4">3/3/23</td>
+                                            <td className="py-3 pr-4">{installment.createdAt}</td>
+                                            <td className="py-3 pr-4">{monthArray[installment.month] + " " + installment.year}</td>
                                             <td className="py-3 pr-4">{currency(installment.amount)}</td>
                                             <td className="py-3">
-                                                {installment?.status}
-                                                {/* <Badge variant={getStatusBadgeVariant(installment?.status)}>{installment?.status}</Badge> */}
+                                                <Badge variant={getStatusBadgeVariant(installment?.status)}>{installment?.status}</Badge>
                                             </td>
                                         </tr>
                                     );
