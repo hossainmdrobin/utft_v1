@@ -82,6 +82,13 @@ AAMARPAY_STORE_ID=your-store-id
 AAMARPAY_SIGNATURE_KEY=your-signature-key
 AAMARPAY_SANDBOX=true
 NEXT_PUBLIC_APP_URL=https://your-domain.example
+CRON_SECRET=your-random-cron-secret
 ```
 
 Set `AAMARPAY_SANDBOX=false` for live payments. `NEXT_PUBLIC_APP_URL` must be a public URL in deployed environments so AamarPay can reach the callback endpoint.
+
+## Daily installment cron
+
+The Vercel cron endpoint runs daily at midnight in `Asia/Dhaka`. Vercel schedules use UTC, so the configured schedule is `18:00 UTC`.
+
+On the configured `default_due_day`, it creates a `due` installment for each member without an installment for the current month and year. The endpoint is protected by `CRON_SECRET`.

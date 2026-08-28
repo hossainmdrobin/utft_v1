@@ -17,6 +17,18 @@ export async function GET(req: NextRequest) {
   const currency = searchParams.get("currency");
   if (currency) filter.currency = currency;
 
+  const status = searchParams.get("status");
+  if (status) filter.status = status;
+
+  const month = searchParams.get("month");
+  if (month) filter.month = Number(month);
+
+  const year = searchParams.get("year");
+  if (year) filter.year = Number(year);
+
+  const day = searchParams.get("day");
+  if (day) filter.day = Number(day);
+
   const amountMin = searchParams.get("amount_min");
   const amountMax = searchParams.get("amount_max");
   if (amountMin || amountMax) {

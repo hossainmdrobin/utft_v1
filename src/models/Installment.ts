@@ -1,29 +1,35 @@
 import { Document, Schema, model, models } from "mongoose";
 
 interface IInstallment extends Document {
-  transaction_id: string;
+  transaction_id?: string;
   amount: number;
-  currency: string;
-  description: string;
-  cus_name: string;
-  member: string;
-  account: string;
-  method:string;
-  month:string;
-  status:string;
+  currency?: string;
+  description?: string;
+  cus_name?: string;
+  member?: string;
+  account?: string;
+  method?: string;
+  month?: number;
+  year?: number;
+  day?: number;
+  status?: string;
+  date?: string;
   created_at?: string;
   updated_at?: string;
 }
 
 const installmentSchema = new Schema(
   {
-    transaction_id: { type: String, required: true, unique: true },
+    transaction_id: { type: String, required: false },
     amount: { type: Number, required: true },
     currency: { type: String ,default:'BDT'},
     description: { type: String, },
     cus_name: { type: String },
-    month:{type:String},
-    status:{type:String, default:"regular", emun:["regular", "due", "advance"]},
+    month:{type:Number, min:1, max:12},
+    year:{type:Number, min:2000},
+    day:{type:Number, min:1, max:31},
+    status:{type:String, default:"regular", enum:["regular", "due", "advance"]},
+    date:{ type: String },
     method: {type:String,default:'aamarpay' },
     member: { type: Schema.Types.ObjectId, ref: "Member" },
     account: { type: Schema.Types.ObjectId, ref: "Account" },
@@ -31,6 +37,8 @@ const installmentSchema = new Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
+installmentSchema.index({ member: 1, month: 1, year: 1 }, { unique: true, sparse: true });
+
 export const Installment =
-  models.Installment || model("OnlineTransaction", installmentSchema);
+  models.Installment || model("Installment", installmentSchema);
 export type InstallmentDoc = IInstallment;

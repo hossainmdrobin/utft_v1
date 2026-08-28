@@ -1,41 +1,71 @@
 import { injectEndpoint } from "@/store/baseApi";
 
 export interface Installment {
-  _id: string;
-  transaction_id: string;
-  amount: number;
-  currency: string;
-  description: string;
-  cus_name: string;
-  member: string;
-  account: string;
-  method: string;
-  created_at?: string;
-  updated_at?: string;
+	_id: string;
+	transaction_id?: string;
+	amount: number;
+	currency?: string;
+	description?: string;
+	cus_name?: string;
+	member?: string;
+	account?: string;
+	method?: string;
+	month?: number;
+	year?: number;
+	day?: number;
+	status?: string;
+	date?: string;
+	created_at?: string;
+	updated_at?: string;
 }
 
 export interface GetInstallmentsParams {
-  member?: string;
-  method?: string;
-  currency?: string;
-  amount_min?: number;
-  amount_max?: number;
-  created_from?: string;
-  created_to?: string;
-  search?: string;
+	member?: string;
+	method?: string;
+	currency?: string;
+	amount_min?: number;
+	amount_max?: number;
+	created_from?: string;
+	created_to?: string;
+	search?: string;
+	status?: string;
+	month?: number;
+	year?: number;
+	day?: number;
 }
 
 export interface GetInstallmentsResponse {
-  data: Installment[];
-  count: number;
+	data: Installment[];
+	count: number;
+}
+
+export interface GatewayTransaction {
+	_id: string;
+	transaction_id: string;
+	member: string;
+	amount: number;
+	description?: string;
+	method: string;
+	currency: string;
+	status: string;
+	created_at?: string;
+	updated_at?: string;
+}
+
+export interface GetGatewayTransactionsResponse {
+	data: GatewayTransaction[];
+	count: number;
+	total: number;
+	page: number;
+	limit: number;
 }
 
 export interface CreatePaymentRequest {
-	amount: string;
+	amount: number;
 	description: string;
 	name: string;
-	email: string;
-	phone: string;
+	status?: "regular" | "due" | "advance";
+	installments: Array<{ year: number; month: number; day?: number }>;
 }
 
 export interface CreatePaymentResponse {
@@ -63,10 +93,35 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 			if (params.created_from) searchParams.set("created_from", params.created_from);
 			if (params.created_to) searchParams.set("created_to", params.created_to);
 			if (params.search) searchParams.set("search", params.search);
+			if (params.status) searchParams.set("status", params.status);
+			if (params.month !== undefined) searchParams.set("month", String(params.month));
+			if (params.year !== undefined) searchParams.set("year", String(params.year));
+			if (params.day !== undefined) searchParams.set("day", String(params.day));
 			const qs = searchParams.toString();
 			return `/app/dashboard/payments/api${qs ? `?${qs}` : ""}`;
 		},
 	}),
+	getInstallment: builder.query<GetInstallmentsResponse, GetInstallmentsParams | void>({
+		query: (params) => {
+			if (!params) return "/app/dashboard/payments/api";
+			const searchParams = new URLSearchParams();
+			if (params.member) searchParams.set("member", params.member);
+			if (params.status) searchParams.set("status", params.status);
+			if (params.month !== undefined) searchParams.set("month", String(params.month));
+			if (params.year !== undefined) searchParams.set("year", String(params.year));
+			if (params.day !== undefined) searchParams.set("day", String(params.day));
+			const qs = searchParams.toString();
+			return `/app/dashboard/payments/api${qs ? `?${qs}` : ""}`;
+		},
+	}),
+	getGatewayTransactions: builder.query<GetGatewayTransactionsResponse, { member: string }>({
+		query: ({ member }) => `/api/aamarpay/transactions?member=${encodeURIComponent(member)}`,
+	}),
 }));
 
-export const { useCreateAamarPayPaymentMutation, useGetInstallmentsQuery } = paymentApi;
+export const {
+	useCreateAamarPayPaymentMutation,
+	useGetInstallmentsQuery,
+	useGetInstallmentQuery,
+	useGetGatewayTransactionsQuery,
+} = paymentApi;
