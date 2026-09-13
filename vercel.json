@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/monthly-installments",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/email-test",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
