@@ -57,7 +57,7 @@ export default function MemberFilter({ filters, setFilters }) {
                         <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
-                        {status.map((item) => <SelectItem value={item.name}>{item.value}</SelectItem>)}
+                        {status.map((item) => <SelectItem key={item.value} value={item.value}>{item.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -71,7 +71,7 @@ export default function MemberFilter({ filters, setFilters }) {
                         <SelectValue placeholder="All roles" />
                     </SelectTrigger>
                     <SelectContent>
-                        {roles.map((item) => <SelectItem value={item.name}>{item.value}</SelectItem>)}
+                        {roles.map((item) => <SelectItem key={item.value} value={item.value}>{item.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -90,22 +90,7 @@ export default function MemberFilter({ filters, setFilters }) {
                     </SelectContent>
                 </Select>
             </div>
-            <div className="min-w-[140px]">
-                <Label className="text-xs text-muted-foreground mb-1 block">Join Date From</Label>
-                <Input
-                    type="date"
-                    value={filters.joinDateFrom || ""}
-                    onChange={(e) => updateFilter("joinDateFrom", e.target.value)}
-                />
-            </div>
-            <div className="min-w-[140px]">
-                <Label className="text-xs text-muted-foreground mb-1 block">Join Date To</Label>
-                <Input
-                    type="date"
-                    value={filters.joinDateTo || ""}
-                    onChange={(e) => updateFilter("joinDateTo", e.target.value)}
-                />
-            </div>
+
             <div className="min-w-[150px]">
                 <Label className="text-xs text-muted-foreground mb-1 block">User ID</Label>
                 <Input

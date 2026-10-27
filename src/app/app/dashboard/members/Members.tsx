@@ -18,8 +18,6 @@ export default function Members() {
 
   const [filters, setFilters] = useState<{
     stage?: string;
-    joinDateFrom?: string;
-    joinDateTo?: string;
     user_id?: string;
     role?: string;
     member_type?: string;

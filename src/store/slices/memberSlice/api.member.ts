@@ -2,8 +2,6 @@ import { injectEndpoint } from "@/store/baseApi";
 
 type MemberFilters = {
   stage?: string;
-  joinDateFrom?: string;
-  joinDateTo?: string;
   user_id?: string;
   role?: string;
   member_type?: string;
@@ -15,10 +13,8 @@ export const memberApi = injectEndpoint("memberApi", (builder) => ({
     query: (filters) => {
       const params = new URLSearchParams();
       if (filters) {
-        const { stage, joinDateFrom, joinDateTo, user_id, role, member_type, search } = filters;
+        const { stage, user_id, role, member_type, search } = filters;
         if (stage) params.set("stage", stage);
-        if (joinDateFrom) params.set("joinDateFrom", joinDateFrom);
-        if (joinDateTo) params.set("joinDateTo", joinDateTo);
         if (user_id) params.set("user_id", user_id);
         if (role) params.set("role", role);
         if (member_type) params.set("member_type", member_type);
