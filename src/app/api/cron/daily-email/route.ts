@@ -1,6 +1,5 @@
 import { createMonthlyInstallments } from "@/lib/cron/createMonthlyInstallments";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 
