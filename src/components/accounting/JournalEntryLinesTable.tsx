@@ -10,7 +10,7 @@ interface JournalEntryLineWithAccount {
 }
 
 interface JournalEntryLinesTableProps {
-  lines: JournalEntryLineWithAccount[];
+  lines?: JournalEntryLineWithAccount[];
   totalDebit: number;
   totalCredit: number;
 }

@@ -15,6 +15,10 @@ export async function GET(
     await connectDB();
     const { id } = await params;
 
+    if (!id || id === "undefined" || id === "null") {
+        return NextResponse.json({ error: "Invalid journal entry ID" }, { status: 400 });
+    }
+
     try {
         const entry = await JournalEntry.findById(id)
             .lean()
@@ -72,6 +76,10 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
+
+    if (!id || id === "undefined" || id === "null") {
+        return NextResponse.json({ error: "Invalid journal entry ID" }, { status: 400 });
+    }
 
     try {
         const entry = await JournalEntry.findByIdAndUpdate(id, body, { new: true }).lean();

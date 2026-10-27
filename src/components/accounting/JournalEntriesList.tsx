@@ -260,7 +260,7 @@ export function JournalEntriesList() {
               Journal Entry
             </DialogTitle>
           </DialogHeader>
-          <JournalEntryDetail _id={String(selectedEntry?._id)} />
+          <JournalEntryDetail _id={selectedEntry?._id ? String(selectedEntry._id) : ""} />
         </DialogContent>
       </Dialog>
     </>
