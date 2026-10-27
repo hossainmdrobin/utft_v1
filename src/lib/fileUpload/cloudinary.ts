@@ -18,7 +18,7 @@ export async function uploadToCloudinary(file: File | Blob | Buffer, folder = "u
 
   const stringToSign = Object.keys(params)
     .sort()
-    .map((key) => `${key}=${encodeURIComponent(params[key])}`)
+    .map((key) => `${key}=${params[key]}`)
     .join("&");
 
   const signature = createHmac("sha1", CLOUDINARY_API_SECRET).update(stringToSign).digest("hex");
