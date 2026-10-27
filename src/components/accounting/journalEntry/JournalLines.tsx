@@ -7,18 +7,24 @@ import { Input } from "@/components/ui/input";
 import { JournalEntryFormValues } from "./types";
 import { AccountSelect } from "./AccountSelect";
 
+interface Account {
+  _id: string;
+  code: string;
+  name: string;
+}
+
 interface JournalLinesProps {
   form: UseFormReturn<JournalEntryFormValues>;
   fields: UseFieldArrayReturn<JournalEntryFormValues, "lines", "id">["fields"];
   append: UseFieldArrayReturn<JournalEntryFormValues, "lines", "id">["append"];
   remove: UseFieldArrayReturn<JournalEntryFormValues, "lines", "id">["remove"];
-  lines: { account_id?: string; description?: string; debit?: number; credit?: number }[];
+  lines: JournalEntryFormValues["lines"];
   totalDebit: number;
   totalCredit: number;
   isBalanced: boolean;
   accountSearch: Record<number, string>;
   setAccountSearch: React.Dispatch<React.SetStateAction<Record<number, string>>>;
-  accounts?: { _id: string; code: string; name: string }[];
+  accounts?: Account[];
 }
 
 export function JournalLines({

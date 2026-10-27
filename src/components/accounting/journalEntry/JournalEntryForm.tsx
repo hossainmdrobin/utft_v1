@@ -20,6 +20,18 @@ import { JournalEntryFormValues } from "./types";
 import { JournalLines } from "./JournalLines";
 import { MemberFilterWithKeyTypeRole } from "@/app/app/dashboard/accounting/filters";
 
+interface Account {
+  _id: string;
+  code: string;
+  name: string;
+}
+
+interface Member {
+  _id: string;
+  user_id: string;
+  full_name?: string;
+}
+
 interface JournalEntryFormProps {
   form: any;
   fields: any[];
@@ -31,11 +43,11 @@ interface JournalEntryFormProps {
   isBalanced: boolean;
   accountSearch: Record<number, string>;
   setAccountSearch: React.Dispatch<React.SetStateAction<Record<number, string>>>;
-  accounts?: { _id: string; code: string; name: string }[];
-  members?: { _id: string; user_id: string; full_name: string }[];
+  accounts?: Account[];
+  members?: Member[];
   filter: any;
   setFilter: React.Dispatch<React.SetStateAction<any>>;
-  createJournalEntry: (values: JournalEntryFormValues) => void;
+  onSubmit: (values: JournalEntryFormValues) => void;
   entryLoading: boolean;
 }
 
@@ -54,13 +66,13 @@ export function JournalEntryForm({
   members,
   filter,
   setFilter,
-  createJournalEntry,
+  onSubmit,
   entryLoading,
 }: JournalEntryFormProps) {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit((v: JournalEntryFormValues) => createJournalEntry(v))}
+        onSubmit={form.handleSubmit((v: JournalEntryFormValues) => onSubmit(v))}
         className="space-y-4"
       >
         <div className="grid grid-cols-3 gap-4">

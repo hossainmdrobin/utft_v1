@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { JournalEntryForm } from "./journalEntry/JournalEntryForm";
 import { useJournalEntryForm } from "./journalEntry/useJournalEntryForm";
 import { JournalEntryDialogPropsType as JournalEntryDialogProps } from "./journalEntry/types";
@@ -29,9 +30,21 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
     members,
     filter,
     setFilter,
-    createJournalEntry,
+    handleSubmit,
     entryLoading,
+    entryData,
+    entryError,
   } = useJournalEntryForm();
+
+  useEffect(() => {
+    if (entryData) {
+      toast.success("Journal entry created successfully");
+      setOpen(false);
+    }
+    if (entryError) {
+      toast.error((entryError as any)?.message || "Failed to create journal entry");
+    }
+  }, [entryData, entryError]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,7 +75,7 @@ export function JournalEntryDialog({ trigger }: JournalEntryDialogProps) {
           members={members}
           filter={filter}
           setFilter={setFilter}
-          createJournalEntry={createJournalEntry}
+          onSubmit={handleSubmit}
           entryLoading={entryLoading}
         />
       </DialogContent>

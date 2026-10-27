@@ -13,9 +13,12 @@ export function useJournalEntryForm() {
   const [filter, setFilter] = useState<memberFilterWithKeyTypeRoleType>({});
   const [createJournalEntry, { data: entryData, isLoading: entryLoading, error: entryError }] =
     useCreateJournalEntryMutation();
-  const { data: accounts, isLoading: accountLoading } = useGetAccountsQuery();
-  const { data: members, isLoading: memberLoading } = useGetMembersQuery(filter);
+  const { data: accountsData, isLoading: accountLoading } = useGetAccountsQuery();
+  const { data: membersData, isLoading: memberLoading } = useGetMembersQuery(filter);
   const [accountSearch, setAccountSearch] = useState<Record<number, string>>({});
+
+  const accounts = accountsData?.data;
+  const members = membersData?.data;
 
   const form = useForm<JournalEntryFormValues>({
     resolver: zodResolver(journalEntrySchema),
@@ -41,13 +44,19 @@ export function useJournalEntryForm() {
   const totalCredit = lines.reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
 
-  useEffect(() => {
-    if (entryData) {
-      toast.success("Journal entry created successfully");
-      form.reset();
-    }
-    if (entryError) toast.error(entryError?.message || "Failed to create journal entry");
-  }, [entryData, entryError]);
+  const handleSubmit = (values: JournalEntryFormValues) => {
+    const cleaned = {
+      ...values,
+      member_id: values.member_id || undefined,
+      lines: values.lines.map((l) => ({
+        account_id: l.account_id,
+        description: l.description,
+        debit: Number(l.debit) || 0,
+        credit: Number(l.credit) || 0,
+      })),
+    };
+    return createJournalEntry(cleaned);
+  };
 
   return {
     form,
@@ -66,7 +75,9 @@ export function useJournalEntryForm() {
     memberLoading,
     filter,
     setFilter,
-    createJournalEntry,
+    handleSubmit,
     entryLoading,
+    entryData,
+    entryError,
   };
 }

@@ -14,7 +14,13 @@ interface Account {
 }
 
 interface AccountSelectProps {
-  field: any;
+  field: {
+    value?: string;
+    onChange: (value: string) => void;
+    name?: string;
+    ref?: (el: HTMLInputElement | null) => void;
+    onBlur?: () => void;
+  };
   index: number;
   accountSearch: Record<number, string>;
   setAccountSearch: React.Dispatch<React.SetStateAction<Record<number, string>>>;
