@@ -18,9 +18,8 @@ interface JournalEntryLineWithAccount {
 }
 
 export function JournalEntryDetail({ _id }: JournalEntryDetailProps) {
-
-  const { data, isLoading: entryLoading } = useGetEntryByIdQuery({id:_id});
-  const {data:entry} = data || {};
+  const { data, isLoading: entryLoading } = useGetEntryByIdQuery({ id: _id }, { skip: !_id });
+  const { data: entry } = data || {};
 const totalDebit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.debit || 0), 0) || 0;
 const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.credit || 0), 0) || 0;  
 

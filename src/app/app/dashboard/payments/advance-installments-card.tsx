@@ -1,11 +1,10 @@
-import { CircleDollarSign, Plus, ShieldCheck } from "lucide-react";
+import { CircleDollarSign, Minus, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import { useEffect, useState } from "react";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
-import { url } from "inspector";
 
 type AdvanceInstallmentsCardProps = {
     currency: (amount: number) => string;
@@ -17,9 +16,22 @@ export function AdvanceInstallmentsCard({
     const { month, year } = getCurrentDhakaDate()
     const { data: settings } = useGetSettingsQuery()
 
-    const [installments, setInstallments] = useState([{ month: (month + 1) % 12, year: (month + 1) > 12 ? year + 1 : year }])
+    const getInstallments = (count: number) => Array.from({ length: count }, (_, index) => {
+        const monthNumber = month + 1 + index
+
+        return {
+            month: monthNumber % 12,
+            year: year + Math.floor(monthNumber / 12),
+        }
+    })
+
+    const [installments, setInstallments] = useState(() => getInstallments(1))
     const [createInstallment, { data: newInstallmentData, error, isLoading }] = useCreateAamarPayPaymentMutation()
     console.log('advacne payerror:', newInstallmentData, error, isLoading)
+    const setInstallmentCount = (count: number) => {
+        setInstallments(getInstallments(Math.max(1, count)))
+    }
+
     const handleAdvancePayment = () => {
         createInstallment({
             installments,
@@ -42,7 +54,7 @@ export function AdvanceInstallmentsCard({
                         Select unpaid future installments and pay them together. Only unpaid future records are eligible.
                     </CardDescription>
                     <Button
-                        onClick={() => setInstallments([{ month: (month + 1) % 12, year: (month + 1) > 12 ? year + 1 : year }])}
+                        onClick={() => setInstallmentCount(1)}
                         className=""
                     >Reset</Button>
 
@@ -51,29 +63,45 @@ export function AdvanceInstallmentsCard({
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-2">
-                    {
-                        installments.map((item, i) => (
-                            <label
-                                onClick={() => setInstallments(installments.filter((_, index) => i != index))}
-                                key={i} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3">
-                                <div className="flex items-center gap-3">
-                                    <input type="checkbox" checked />
-                                    <div>
-                                        <p className="font-medium">{monthArray[item.month] + " " + item.year}</p>
-                                        <p className="text-sm text-muted-foreground">{item.year}</p>
-                                    </div>
-                                </div>
-                                <span className="font-medium">{currency(settings?.data?.share_value || 0)}</span>
-                            </label>)
-                        )
-                    }
-                    <Button
-                        onClick={() => setInstallments([...installments, { month: (month + 1 + installments.length) % 12, year: year + Math.floor((month + 1 + installments.length) / 12) }])}
-                        className="flex cursor-pointer items-center justify-center gap-3 rounded-lg border p-8">
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span>Add Another Installment </span>
-                        <span>{currency(settings?.data?.share_value || 0)}</span>
-                    </Button>
+                    <div className="flex flex-col gap-3 rounded-lg border p-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-medium">Number of months</span>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setInstallmentCount(installments.length - 1)}
+                                    disabled={installments.length === 1}
+                                    aria-label="Select one fewer month"
+                                >
+                                    <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="min-w-8 text-center text-lg font-semibold">{installments.length}</span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setInstallmentCount(installments.length + 1)}
+                                    aria-label="Select one more month"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[2, 3, 6].map((count) => (
+                                <Button
+                                    key={count}
+                                    type="button"
+                                    variant={installments.length === count ? "default" : "outline"}
+                                    onClick={() => setInstallmentCount(count)}
+                                >
+                                    {count} months
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">

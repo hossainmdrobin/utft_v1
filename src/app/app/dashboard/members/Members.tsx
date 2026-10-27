@@ -9,6 +9,7 @@ import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
 import type { MemberDoc } from "@/models/member";
 import MemberFilter from "./MemberFilter";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type MemberDisplay = MemberDoc & { id: string };
 
@@ -18,8 +19,6 @@ export default function Members() {
 
   const [filters, setFilters] = useState<{
     stage?: string;
-    joinDateFrom?: string;
-    joinDateTo?: string;
     user_id?: string;
     role?: string;
     member_type?: string;
@@ -65,16 +64,30 @@ export default function Members() {
         <Tabs defaultValue="all" className="space-y-4">
 
 
-          {data && <TabsContent value="all" className="space-y-4">
-            <MembersTable
-              members={data.data}
-              loading={isLoading}
-              receivables={receivables}
-              isAdmin={isAdmin}
-              onAddMember={() => setAddDialogOpen(true)}
-            />
-          </TabsContent>}
-
+          {isLoading ? (
+            <TabsContent value="all" className="space-y-4">
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-3/4" />
+                <Skeleton className="h-10 w-1/2" />
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-10" />
+                  ))}
+                </div>
+                <Skeleton className="h-[400px] w-full" />
+              </div>
+            </TabsContent>
+          ) : (
+            <TabsContent value="all" className="space-y-4">
+              <MembersTable
+                members={data?.data}
+                loading={isLoading}
+                receivables={receivables}
+                isAdmin={isAdmin}
+                onAddMember={() => setAddDialogOpen(true)}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
       <AddMemberDialog

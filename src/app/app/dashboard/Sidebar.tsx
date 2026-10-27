@@ -35,7 +35,7 @@ export default function Sidebar({ setSidebarOpen }: { setSidebarOpen: (boolean) 
         <>
             <nav className="flex-1 space-y-1 px-3 py-4">
                 {navigation.map((item) => {
-                    if (!item.access.includes(data.data.role)) return null;
+                    if (!item.access.includes(data?.data?.role)) return null;
                     const isActive = pathname === item.href;
                     return (
                         <Link

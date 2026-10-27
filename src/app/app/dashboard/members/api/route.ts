@@ -11,7 +11,6 @@ interface MemberFilter {
   user_id?: string;
   role?: string;
   member_type?: string;
-  joinDate?: { $gte?: Date; $lte?: Date };
   $or?: { full_name?: RegExp; father_name?: RegExp; mother_name?: RegExp; nid?: RegExp; mobile?: RegExp; nominee_nid?: RegExp }[];
 }
 
@@ -42,14 +41,6 @@ export async function GET(req: NextRequest) {
 
   const memberType = searchParams.get("member_type");
   if (memberType) filter.member_type = memberType;
-
-  const joinDateFrom = searchParams.get("joinDateFrom");
-  const joinDateTo = searchParams.get("joinDateTo");
-  if (joinDateFrom || joinDateTo) {
-    filter.joinDate = {};
-    if (joinDateFrom) filter.joinDate.$gte = new Date(joinDateFrom);
-    if (joinDateTo) filter.joinDate.$lte = new Date(joinDateTo);
-  }
 
   const search = searchParams.get("search");
   if (search) {

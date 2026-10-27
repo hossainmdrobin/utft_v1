@@ -62,6 +62,19 @@ export default function PaymentsPage() {
     const currentDate = useMemo(() => new Date("2026-08-21T12:00:00.000Z"), []);
     const member = currentUserData?.data;
 
+    const totalAmountPaid = useMemo(
+        () => (installmentData?.data ?? [])
+            .filter((installment) => installment.status?.toLowerCase() !== "due")
+            .reduce((total, installment) => total + Number(installment.amount ?? 0), 0),
+        [installmentData],
+    );
+    const totalDueAmount = useMemo(
+        () => (installmentData?.data ?? [])
+            .filter((installment) => installment.status?.toLowerCase() === "due")
+            .reduce((total, installment) => total + Number(installment.amount ?? 0), 0),
+        [installmentData],
+    );
+
     const summary = useMemo(() => calculateFinancialSummary(installments, currentDate), [installments, currentDate]);
 
     const nextInstallment = installments.find((installment) => installment.status !== "PAID") ?? installments[0];
@@ -91,7 +104,7 @@ export default function PaymentsPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription>Total amount paid</CardDescription>
-                        <CardTitle className="text-3xl font-semibold">{currency(summary.totalPaidAmount)}</CardTitle>
+                        <CardTitle className="text-3xl font-semibold">{currency(totalAmountPaid)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">Paid installments: {summary.paidInstallments}</p>
@@ -101,7 +114,7 @@ export default function PaymentsPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription>Total due</CardDescription>
-                        <CardTitle className="text-3xl font-semibold">{currency(summary.totalDueAmount)}</CardTitle>
+                        <CardTitle className="text-3xl font-semibold">{currency(totalDueAmount)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">Due installments: {summary.dueInstallments}</p>
