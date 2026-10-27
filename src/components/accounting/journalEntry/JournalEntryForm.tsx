@@ -172,7 +172,7 @@ export function JournalEntryForm({
             type="submit"
             disabled={entryLoading || !isBalanced}
           >
-            {entryLoading ? "Creating..." : "Create Entry"}
+            {entryLoading ? "Creating..." : "Create Transaction"}
           </Button>
         </div>
       </form>
