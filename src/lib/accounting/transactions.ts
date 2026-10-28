@@ -1,7 +1,6 @@
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Account } from "@/models/Account";
 import { JournalEntry } from "@/models/JournalEntry";
-import mongoose from "mongoose";
 
 const AccountModel = Account as any;
 const JournalEntryModel = JournalEntry as any;
@@ -71,8 +70,8 @@ export async function getTransactionById(id: string) {
 export async function createTransaction(data: any) {
   await connectDB();
   const { date, reference, member, description, lines, status = "posted" } = data;
-  if (!date || !description) {
-    throw new Error("Date and description are required");
+  if (!date) {
+    throw new Error("Date is required");
   }
   if (!Array.isArray(lines) || lines.length < 2) {
     throw new Error("At least 2 lines are required");
@@ -88,41 +87,27 @@ export async function createTransaction(data: any) {
     throw new Error("Total debits must equal total credits");
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const entry = await JournalEntryModel.create(
-      {
-        date,
-        reference: reference || undefined,
-        member: member || null,
-        description,
-        lines,
-        status,
-      },
-      { session },
-    );
+  const entry = await JournalEntryModel.create({
+    date: new Date(date),
+    reference: reference || undefined,
+    member: member || null,
+    description: description || "",
+    lines,
+    status,
+  });
 
-    if (status === "posted") {
-      for (const line of lines) {
-        const account = await AccountModel.findById(line.account).session(session);
-        if (!account) {
-          throw new Error(`Account not found: ${line.account}`);
-        }
-        await AccountModel.findByIdAndUpdate(
-          line.account,
-          { $inc: { balance: balanceDelta(account.type, line.debit, line.credit) } },
-          { session, new: true },
-        );
+  if (status === "posted") {
+    for (const line of lines) {
+      const account = await AccountModel.findById(line.account);
+      if (!account) {
+        throw new Error(`Account not found: ${line.account}`);
       }
+      await AccountModel.findByIdAndUpdate(
+        line.account,
+        { $inc: { balance: balanceDelta(account.type, line.debit, line.credit) } },
+      );
     }
-
-    await session.commitTransaction();
-    return entry;
-  } catch (err) {
-    await session.abortTransaction();
-    throw err;
-  } finally {
-    session.endSession();
   }
+
+  return entry;
 }
