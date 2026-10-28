@@ -17,6 +17,6 @@ export async function GET(request: NextRequest) {
     if (insData) return NextResponse.json(insData, { status: 200 })
   } catch (error) {
     console.error("Daily email cron failed:", error);
-    return NextResponse.json({ error: "Failed to send daily email" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
