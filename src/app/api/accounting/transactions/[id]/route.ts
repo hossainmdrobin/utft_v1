@@ -22,6 +22,7 @@ export async function GET(
     const entry = await JournalEntryModel.findById(id)
       .populate("member", "user_id full_name")
       .populate("created_by", "user_id full_name")
+      .populate("actioned_by", "user_id full_name")
       .populate("lines.account", "code name")
       .lean();
 
