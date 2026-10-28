@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     const entry = await createTransaction(body);
     return NextResponse.json({ data: entry }, { status: 201 });
   } catch (error) {
+    console.log(error)
     return NextResponse.json(
       { error: (error as Error)?.message || "Failed to create transaction" },
       { status: 400 },

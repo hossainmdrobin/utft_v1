@@ -16,6 +16,7 @@ export interface IJournalEntry extends Document {
   description: string;
   lines: IJournalEntryLine[];
   status: JournalEntryStatus;
+  created_by:Schema.Types.ObjectId;
 }
 
 const journalEntryLineSchema = new Schema<IJournalEntryLine>({
@@ -26,6 +27,7 @@ const journalEntryLineSchema = new Schema<IJournalEntryLine>({
 });
 
 const journalEntrySchema = new Schema<IJournalEntry>({
+  created_by:{type:Schema.Types.ObjectId, ref:"Member" },
   date: { type: Date, required: true },
   reference: { type: String },
   member: { type: Schema.Types.ObjectId, ref: "Member" },
