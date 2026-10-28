@@ -54,7 +54,7 @@ export function JournalEntryDetail({ _id }: JournalEntryDetailProps) {
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <span className="text-muted-foreground">Date:</span>{" "}
-          {format(new Date(entry.date), "dd MMM yyyy")}
+          {entry.date ? format(new Date(entry.date), "dd MMM yyyy") : "-"}
         </div>
         <div>
           <span className="text-muted-foreground">Status:</span>{" "}

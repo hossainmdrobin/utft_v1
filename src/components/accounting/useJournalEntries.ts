@@ -104,7 +104,7 @@ export function useJournalEntries() {
       const totalDebit = lines.reduce((s: number, l: any) => s + (l.debit || 0), 0);
       return [
         entry.reference || entry.id,
-        format(new Date(entry.date), "dd MMM yyyy"),
+        entry.date ? format(new Date(entry.date), "dd MMM yyyy") : "-",
         entry.description || entry.reference || "-",
         entry.member?.user_id || "-",
         `BDT ${Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,

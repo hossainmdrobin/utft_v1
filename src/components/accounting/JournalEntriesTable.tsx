@@ -49,7 +49,9 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
   return (
     <TableRow key={entry._id}>
       <TableCell className="font-mono">{entry.reference || entry._id.toString().slice(-6)}</TableCell>
-      <TableCell>{format(new Date(entry.date), "dd MMM yyyy")}</TableCell>
+      <TableCell>
+        {entry.date ? format(new Date(entry.date), "dd MMM yyyy") : "-"}
+      </TableCell>
       <TableCell className="max-w-[200px] truncate">
         {entry.description || entry.reference || "-"}
       </TableCell>
