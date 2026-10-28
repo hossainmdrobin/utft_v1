@@ -7,11 +7,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { MoreVertical, Eye, CheckCircle, XCircle } from "lucide-react";
+import { MoreVertical, Eye, Edit2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { useUpdateJournalEntryMutation } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { useDeleteJournalEntryMutation } from "@/store/slices/journalEntrySlice/api.journalEntry";
 import { toast } from "sonner";
-import { useEffect } from "react";
 
 interface JournalEntryLineWithAccount {
   debit: number;
@@ -36,45 +35,47 @@ interface JournalEntriesTableProps {
 }
 
 export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: JournalEntriesTableProps) {
-  const [updateEntry, { isLoading, error }] = useUpdateJournalEntryMutation();
-
-  useEffect(() => {
-    if (error) {
-      toast.error("Failed to update entry");
-    }
-  }, [error]);
+  const [deleteEntry, { isLoading: deleteLoading }] = useDeleteJournalEntryMutation();
 
   const totalDebit = entry.lines?.reduce((sum, line) => sum + (line.debit || 0), 0) || 0;
-  const totalCredit = entry.lines?.reduce((sum, line) => sum + (line.credit || 0), 0) || 0;
+
+  const handleDelete = async () => {
+    if (!window.confirm("Delete this journal entry?")) return;
+    try {
+      await deleteEntry({ id: entry._id }).unwrap();
+      toast.success("Entry deleted");
+    } catch {
+      toast.error("Failed to delete entry");
+    }
+  };
+
+  const handleEdit = () => {
+    toast.info("Edit entry is not yet available");
+  };
+
   return (
     <TableRow key={entry._id}>
-      <TableCell className="font-mono">{entry.reference || entry._id.toString().slice(-6)}</TableCell>
-      <TableCell>
+      <TableCell className="font-mono text-sm">{entry.reference || entry._id.toString().slice(-6)}</TableCell>
+      <TableCell className="text-sm">
         {entry.date ? format(new Date(entry.date), "dd MMM yyyy") : "-"}
       </TableCell>
-      <TableCell className="max-w-[200px] truncate">
+      <TableCell className="max-w-[200px] truncate text-sm">
         {entry.description || entry.reference || "-"}
       </TableCell>
-      <TableCell>
-        {entry.member ? (
-          <span className="text-sm">
-            {entry.member.user_id}
-          </span>
-        ) : (
-          "-"
-        )}
+      <TableCell className="text-sm">
+        {entry.member?.full_name || entry.member?.user_id || "-"}
       </TableCell>
-      <TableCell className="text-right font-mono">
+      <TableCell className="text-right font-mono text-sm">
         ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
       </TableCell>
-      <TableCell className="text-right font-mono">
-        ৳{Number(totalCredit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-      </TableCell>
       <TableCell>
-        {isLoading && <span className="text-sm bg-gray-300 animate-pulse"></span>}
-        {!isLoading &&<Badge variant="outline" className={statusColors[entry.status]}>
-          {entry.status}
-        </Badge>}
+        {deleteLoading ? (
+          <span className="text-sm bg-gray-300 animate-pulse" />
+        ) : (
+          <Badge variant="outline" className={statusColors[entry.status]}>
+            {entry.status}
+          </Badge>
+        )}
       </TableCell>
       <TableCell className="print:hidden">
         <DropdownMenu>
@@ -88,21 +89,14 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
               <Eye className="h-4 w-4 mr-2" />
               View Details
             </DropdownMenuItem>
-            {entry.status === "draft" && !isLoading && (
-              <>
-                <DropdownMenuItem onClick={() => updateEntry({ id: entry._id, status: "posted" })}>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Post Entry
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => updateEntry({ id: entry._id, status: "void" })}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Void Entry
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuItem onClick={handleEdit}>
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit Entry
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Entry
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
