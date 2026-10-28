@@ -13,15 +13,19 @@ import { useUpdateJournalEntryMutation } from "@/store/slices/journalEntrySlice/
 import { toast } from "sonner";
 import { useEffect } from "react";
 
+interface JournalEntryLineWithAccount {
+  debit: number;
+  credit: number;
+}
+
 interface JournalEntryListItem {
   _id: string;
   id: string;
-  entry_number: string;
-  entry_date: string;
-  description?: string;
   reference?: string;
-  member?: { user_id: string };
-  lines?: Array<{ debit: number }>;
+  date: string;
+  description?: string;
+  member?: { user_id: string; full_name?: string };
+  lines?: JournalEntryLineWithAccount[];
   status: string;
 }
 
@@ -40,11 +44,12 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
     }
   }, [error]);
 
-  const totalDebit = entry.lines?.reduce((sum, line) => sum + line.debit, 0) || 0;
+  const totalDebit = entry.lines?.reduce((sum, line) => sum + (line.debit || 0), 0) || 0;
+  const totalCredit = entry.lines?.reduce((sum, line) => sum + (line.credit || 0), 0) || 0;
   return (
     <TableRow key={entry._id}>
-      <TableCell className="font-mono">{entry.entry_number}</TableCell>
-      <TableCell>{format(new Date(entry.entry_date), "dd MMM yyyy")}</TableCell>
+      <TableCell className="font-mono">{entry.reference || entry._id.toString().slice(-6)}</TableCell>
+      <TableCell>{format(new Date(entry.date), "dd MMM yyyy")}</TableCell>
       <TableCell className="max-w-[200px] truncate">
         {entry.description || entry.reference || "-"}
       </TableCell>
@@ -59,6 +64,9 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
       </TableCell>
       <TableCell className="text-right font-mono">
         ৳{Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+      </TableCell>
+      <TableCell className="text-right font-mono">
+        ৳{Number(totalCredit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
       </TableCell>
       <TableCell>
         {isLoading && <span className="text-sm bg-gray-300 animate-pulse"></span>}
@@ -80,13 +88,13 @@ export function JournalEntriesTable({ entry, statusColors, onSelectEntry }: Jour
             </DropdownMenuItem>
             {entry.status === "draft" && !isLoading && (
               <>
-                <DropdownMenuItem onClick={() => updateEntry({ id: entry._id, status: "approved" })}>
+                <DropdownMenuItem onClick={() => updateEntry({ id: entry._id, status: "posted" })}>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve Entry
+                  Post Entry
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
-                  onClick={() => updateEntry({ id: entry._id, status: "voided" })}
+                  onClick={() => updateEntry({ id: entry._id, status: "void" })}
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Void Entry

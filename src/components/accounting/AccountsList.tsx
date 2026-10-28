@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Table,
@@ -19,10 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, ChevronRight, ChevronDown, Folder, FolderOpen, FileText } from "lucide-react";
+import { MoreVertical, Edit, ChevronRight, ChevronDown, Trash2, Folder, FolderOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AccountDoc } from "@/models/Account";
 import { AccountTypeRow } from "./AccountTypeRow";
+import { useUpdateAccountMutation, useDeleteAccountMutation } from "@/store/slices/accountSlice/api.account";
 
 type AccountWithChildren = AccountDoc & { children: AccountWithChildren[] };
 
@@ -49,14 +49,12 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
   );
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const [updateAccount] = useUpdateAccountMutation();
+  const [deleteAccount] = useDeleteAccountMutation();
 
   const toggleAccount = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from("accounts")
-        .update({ is_active })
-        .eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      await updateAccount({ id, isActive }).unwrap();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
@@ -64,6 +62,19 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
     },
     onError: () => {
       toast.error("Failed to update account");
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await deleteAccount({ id }).unwrap();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      toast.success("Account deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete account");
     },
   });
 
@@ -91,22 +102,12 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
     });
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="space-y-2">
-  //       {[...Array(5)].map((_, i) => (
-  //         <Skeleton key={i} className="h-12 w-full" />
-  //       ))}
-  //     </div>
-  //   );
-  // }
-
   // Group accounts by type
   const groupedAccounts = accounts?.reduce((acc, account) => {
-    if (!acc[account.account_type]) {
-      acc[account.account_type] = [];
+    if (!acc[account.type]) {
+      acc[account.type] = [];
     }
-    acc[account.account_type].push(account);
+    acc[account.type].push(account);
     return acc;
   }, {} as Record<string, AccountDoc[]>);
 
@@ -115,7 +116,6 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
     const map = new Map<string, AccountWithChildren>();
     const roots: AccountWithChildren[] = [];
 
-    // First pass: create nodes
     accountsList.forEach((acc) => {
       map.set(
         String(acc._id),
@@ -123,29 +123,22 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
       );
     });
 
-    // Second pass: build tree
     accountsList.forEach((acc) => {
       const node = map.get(String(acc._id))!;
-      if (acc.parent_id && map.has(acc.parent_id)) {
-        map.get(acc.parent_id)!.children.push(node);
+      if (acc.parentAccount && map.has(String(acc.parentAccount))) {
+        map.get(String(acc.parentAccount))!.children.push(node);
       } else {
         roots.push(node);
       }
     });
 
-    // Sort children by code
     const sortChildren = (nodes: AccountWithChildren[]) => {
-      nodes.sort((a, b) => a.code.localeCompare(b.code));
+      nodes.sort((a, b) => (a.code || "").localeCompare(b.code || ""));
       nodes.forEach((node) => sortChildren(node.children));
     };
     sortChildren(roots);
 
     return roots;
-  };
-
-  const getAccountLevel = (account: AccountWithChildren): number => {
-    // Check if this account has children (is a category/folder)
-    return account.children.length > 0 ? 0 : 1; // 0 = folder, 1 = leaf
   };
 
   const renderAccountRow = (account: AccountWithChildren, depth: number): JSX.Element[] => {
@@ -158,7 +151,7 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
       <TableRow 
         key={String(account._id)} 
         className={cn(
-          !account.is_active && "opacity-50",
+          !account.isActive && "opacity-50",
           hasChildren && "bg-muted/30 hover:bg-muted/50",
           !hasChildren && "hover:bg-muted/20"
         )}
@@ -188,7 +181,7 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </>
             )}
-            <span>{account.code}</span>
+            <span>{account.code || "-"}</span>
           </div>
         </TableCell>
         <TableCell 
@@ -199,27 +192,17 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
         </TableCell>
         <TableCell>
           {!hasChildren && (
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className={typeColors[account.account_type]}>
-                {account.account_type}
-              </Badge>
-              {account.is_contra && (
-                <Badge variant="secondary" className="text-xs">
-                  Contra
-                </Badge>
-              )}
-            </div>
+            <Badge variant="outline" className={typeColors[account.type]}>
+              {account.type}
+            </Badge>
           )}
         </TableCell>
         <TableCell className="text-right font-mono">
           {!hasChildren && (
-            <>৳{Number(account.current_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</>
+            <>৳{Number(account.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</>
           )}
         </TableCell>
         <TableCell>
-          {account.is_system ? (
-            <Badge variant="secondary">System</Badge>
-          ) : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -233,19 +216,24 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
-                    toggleAccount.mutate({ id: String(account._id), is_active: !account.is_active })
+                    toggleAccount.mutate({ id: String(account._id), isActive: !account.isActive })
                   }
                 >
-                  {account.is_active ? "Deactivate" : "Activate"}
+                  {account.isActive ? "Deactivate" : "Activate"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => deleteAccountMutation.mutate(String(account._id))}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
         </TableCell>
       </TableRow>
     );
 
-    // Render children if expanded
     if (hasChildren && isExpanded) {
       account.children.forEach((child) => {
         rows.push(...renderAccountRow(child, depth + 1));
@@ -275,9 +263,8 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
             const tree = buildTree(typeAccounts);
             const isExpanded = expandedTypes.has(type);
 
-            // Calculate total balance for type
             const totalBalance = typeAccounts.reduce(
-              (sum, acc) => sum + Number(acc.current_balance),
+              (sum, acc) => sum + Number(acc.balance),
               0
             );
 

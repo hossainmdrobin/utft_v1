@@ -23,13 +23,13 @@ export function useJournalEntryForm() {
   const form = useForm<JournalEntryFormValues>({
     resolver: zodResolver(journalEntrySchema),
     defaultValues: {
-      entry_date: format(new Date(), "yyyy-MM-dd"),
+      date: format(new Date(), "yyyy-MM-dd"),
       reference: "",
       description: "",
-      member_id: "",
+      member: "",
       lines: [
-        { account_id: "", description: "", debit: 0, credit: 0 },
-        { account_id: "", description: "", debit: 0, credit: 0 },
+        { account: "", description: "", debit: 0, credit: 0 },
+        { account: "", description: "", debit: 0, credit: 0 },
       ],
     },
   });
@@ -47,9 +47,9 @@ export function useJournalEntryForm() {
   const handleSubmit = (values: JournalEntryFormValues) => {
     const cleaned = {
       ...values,
-      member_id: values.member_id || undefined,
+      member: values.member || undefined,
       lines: values.lines.map((l) => ({
-        account_id: l.account_id,
+        account: l.account,
         description: l.description,
         debit: Number(l.debit) || 0,
         credit: Number(l.credit) || 0,

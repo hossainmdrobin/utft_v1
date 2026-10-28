@@ -1,15 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
-import { toast } from "sonner";
+import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { useGetJournalEntriesQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
 import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
 import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
-import { useState, useMemo } from "react";
+import { useUpdateJournalEntryMutation } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { toast } from "sonner";
+import { JournalEntryDoc } from "@/models/JournalEntry";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { JournalEntry, JournalLine, DateRangeValue } from "./types";
-import { JournalEntryDoc } from "@/models/JournalEntry";
 
 export function useJournalEntries() {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntryDoc | null>(null);
@@ -19,7 +17,9 @@ export function useJournalEntries() {
   const [memberFilter, setMemberFilter] = useState("all");
   const [accountFilter, setAccountFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const queryClient = useQueryClient();
+
+  const [postEntry] = useUpdateJournalEntryMutation();
+  const [voidEntry] = useUpdateJournalEntryMutation();
 
   const { data: journalEntries, isLoading: entryLoading, error: entryError } =
     useGetJournalEntriesQuery();
@@ -27,34 +27,14 @@ export function useJournalEntries() {
   const { data: members } = useGetMembersQuery();
   const { data: accounts } = useGetAccountsQuery();
 
-  const { data: entryLines } = useQuery({
-    queryKey: ["journal-entry-lines", selectedEntry],
-    queryFn: async () => {
-      if (!selectedEntry) return null;
-      const { data, error } = await supabase
-        .from("journal_entry_lines")
-        .select(`
-          *,
-          account:accounts(code, name)
-        `)
-        .eq("journal_entry_id", selectedEntry)
-        .order("debit", { ascending: false });
-      if (error) throw error;
-      return data as JournalLine[];
-    },
-    enabled: !!selectedEntry,
-  });
-
-  const { data: allEntryLines } = useQuery({
-    queryKey: ["all-journal-entry-lines"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("journal_entry_lines")
-        .select("journal_entry_id, account_id");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const updateEntryStatus = async (id: string, status: string) => {
+    try {
+      await postEntry({ id, status }).unwrap();
+      toast.success(`Entry ${status}`);
+    } catch {
+      toast.error(`Failed to ${status} entry`);
+    }
+  };
 
   const filteredEntries = useMemo(() => {
     if (!entryData) return [];
@@ -95,21 +75,14 @@ export function useJournalEntries() {
 
       if (startDate && endDate) {
         filtered = filtered.filter((entry) => {
-          const entryDate = new Date(entry.entry_date);
+          const entryDate = new Date(entry.date);
           return entryDate >= startDate! && entryDate <= endDate!;
         });
       }
     }
 
     if (memberFilter !== "all") {
-      filtered = filtered.filter((entry) => entry.member?.beneficiary_id === memberFilter);
-    }
-
-    if (accountFilter !== "all" && allEntryLines) {
-      const entryIdsWithAccount = allEntryLines
-        .filter((line) => line.account_id === accountFilter)
-        .map((line) => line.journal_entry_id);
-      filtered = filtered.filter((entry) => entryIdsWithAccount.includes(entry.id));
+      filtered = filtered.filter((entry) => entry.member?.user_id === memberFilter);
     }
 
     if (statusFilter !== "all") {
@@ -117,64 +90,27 @@ export function useJournalEntries() {
     }
 
     return filtered;
-  }, [entryData, dateRange, customStartDate, customEndDate, memberFilter, accountFilter, statusFilter, allEntryLines]);
-
-  const postEntry = useMutation({
-    mutationFn: async (id: string) => {
-      const { data: user } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from("journal_entries")
-        .update({
-          status: "posted",
-          posted_by: user.user?.id,
-          posted_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journal-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success("Journal entry posted");
-    },
-    onError: () => {
-      toast.error("Failed to post entry");
-    },
-  });
-
-  const voidEntry = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("journal_entries")
-        .update({ status: "voided" })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journal-entries"] });
-      toast.success("Journal entry voided");
-    },
-    onError: () => {
-      toast.error("Failed to void entry");
-    },
-  });
+  }, [entryData, dateRange, customStartDate, customEndDate, memberFilter, statusFilter]);
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-
     doc.setFontSize(18);
     doc.text("Journal Entries Report", 14, 22);
     doc.setFontSize(10);
     doc.text(`Generated on: ${format(new Date(), "dd MMM yyyy HH:mm")}`, 14, 30);
 
-    const tableData = filteredEntries.map((entry) => [
-      entry.entry_number,
-      format(new Date(entry.entry_date), "dd MMM yyyy"),
-      entry.description || entry.reference || "-",
-      entry.member?.beneficiary_id || "-",
-      `BDT ${Number(entry.total_debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-      entry.status,
-    ]);
+    const tableData = filteredEntries.map((entry) => {
+      const lines = entry.lines || [];
+      const totalDebit = lines.reduce((s: number, l: any) => s + (l.debit || 0), 0);
+      return [
+        entry.reference || entry.id,
+        format(new Date(entry.date), "dd MMM yyyy"),
+        entry.description || entry.reference || "-",
+        entry.member?.user_id || "-",
+        `BDT ${Number(totalDebit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        entry.status,
+      ];
+    });
 
     autoTable(doc, {
       head: [["Entry #", "Date", "Description", "Member", "Amount", "Status"]],
@@ -192,7 +128,8 @@ export function useJournalEntries() {
     window.print();
   };
 
-  const selectedEntryData = entryData?.find((e) => e.id === selectedEntry);
+  const postEntryAction = (id: string) => updateEntryStatus(id, "posted");
+  const voidEntryAction = (id: string) => updateEntryStatus(id, "void");
 
   return {
     entryData,
@@ -215,10 +152,9 @@ export function useJournalEntries() {
     setStatusFilter,
     members,
     accounts,
-    entryLines,
-    selectedEntryData,
-    postEntry,
-    voidEntry,
+    count,
+    postEntry: postEntryAction,
+    voidEntry: voidEntryAction,
     exportToPDF,
     handlePrint,
   };

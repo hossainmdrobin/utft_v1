@@ -1,46 +1,38 @@
 import { Schema, model, models, Document } from "mongoose";
-import { JournalEntryLineDoc } from "./JournalEntryLine";
-import { MemberDoc } from "./member";
 
-interface IJournalEntry extends Document {
-  lines?: string[] | JournalEntryLineDoc[];
-  entry_number?: string;
-  entry_date?: string;
+export type JournalEntryStatus = "draft" | "posted" | "void";
+
+interface IJournalEntryLine {
+  account: Schema.Types.ObjectId;
   description?: string;
-  member_id?: string | MemberDoc;
-  reference?: string;
-  status: string;
-  total_debit: number;
-  total_credit: number;
-  posted_at?: string;
-  posted_by?: string;
-  is_locked: boolean;
-  locked_at?: string;
-  locked_by?: string;
-  created_by?: string | MemberDoc;
-  approved_by?: string | MemberDoc;
-  voided_by?: string | MemberDoc;
+  debit: number;
+  credit: number;
 }
 
-const journalEntrySchema = new Schema({
-  lines: [{ type: Schema.Types.ObjectId, ref: "JournalEntryLine" }],
-  entry_number: { type: String, required: false },
-  entry_date: { type: String, required: true,default: new Date().toISOString() },
-  description: { type: String },
-  member_id: { type: Schema.Types.ObjectId, ref: "Member" },
-  reference: { type: String },
-  status: { type: String, default: "draft", enum: ["draft", "approved", "voided"] },
-  total_debit: { type: Number, default: 0 },
-  total_credit: { type: Number, default: 0 },
-  posted_at: { type: String },
-  posted_by: { type: String },
-  is_locked: { type: Boolean, default: false },
-  locked_at: { type: String },
-  locked_by: { type: String },
-  created_by: { type: Schema.Types.ObjectId, ref: "Member" },
-  approved_by: { type: Schema.Types.ObjectId, ref: "Member" },
-  voided_by: { type: Schema.Types.ObjectId, ref: "Member" },
-}, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
+export interface IJournalEntry extends Document {
+  date: Date;
+  reference?: string;
+  member?: Schema.Types.ObjectId;
+  description: string;
+  lines: IJournalEntryLine[];
+  status: JournalEntryStatus;
+}
 
-export const JournalEntry = models.JournalEntry || model("JournalEntry", journalEntrySchema);
+const journalEntryLineSchema = new Schema<IJournalEntryLine>({
+  account: { type: Schema.Types.ObjectId, ref: "Account", required: true },
+  description: { type: String },
+  debit: { type: Number, default: 0 },
+  credit: { type: Number, default: 0 },
+});
+
+const journalEntrySchema = new Schema<IJournalEntry>({
+  date: { type: Date, required: true },
+  reference: { type: String },
+  member: { type: Schema.Types.ObjectId, ref: "Member" },
+  description: { type: String, required: true },
+  lines: [journalEntryLineSchema],
+  status: { type: String, enum: ["draft", "posted", "void"], default: "posted" },
+}, { timestamps: true });
+
+export const JournalEntry = models.JournalEntry || model<IJournalEntry>("JournalEntry", journalEntrySchema);
 export type JournalEntryDoc = IJournalEntry;

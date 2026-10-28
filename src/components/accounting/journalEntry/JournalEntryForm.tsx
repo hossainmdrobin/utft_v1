@@ -78,7 +78,7 @@ export function JournalEntryForm({
         <div className="grid grid-cols-3 gap-4">
           <FormField
             control={form.control}
-            name="entry_date"
+            name="date"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Date *</FormLabel>

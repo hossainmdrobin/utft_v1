@@ -49,7 +49,7 @@ export function JournalLines({
           variant="outline"
           size="sm"
           onClick={() =>
-            append({ account_id: "", description: "", debit: 0, credit: 0 })
+            append({ account: "", description: "", debit: 0, credit: 0 })
           }
         >
           <Plus className="h-4 w-4 mr-1" />
@@ -74,7 +74,7 @@ export function JournalLines({
                 <td className="p-2">
                   <FormField
                     control={form.control}
-                    name={`lines.${index}.account_id`}
+                    name={`lines.${index}.account`}
                     render={({ field }) => (
                       <AccountSelect
                         field={field}

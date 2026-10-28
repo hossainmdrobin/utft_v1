@@ -1,7 +1,6 @@
 import { Member } from "./Member";
 import { Account } from "@/models/Account";
 import { JournalEntry } from "../../../models/JournalEntry";
-import { JournalEntryLine } from "../../../models/JournalEntryLine";
 import { MonthlyDonation } from "./MonthlyDonation";
 import { MemberCharge } from "./MemberCharge";
 import { FineRule } from "./FineRule";
@@ -21,7 +20,6 @@ export const models = {
   Member,
   Account,
   JournalEntry,
-  JournalEntryLine,
   MonthlyDonation,
   MemberCharge,
   FineRule,
