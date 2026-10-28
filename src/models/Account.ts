@@ -1,36 +1,30 @@
 import { Schema, model, models, Document } from "mongoose";
 
-interface IAccount extends Document {
+export type AccountType = "asset" | "liability" | "equity" | "income" | "expense";
+
+export interface IAccount extends Document {
+  code?: string;
   name: string;
-  code: string;
-  account_type: "asset" | "liability" | "equity" | "income" | "expense";
+  type: AccountType;
+  parentAccount?: Schema.Types.ObjectId;
+  balance: number;
   description?: string;
-  opening_balance: number;
-  current_balance: number;
-  is_active: boolean;
-  is_contra: boolean;
-  is_system: boolean;
-  parent_account_id?: string;
-  parent_id?: string;
-  created_by?: string;
-  created_at?: string;
-  updated_at?: string;
+  isActive: boolean;
 }
 
-const accountSchema = new Schema({
+const accountSchema = new Schema<IAccount>({
+  code: { type: String, unique: true, sparse: true },
   name: { type: String, required: true },
-  code: { type: String, required: true, unique: true },
-  account_type: { type: String, enum: ["asset", "liability", "equity", "income", "expense"], required: true },
+  type: {
+    type: String,
+    enum: ["asset", "liability", "equity", "income", "expense"],
+    required: true,
+  },
+  parentAccount: { type: Schema.Types.ObjectId, ref: "Account", default: null },
+  balance: { type: Number, default: 0 },
   description: { type: String },
-  opening_balance: { type: Number, default: 0 },
-  current_balance: { type: Number, default: 0 },
-  is_active: { type: Boolean, default: true },
-  is_contra: { type: Boolean, default: false },
-  is_system: { type: Boolean, default: false },
-  parent_account_id: { type: String },
-  parent_id: { type: String },
-  created_by: { type: String },
-}, { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } });
+  isActive: { type: Boolean, default: true },
+}, { timestamps: true });
 
-export const Account = models.Account || model("Account", accountSchema);
+export const Account = models.Account || model<IAccount>("Account", accountSchema);
 export type AccountDoc = IAccount;

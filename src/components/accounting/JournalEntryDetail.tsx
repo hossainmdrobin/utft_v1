@@ -14,14 +14,15 @@ interface JournalEntryLineWithAccount {
   description: string | null;
   debit: number;
   credit: number;
-  account_id: { code: string; name: string } | null;
+  account: { code: string; name: string } | null;
 }
 
 export function JournalEntryDetail({ _id }: JournalEntryDetailProps) {
-  const { data, isLoading: entryLoading } = useGetEntryByIdQuery({ id: _id }, { skip: !_id });
+  const { data, isLoading: entryLoading, error } = useGetEntryByIdQuery({ id: _id }, { skip: !_id });
+  console.log("PLEASE PUT", data, error)
   const { data: entry } = data || {};
-const totalDebit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.debit || 0), 0) || 0;
-const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.credit || 0), 0) || 0;  
+  const totalDebit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.debit || 0), 0) || 0;
+  const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWithAccount) => sum + (line.credit || 0), 0) || 0;
 
   if (entryLoading) {
     return (
@@ -54,7 +55,7 @@ const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWit
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <span className="text-muted-foreground">Date:</span>{" "}
-          {format(new Date(entry.created_at), "dd MMM yyyy")}
+          {entry.date ? format(new Date(entry.date), "dd MMM yyyy") : "-"}
         </div>
         <div>
           <span className="text-muted-foreground">Status:</span>{" "}
@@ -68,11 +69,20 @@ const totalCredit = entry?.lines?.reduce((sum: number, line: JournalEntryLineWit
             {entry.reference}
           </div>
         )}
-        
         {entry.created_by && (
           <div>
             <span className="text-muted-foreground">Created By:</span>{" "}
-            {entry?.created_by.full_name+" - "+entry?.created_by?.user_id}
+            {typeof entry.created_by === "object" && entry.created_by
+              ? `${(entry.created_by as any).full_name || ""} - ${(entry.created_by as any).user_id || ""}`
+              : String(entry.created_by)}
+          </div>
+        )}
+        {entry.actioned_by && (
+          <div>
+            <span className="text-muted-foreground">Actioned By:</span>{" "}
+            {typeof entry.actioned_by === "object" && entry.actioned_by
+              ? `${(entry.actioned_by as any).full_name || ""} - ${(entry.actioned_by as any).user_id || ""}`
+              : String(entry.actioned_by)}
           </div>
         )}
       </div>

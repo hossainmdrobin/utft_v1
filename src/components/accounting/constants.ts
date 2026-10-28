@@ -2,8 +2,8 @@ import type { DateRangeValue } from "./types";
 
 export const statusColors: Record<string, string> = {
   draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  voided: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  posted: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  void: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
 
 export const dateRangeOptions: { value: DateRangeValue; label: string }[] = [

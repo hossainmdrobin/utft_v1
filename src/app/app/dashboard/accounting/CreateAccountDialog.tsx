@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -28,71 +27,29 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: {
-      code: "",
-      name: "",
-      account_type: "asset",
-      parent_id: "",
-      parent_account_id: "",
-      description: "",
-      opening_balance: 0,
-      is_contra: false,
-    },
+      defaultValues: {
+        code: "",
+        name: "",
+        type: "asset",
+        parentAccount: "",
+        description: "",
+      },
   });
-
 
   useEffect(() => {
     if (accountData) {
-      form.reset()
-      setOpen(false)
+      form.reset();
+      setOpen(false);
       toast.success("Account created successfully");
     }
     if (error) {
-      toast.error("Could not create account.")
+      toast.error("Could not create account.");
     }
-  }, [])
+  }, []);
 
-  // const mainAccounts = parentAccounts?.filter((acc) => !acc.is_contra);
-  const mainAccounts = []
-
-  const createAccount = useMutation({
-    mutationFn: async (values: AccountFormValues) => {
-      const { data: user } = await supabase.auth.getUser();
-      const { error } = await supabase.from("accounts").insert({
-        code: values.code,
-        name: values.name,
-        account_type: values.account_type,
-        parent_id: values.parent_id || null,
-        parent_account_id: values.is_contra ? (values.parent_account_id || null) : null,
-        description: values.description || null,
-        opening_balance: values.opening_balance,
-        current_balance: values.opening_balance,
-        is_contra: values.is_contra,
-        created_by: user.user?.id,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts-parents"] });
-      toast.success("Account created successfully");
-      form.reset();
-      setOpen(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create account");
-    },
-  });
-
-  const selectedType = form.watch("account_type");
-
-  const filteredParents = [].filter(
-    (acc) => acc.account_type === selectedType && !acc.is_contra
-  );
-
-  const filteredMainAccounts = mainAccounts?.filter(
-    (acc) => acc.account_type === selectedType
-  );
+  const createAccount = (values: AccountFormValues) => {
+    return createNewAccount(values);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -108,13 +65,7 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
         <DialogHeader>
           <DialogTitle>Create New Account</DialogTitle>
         </DialogHeader>
-        <CreateAccountFormFields
-          form={form}
-          // parentAccounts={parentAccounts}
-          mainAccounts={mainAccounts}
-          filteredParents={filteredParents}
-          filteredMainAccounts={filteredMainAccounts}
-        />
+        <CreateAccountFormFields form={form} />
         <div className="flex justify-end gap-2 pt-4">
           <Button
             type="button"
@@ -123,9 +74,9 @@ export function CreateAccountDialog({ trigger }: CreateAccountDialogProps) {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={createAccount.isPending}
+          <Button type="submit" disabled={createNewAccount.isPending}
             onClick={form.handleSubmit((v) => {
-              createNewAccount(v)
+              createAccount(v);
             })}
           >
             {isLoading ? "Creating..." : "Create Account"}

@@ -12,8 +12,8 @@ export default function Page() {
 
   const summary = accounts.reduce(
     (acc, acc_) => {
-      const balance = Number(acc_.current_balance);
-      switch (acc_.account_type) {
+      const balance = Number(acc_.balance);
+      switch (acc_.type) {
         case "asset":
           acc.assets += balance;
           break;

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 
 interface Account {
   _id: string;
-  code: string;
+  code?: string;
   name: string;
 }
 
@@ -25,7 +25,7 @@ interface AccountSelectProps {
   accountSearch: Record<number, string>;
   setAccountSearch: React.Dispatch<React.SetStateAction<Record<number, string>>>;
   accounts?: Account[];
-  lines: { account_id?: string }[];
+  lines: { account?: string }[];
 }
 
 export function AccountSelect({
@@ -38,12 +38,12 @@ export function AccountSelect({
 }: AccountSelectProps) {
   const search = accountSearch[index] || "";
   const selectedAccountIds = lines
-    .map((l) => l.account_id)
+    .map((l) => l.account)
     .filter((id): id is string => Boolean(id) && id !== field.value);
   const filteredAccounts = accounts?.filter((acc) => {
     const matchesSearch =
       !search ||
-      acc.code.toLowerCase().includes(search.toLowerCase()) ||
+      (acc.code || "").toLowerCase().includes(search.toLowerCase()) ||
       acc.name.toLowerCase().includes(search.toLowerCase());
     return matchesSearch && !selectedAccountIds.includes(acc._id);
   }) || [];
@@ -73,7 +73,7 @@ export function AccountSelect({
         )}
         {filteredAccounts.map((acc) => (
           <SelectItem key={acc._id} value={acc._id}>
-            {acc.code} - {acc.name}
+            {(acc.code || "")} - {acc.name}
           </SelectItem>
         ))}
       </SelectContent>

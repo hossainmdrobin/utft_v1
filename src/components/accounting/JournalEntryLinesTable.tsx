@@ -6,7 +6,7 @@ interface JournalEntryLineWithAccount {
   description: string | null;
   debit: number;
   credit: number;
-  account_id: { code: string; name: string } | null;
+  account: { code: string; name: string } | null;
 }
 
 interface JournalEntryLinesTableProps {
@@ -31,7 +31,7 @@ export function JournalEntryLinesTable({ lines, totalDebit, totalCredit }: Journ
           {lines?.map((line: JournalEntryLineWithAccount) => (
             <TableRow key={line.id || line._id}>
               <TableCell className="font-mono text-sm">
-                {line.account_id ? `${line.account_id.code} - ${line.account_id.name}` : "ACCOUNT NUMBER"}
+                {line.account ? `${line.account.code} - ${line.account.name}` : "ACCOUNT NUMBER"}
               </TableCell>
               <TableCell className="text-sm">{line.description || "-"}</TableCell>
               <TableCell className="text-right font-mono">

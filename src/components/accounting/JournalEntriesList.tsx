@@ -154,7 +154,7 @@ export function JournalEntriesList() {
               return (
                 !q ||
                 m.full_name?.toLowerCase().includes(q) ||
-                String(m.beneficiary_id || "").toLowerCase().includes(q)
+                String(m.user_id || "").toLowerCase().includes(q)
               )
             }).map((m) => (
               <SelectItem key={m._id} value={m.user_id || m.user_id}>
