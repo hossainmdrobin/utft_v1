@@ -77,6 +77,14 @@ export function JournalEntryDetail({ _id }: JournalEntryDetailProps) {
               : String(entry.created_by)}
           </div>
         )}
+        {entry.actioned_by && (
+          <div>
+            <span className="text-muted-foreground">Actioned By:</span>{" "}
+            {typeof entry.actioned_by === "object" && entry.actioned_by
+              ? `${(entry.actioned_by as any).full_name || ""} - ${(entry.actioned_by as any).user_id || ""}`
+              : String(entry.actioned_by)}
+          </div>
+        )}
       </div>
       {entry.description && (
         <p className="text-sm">{entry.description}</p>
