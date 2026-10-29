@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/mongodb/client";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
+import { monthArray } from "@/lib/date/dhaka";
 
 interface DashboardStats {
   totalMembers: number;
@@ -21,9 +23,9 @@ export default function Dashboard() {
     queryKey: ["dashboard-stats"],
     queryFn: async (): Promise<DashboardStats> => {
       const [membersResult, sharesResult, settingsResult] = await Promise.all([
-        supabase.from("members").select("status, share_quantity"),
-        supabase.from("share_transactions").select("share_quantity"),
-        supabase.from("trust_settings").select("value").eq("key", "share_price").maybeSingle(),
+        supabase.from("Member").select("status, share_quantity"),
+        supabase.from("ShareTransaction").select("share_quantity"),
+        supabase.from("TrustSetting").select("value").eq("key", "share_price").maybeSingle(),
       ]);
 
       if (membersResult.error) throw membersResult.error;
@@ -50,9 +52,9 @@ export default function Dashboard() {
     queryKey: ["recent-members"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("members")
-        .select("id, full_name, member_type, status, created_at")
-        .order("created_at", { ascending: false })
+        .from("Member")
+        .select("id, full_name, member_type, status, created_at, updated_at")
+        .order("updated_at", { ascending: false })
         .limit(5);
 
       if (error) throw error;
@@ -64,7 +66,7 @@ export default function Dashboard() {
     queryKey: ["pending-approvals"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("members")
+        .from("Member")
         .select("id, full_name, member_type, created_at")
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -88,6 +90,9 @@ export default function Dashboard() {
       return data;
     },
   });
+
+  const { data: installmentsData, isLoading: installmentsLoading } = useGetInstallmentsQuery();
+  const recentInstallments = (installmentsData?.data ?? []).slice(0, 5);
 
   const statsCards = [
     {
@@ -120,6 +125,16 @@ export default function Dashboard() {
     },
   ];
 
+  function memberJoinedUpdated(member: { created_at?: string; updated_at?: string }) {
+    const created = member.created_at ? new Date(member.created_at) : null;
+    const updated = member.updated_at ? new Date(member.updated_at) : null;
+    const same = created && updated && created.getTime() === updated.getTime();
+    if (same || !updated) {
+      return { label: "Joined", date: created };
+    }
+    return { label: "Updated", date: updated };
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -151,7 +166,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle>Recent Members</CardTitle>
@@ -163,23 +178,26 @@ export default function Dashboard() {
               </div>
             ) : recentMembers && recentMembers.length > 0 ? (
               <div className="space-y-3">
-                {recentMembers.map((member) => (
-                  <Link
-                    key={member.id}
-                    href={`/members/${member.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{member.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(member.created_at), "MMM d, yyyy")}
-                      </p>
-                    </div>
-                    <Badge variant={member.status === "active" ? "default" : "secondary"}>
-                      {member.member_type}
-                    </Badge>
-                  </Link>
-                ))}
+                {recentMembers.map((member) => {
+                  const { label, date } = memberJoinedUpdated(member);
+                  return (
+                    <Link
+                      key={member.id}
+                      href={`/members/${member.id}`}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">{member.full_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {label} {format(date ?? new Date(member.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                      <Badge variant={member.status === "active" ? "default" : "secondary"}>
+                        {member.member_type}
+                      </Badge>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
@@ -219,6 +237,50 @@ export default function Dashboard() {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 No pending approvals
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle>Recent Installments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {installmentsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : recentInstallments.length > 0 ? (
+              <div className="space-y-2">
+                {recentInstallments.map((installment) => (
+                  <div
+                    key={String(installment._id)}
+                    className="flex items-center justify-between p-2 rounded hover:bg-accent"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground">
+                        {installment.cus_name || "Unknown member"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {monthArray[(installment.month ?? 1) - 1]} {installment.year ?? ""} •{" "}
+                        {format(new Date(installment.created_at ?? Date.now()), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-foreground">
+                        ৳{Number(installment.amount ?? 0).toLocaleString()}
+                      </p>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {installment.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No installments yet
               </div>
             )}
           </CardContent>
@@ -264,4 +326,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
