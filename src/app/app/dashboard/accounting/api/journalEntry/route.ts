@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { getTransactions, createTransaction } from "@/lib/accounting/transactions";
+import { connectDB } from "@/integrations/mongodb/connection";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const ADMIN_ROLES = ["admin", "president", "director"];
 
@@ -52,10 +54,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  await connectDB();
   const body = await req.json();
   const { type, lines, ...data } = body;
   try {
     const entry = await createTransaction({ ...data, lines });
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String((entry as any)._id),
+      action: "INSERT",
+      description: `Journal entry created: ${(entry as any).reference || (entry as any)._id} by ${user?.full_name || user?.user_id || user?.role}`,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+      new_data: entry,
+    });
+    
     return NextResponse.json({ data: entry }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -75,13 +89,30 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  await connectDB();
   const body = await req.json();
   const { id, ...updateData } = body;
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
   try {
+    const { JournalEntry } = await import("@/models/JournalEntry");
+    const JournalEntryModel = JournalEntry as any;
+    const oldEntry = await JournalEntryModel.findById(id).lean();
+    
     const entry = await JournalEntryUpdate(id, updateData);
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String(id),
+      action: "UPDATE",
+      description: `Journal entry updated by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldEntry,
+      new_data: entry,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: entry });
   } catch (error) {
     const status = (error as Error)?.message === "Journal entry not found" ? 404 : 400;
@@ -114,20 +145,32 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
+  await connectDB();
   const body = await req.json();
   const { id, type } = body;
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
   try {
-    const { connectDB } = await import("@/integrations/mongodb/connection");
     const { JournalEntry } = await import("@/models/JournalEntry");
-    await connectDB();
     const JournalEntryModel = JournalEntry as any;
+    const oldEntry = await JournalEntryModel.findById(id).lean();
+    
     const entry = await JournalEntryModel.findByIdAndDelete(id);
     if (!entry) {
       return NextResponse.json({ error: "Journal entry not found" }, { status: 404 });
     }
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String(id),
+      action: "DELETE",
+      description: `Journal entry deleted: ${oldEntry?.reference || id} by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldEntry,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     return NextResponse.json(

@@ -1,6 +1,7 @@
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Account } from "@/models/Account";
 import { JournalEntry } from "@/models/JournalEntry";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const AccountModel = Account as any;
 const JournalEntryModel = JournalEntry as any;
@@ -71,7 +72,7 @@ export async function getTransactionById(id: string) {
   return entry;
 }
 
-export async function createTransaction(data: any) {
+export async function createTransaction(data: any, user?: any) {
   await connectDB();
   const { date, reference, member, description, lines, status = "posted" } = data;
   if (!date) {
@@ -98,6 +99,7 @@ export async function createTransaction(data: any) {
     description: description || "",
     lines,
     status,
+    created_by: user?._id || user?.id || undefined,
   });
 
   if (status === "posted") {
@@ -111,6 +113,20 @@ export async function createTransaction(data: any) {
         { $inc: { balance: balanceDelta(account.type, line.debit, line.credit) } },
       );
     }
+  }
+
+  try {
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String((entry as any)._id),
+      action: "INSERT",
+      description: `Transaction/journal entry created: ${(entry as any).reference || (entry as any)._id} by ${user?.full_name || user?.user_id || user?.role || "system"}`,
+      changed_by: user?._id ? String(user._id) : undefined,
+      changed_at: new Date().toISOString(),
+      new_data: entry,
+    });
+  } catch (e) {
+    console.log("Audit log error:", e);
   }
 
   return entry;

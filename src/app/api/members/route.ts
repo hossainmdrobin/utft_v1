@@ -3,6 +3,7 @@ import { connectDB } from "@/integrations/mongodb/connection";
 import { UserRole } from "@/integrations/mongodb/models/UserRole";
 import { hashPassword, verifyToken } from "@/integrations/mongodb/lib/auth";
 import { Member } from "@/models/member";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,15 @@ export async function POST(req: NextRequest) {
     const member = await Member.create({
       user_id,
       password:hashedPassword
+    });
+
+    await AuditLog.create({
+      table_name: "Member",
+      record_id: String(member._id),
+      action: "INSERT",
+      description: `Member created via API: ${member.user_id}`,
+      changed_at: new Date().toISOString(),
+      new_data: member,
     });
 
     return NextResponse.json(
