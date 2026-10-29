@@ -16,6 +16,8 @@ export async function GET(req: NextRequest) {
   if (isActive !== null) filters.isActive = isActive === "true";
   const search = searchParams.get("search");
   if (search) filters.search = search;
+  const tree = searchParams.get("tree");
+  if (tree !== null) filters.tree = tree === "true";
 
   try {
     const result = await getAccounts(filters);
@@ -52,9 +54,16 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ data: account }, { status: 201 });
   } catch (error) {
-    const status = (error as Error)?.message === "Account code already exists" ? 409 : 400;
+    const message = (error as Error)?.message || "Failed to create account";
+    const status =
+      message === "Account code already exists" ||
+      message === "Account cannot be its own parent" ||
+      message === "Circular parent reference detected" ||
+      message === "Parent account not found"
+        ? 409
+        : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to create account" },
+      { error: message },
       { status },
     );
   }

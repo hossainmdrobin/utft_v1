@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
   if (isContra !== null) filters.isActive = isContra === "true";
   const search = searchParams.get("search");
   if (search) filters.search = search;
+  const tree = searchParams.get("tree");
+  if (tree !== null) filters.tree = tree === "true";
 
   try {
     const result = await getAccounts(filters);
@@ -64,9 +66,16 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ data: account }, { status: 201 });
   } catch (error) {
-    const status = (error as Error)?.message === "Account code already exists" ? 409 : 400;
+    const message = (error as Error)?.message || "Failed to create account";
+    const status =
+      message === "Account code already exists" ||
+      message === "Account cannot be its own parent" ||
+      message === "Circular parent reference detected" ||
+      message === "Parent account not found"
+        ? 409
+        : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to create account" },
+      { error: message },
       { status },
     );
   }
@@ -105,9 +114,17 @@ export async function PATCH(req: NextRequest) {
     
     return NextResponse.json({ data: account });
   } catch (error) {
-    const status = (error as Error)?.message === "Account not found" ? 404 : 400;
+    const message = (error as Error)?.message || "Failed to update account";
+    const status =
+      message === "Account not found"
+        ? 404
+        : message === "Account cannot be its own parent" ||
+          message === "Circular parent reference detected" ||
+          message === "Parent account not found"
+          ? 409
+          : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to update account" },
+      { error: message },
       { status },
     );
   }
@@ -145,14 +162,16 @@ export async function DELETE(req: NextRequest) {
     
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
+    const message = (error as Error)?.message || "Failed to delete account";
     const status =
-      (error as Error)?.message === "Cannot delete an account that has attached transactions"
+      message === "Cannot delete an account that has attached transactions" ||
+      message === "Cannot delete an account that has child accounts"
         ? 409
-        : (error as Error)?.message === "Account not found"
+        : message === "Account not found"
           ? 404
           : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to delete account" },
+      { error: message },
       { status },
     );
   }

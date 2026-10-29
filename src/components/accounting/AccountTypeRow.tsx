@@ -2,10 +2,8 @@ import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, ChevronDown } from "lucide-react";
-import { Account, AccountDoc } from "@/models/Account";
+import { AccountDoc } from "@/models/Account";
 import { typeLabels } from "./AccountsList";
-import AccountRow from "./AccountRow";
-
 
 interface AccountTypeRowProps {
   type: string;
@@ -24,6 +22,7 @@ export function AccountTypeRow({
   totalBalance,
   toggleType,
   tree,
+  renderAccountRow,
 }: AccountTypeRowProps) {
   return (
     <React.Fragment key={type}>
@@ -49,9 +48,8 @@ export function AccountTypeRow({
         </TableCell>
         <TableCell />
       </TableRow>
-      {isExpanded && tree.map((acc) => 
-      <AccountRow account={acc} />
-      )}
+      {isExpanded &&
+        tree.flatMap((acc) => renderAccountRow(acc, 0))}
     </React.Fragment>
   );
 }

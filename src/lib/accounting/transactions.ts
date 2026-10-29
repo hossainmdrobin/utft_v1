@@ -2,6 +2,7 @@ import { connectDB } from "@/integrations/mongodb/connection";
 import { Account } from "@/models/Account";
 import { JournalEntry } from "@/models/JournalEntry";
 import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
+import { Types } from "mongoose";
 
 const AccountModel = Account as any;
 const JournalEntryModel = JournalEntry as any;
@@ -103,10 +104,23 @@ export async function createTransaction(data: any, user?: any) {
   });
 
   if (status === "posted") {
+    const lineAccountIds = [...new Set(lines.map((line) => String(line.account)))];
+    const accounts = await AccountModel.find({
+      _id: { $in: lineAccountIds.map((id) => new Types.ObjectId(id)) },
+    }).lean();
+    const accountById = new Map(accounts.map((acc) => [String(acc._id), acc]));
+    const parentAccountIds = new Set(
+      (await AccountModel.distinct("parentAccount", {
+        parentAccount: { $in: lineAccountIds },
+      })).map(String),
+    );
     for (const line of lines) {
-      const account = await AccountModel.findById(line.account);
+      const account = accountById.get(String(line.account)) as any;
       if (!account) {
         throw new Error(`Account not found: ${line.account}`);
+      }
+      if (parentAccountIds.has(String(line.account))) {
+        throw new Error("Cannot post to a parent account; post to a leaf account instead.");
       }
       await AccountModel.findByIdAndUpdate(
         line.account,

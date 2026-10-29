@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
+import { AccountDoc } from "@/models/Account";
 
 export const accountSchema = z.object({
   code: z.string().min(1, "Code is required").max(20, "Code too long").optional().or(z.literal("")),
@@ -37,6 +39,9 @@ interface CreateAccountFormFieldsProps {
 export function CreateAccountFormFields({
   form,
 }: CreateAccountFormFieldsProps) {
+  const { data: accountsData } = useGetAccountsQuery();
+  const accounts: AccountDoc[] = accountsData?.data ?? [];
+
   return (
     <Form {...form}>
       <>
@@ -73,8 +78,8 @@ export function CreateAccountFormFields({
                     <SelectItem value="income">Income</SelectItem>
                     <SelectItem value="expense">Expense</SelectItem>
                   </SelectContent>
+                  <FormMessage />
                 </Select>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -101,7 +106,22 @@ export function CreateAccountFormFields({
             <FormItem>
               <FormLabel>Parent Account (optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Parent account code or ID" {...field} />
+                <Select
+                  onValueChange={(value) => field.onChange(value === "none" ? "" : value)}
+                  value={field.value || "none"}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None (top-level)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None (top-level)</SelectItem>
+                    {accounts.map((acc) => (
+                      <SelectItem key={String(acc._id)} value={String(acc._id)}>
+                        {acc.code || "-"} — {acc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

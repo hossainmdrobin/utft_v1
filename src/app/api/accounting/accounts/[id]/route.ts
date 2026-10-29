@@ -39,9 +39,17 @@ export async function PATCH(
     
     return NextResponse.json({ data: account });
   } catch (error) {
-    const status = (error as Error)?.message === "Account not found" ? 404 : 400;
+    const message = (error as Error)?.message || "Failed to update account";
+    const status =
+      message === "Account not found"
+        ? 404
+        : message === "Account cannot be its own parent" ||
+          message === "Circular parent reference detected" ||
+          message === "Parent account not found"
+          ? 409
+          : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to update account" },
+      { error: message },
       { status },
     );
   }
@@ -78,14 +86,16 @@ export async function DELETE(
     
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
+    const message = (error as Error)?.message || "Failed to delete account";
     const status =
-      (error as Error)?.message === "Cannot delete an account that has attached transactions"
+      message === "Cannot delete an account that has attached transactions" ||
+      message === "Cannot delete an account that has child accounts"
         ? 409
-        : (error as Error)?.message === "Account not found"
+        : message === "Account not found"
           ? 404
           : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to delete account" },
+      { error: message },
       { status },
     );
   }

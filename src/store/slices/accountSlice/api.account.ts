@@ -5,6 +5,7 @@ export interface AccountFilters {
   type?: string;
   isActive?: boolean;
   search?: string;
+  tree?: boolean;
 }
 
 export const accountApi = injectEndpoint("accountApi", (builder) => ({
@@ -12,10 +13,11 @@ export const accountApi = injectEndpoint("accountApi", (builder) => ({
     query: (filters) => {
       const params = new URLSearchParams();
       if (filters) {
-        const { type, isActive, search } = filters;
+        const { type, isActive, search, tree } = filters;
         if (type) params.set("type", type);
         if (isActive !== undefined) params.set("isActive", String(isActive));
         if (search) params.set("search", search);
+        if (tree !== undefined) params.set("tree", String(tree));
       }
       const queryString = params.toString();
       return {

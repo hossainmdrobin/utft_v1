@@ -105,6 +105,30 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
     });
   };
 
+  // Rollup balances: parent = sum of descendant leaf balances (computed from flat list)
+  const childrenMap = new Map<string, string[]>();
+  accounts?.forEach((acc) => {
+    const pid = acc.parentAccount ? String(acc.parentAccount) : null;
+    if (pid) {
+      if (!childrenMap.has(pid)) childrenMap.set(pid, []);
+      childrenMap.get(pid)!.push(String(acc._id));
+    }
+  });
+  const rollupById = new Map<string, number>();
+  const computeRollup = (id: string): number => {
+    if (rollupById.has(id)) return rollupById.get(id)!;
+    const children = childrenMap.get(id) || [];
+    if (children.length === 0) {
+      const acc = accounts?.find((a) => String(a._id) === id);
+      rollupById.set(id, Number(acc?.balance || 0));
+      return rollupById.get(id)!;
+    }
+    const total = children.reduce((sum, cid) => sum + computeRollup(cid), 0);
+    rollupById.set(id, total);
+    return total;
+  };
+  accounts?.forEach((acc) => computeRollup(String(acc._id)));
+
   // Group accounts by type
   const groupedAccounts = accounts?.reduce((acc, account) => {
     if (!acc[account.type]) {
@@ -200,7 +224,9 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
           )}
         </TableCell>
         <TableCell className="text-right font-mono">
-          {!hasChildren && (
+          {hasChildren ? (
+            <>৳{Number(rollupById.get(String(account._id)) || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</>
+          ) : (
             <>৳{Number(account.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</>
           )}
         </TableCell>
@@ -265,8 +291,8 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
             const tree = buildTree(typeAccounts);
             const isExpanded = expandedTypes.has(type);
 
-            const totalBalance = typeAccounts.reduce(
-              (sum, acc) => sum + Number(acc.balance),
+            const totalBalance = tree.reduce(
+              (sum, root) => sum + Number(rollupById.get(String(root._id)) || 0),
               0
             );
 

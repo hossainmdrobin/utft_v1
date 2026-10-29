@@ -10,7 +10,15 @@ export default function Page() {
   const { data: accountsData } = useGetAccountsQuery();
   const accounts = accountsData?.data ?? [];
 
-  const summary = accounts.reduce(
+  const parentAccountIds = new Set(
+    accounts
+      .map((acc) => acc.parentAccount)
+      .filter(Boolean)
+      .map((id) => String(id)),
+  );
+  const leafAccounts = accounts.filter((acc) => !parentAccountIds.has(String(acc._id)));
+
+  const summary = leafAccounts.reduce(
     (acc, acc_) => {
       const balance = Number(acc_.balance);
       switch (acc_.type) {
