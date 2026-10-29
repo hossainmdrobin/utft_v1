@@ -458,22 +458,69 @@ export function AuditLogs() {
                   <p className="text-muted-foreground text-sm mb-1">Description</p>
                   <p>{viewLog.description || "No description"}</p>
                 </div>
-                {viewLog.old_data && (
-                  <div>
-                    <p className="text-muted-foreground text-sm mb-1">Previous Data</p>
-                    <pre className="bg-muted p-3 rounded text-xs overflow-auto">
-                      {JSON.stringify(viewLog.old_data, null, 2)}
-                    </pre>
-                  </div>
-                )}
-                {viewLog.new_data && (
-                  <div>
-                    <p className="text-muted-foreground text-sm mb-1">New Data</p>
-                    <pre className="bg-muted p-3 rounded text-xs overflow-auto">
-                      {JSON.stringify(viewLog.new_data, null, 2)}
-                    </pre>
-                  </div>
-                )}
+                <div>
+                  <p className="text-muted-foreground text-sm mb-2">Changed Fields</p>
+                  {(() => {
+                    const oldObj =
+                      viewLog.old_data && typeof viewLog.old_data === "object"
+                        ? (viewLog.old_data as Record<string, unknown>)
+                        : {};
+                    const newObj =
+                      viewLog.new_data && typeof viewLog.new_data === "object"
+                        ? (viewLog.new_data as Record<string, unknown>)
+                        : {};
+                    const keys = Array.from(
+                      new Set([...Object.keys(oldObj), ...Object.keys(newObj)])
+                    );
+                    const rows = keys
+                      .map((key) => ({
+                        field: key,
+                        oldVal: oldObj[key],
+                        newVal: newObj[key],
+                      }))
+                      .filter(
+                        (r) =>
+                          JSON.stringify(r.oldVal) !== JSON.stringify(r.newVal)
+                      );
+                    if (rows.length === 0) {
+                      return <p className="text-sm text-muted-foreground">No field changes</p>;
+                    }
+                    return (
+                      <div className="border rounded-lg overflow-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Field</TableHead>
+                              <TableHead>Previous</TableHead>
+                              <TableHead>New</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {rows.map((r) => (
+                              <TableRow key={r.field}>
+                                <TableCell className="font-mono text-xs">{r.field}</TableCell>
+                                <TableCell className="text-xs break-all">
+                                  {r.oldVal === undefined
+                                    ? "-"
+                                    : typeof r.oldVal === "object"
+                                    ? JSON.stringify(r.oldVal)
+                                    : String(r.oldVal)}
+                                </TableCell>
+                                <TableCell className="text-xs break-all">
+                                  {r.newVal === undefined
+                                    ? "-"
+                                    : typeof r.newVal === "object"
+                                    ? JSON.stringify(r.newVal)
+                                    : String(r.newVal)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             </ScrollArea>
           )}
