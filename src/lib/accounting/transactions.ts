@@ -23,13 +23,14 @@ export interface TransactionFilters {
   member?: string;
   status?: string;
   search?: string;
+  account?: string;
   page?: number;
   limit?: number;
 }
 
 export async function getTransactions(filters: TransactionFilters = {}) {
   await connectDB();
-  const { dateFrom, dateTo, order, member, status, search, page = 1, limit = 100 } = filters;
+  const { dateFrom, dateTo, order, member, status, search, account, page = 1, limit = 100 } = filters;
   const filter: Record<string, any> = {};
   if (dateFrom || dateTo) {
     filter.date = {};
@@ -41,6 +42,9 @@ export async function getTransactions(filters: TransactionFilters = {}) {
   if (search) {
     const regex = new RegExp(search, "i");
     filter.$or = [{ description: regex }, { reference: regex }];
+  }
+  if (account) {
+    filter["lines.account"] = account;
   }
   const sortOrder = order === "asc" ? 1 : -1;
   const skip = (Number(page) - 1) * Number(limit);

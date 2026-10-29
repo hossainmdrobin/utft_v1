@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
   const member = searchParams.get("member");
   const status = searchParams.get("status");
   const search = searchParams.get("search");
+  const account = searchParams.get("account");
   const page = searchParams.get("page");
   const limit = searchParams.get("limit");
   if (dateFrom) filters.dateFrom = dateFrom;
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
   if (member) filters.member = member;
   if (status) filters.status = status;
   if (search) filters.search = search;
+  if (account) filters.account = account;
   if (page) filters.page = Number(page);
   if (limit) filters.limit = Number(limit);
 

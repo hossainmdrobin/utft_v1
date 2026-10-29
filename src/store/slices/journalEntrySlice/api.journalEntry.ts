@@ -8,6 +8,7 @@ export interface JournalEntryFilters {
   member?: string;
   status?: string;
   search?: string;
+  account?: string;
   page?: number;
   limit?: number;
 }
@@ -18,13 +19,14 @@ export const journalEntryApi = injectEndpoint("journalEntryApi", (builder) => ({
     query: (filters) => {
       const params = new URLSearchParams();
       if (filters) {
-        const { dateFrom, dateTo, order, member, status, search, page, limit } = filters;
+        const { dateFrom, dateTo, order, member, status, search, account, page, limit } = filters;
         if (dateFrom) params.set("dateFrom", dateFrom);
         if (dateTo) params.set("dateTo", dateTo);
         if (order) params.set("order", order);
         if (member) params.set("member", member);
         if (status) params.set("status", status);
         if (search) params.set("search", search);
+  if (account) params.set("account", account);
         if (page !== undefined) params.set("page", String(page));
         if (limit !== undefined) params.set("limit", String(limit));
       }

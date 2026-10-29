@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,6 +24,7 @@ import { MoreVertical, Edit, ChevronRight, ChevronDown, Trash2, Folder, FolderOp
 import { cn } from "@/lib/utils";
 import { AccountDoc } from "@/models/Account";
 import { AccountTypeRow } from "./AccountTypeRow";
+import { AccountNameCell } from "./AccountDetailDialog";
 import { useUpdateAccountMutation, useDeleteAccountMutation } from "@/store/slices/accountSlice/api.account";
 
 type AccountWithChildren = AccountDoc & { children: AccountWithChildren[] };
@@ -186,9 +189,8 @@ export function AccountsList({accounts}:{accounts:AccountDoc[]}) {
         </TableCell>
         <TableCell 
           className={cn("cursor-pointer", hasChildren && "font-semibold")}
-          onClick={() => hasChildren && toggleAccountExpand(String(account._id))}
         >
-          {account.name}
+          <AccountNameCell account={account} />
         </TableCell>
         <TableCell>
           {!hasChildren && (
