@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AccountNameCell } from "./AccountDetailDialog";
 import { typeColors } from "./AccountsList";
 
 
@@ -29,7 +30,7 @@ export default ({ account }: { account: AccountDoc }): JSX.Element => {
                 {account.code || "-"}
             </TableCell>
             <TableCell className="cursor-pointer">
-                {account.name}
+                <AccountNameCell account={account} />
             </TableCell>
             <TableCell>
                 <div className="flex items-center gap-2">
