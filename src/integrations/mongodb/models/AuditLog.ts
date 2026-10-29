@@ -9,7 +9,7 @@ const auditLogSchema = new Schema({
   old_data: { type: Schema.Types.Mixed },
   new_data: { type: Schema.Types.Mixed },
   changed_by: { type: String },
-  changed_at: { type: String, required: true },
+  changed_at: { type: String, default: () => new Date().toISOString() },
   deleted_by: { type: String },
   deleted_at: { type: String },
   is_deleted: { type: Boolean, default: false },

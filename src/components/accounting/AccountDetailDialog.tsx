@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { statusColors } from "./constants";
 import { AccountDoc } from "@/models/Account";
 import { useGetJournalEntriesQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
@@ -29,11 +30,6 @@ interface AccountDetailDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function AccountDetailDialog({ account, open, onOpenChange }: AccountDetailDialogProps) {
-  const { data, isLoading } = useGetJournalEntriesQuery(
-    { account: String(account._id) },
-    { skip: !open },
-  );
 interface TransactionLine {
   account?: { _id?: string } | string;
   debit?: number;
@@ -50,7 +46,22 @@ interface TransactionEntry {
   lines?: TransactionLine[];
 }
 
-  const entries: TransactionEntry[] = (data as { data?: TransactionEntry[] })?.data ?? [];
+export function AccountDetailDialog({ account, open, onOpenChange }: AccountDetailDialogProps) {
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  useEffect(() => {
+    if (open) setPage(1);
+  }, [open, account._id]);
+
+  const { data, isLoading } = useGetJournalEntriesQuery(
+    { account: String(account._id), page, limit },
+    { skip: !open },
+  );
+  const result = data as { data?: TransactionEntry[]; count?: number } | undefined;
+  const entries: TransactionEntry[] = result?.data ?? [];
+  const count = result?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(count / limit));
 
   const rows = entries.flatMap((entry: TransactionEntry) => {
     const lines = (entry.lines || []).filter(
@@ -174,6 +185,34 @@ interface TransactionEntry {
                     </tr>
                   </tfoot>
                 </Table>
+              </div>
+            )}
+
+            {count > 0 && (
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages} ({count} entries)
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages || isLoading}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>

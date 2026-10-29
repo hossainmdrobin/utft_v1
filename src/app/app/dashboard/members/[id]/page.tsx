@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import SignupForm from "@/app/auth/SignupForm";
 import { RecordPaymentDialog } from "@/components/members/RecordPaymentDialog";
 import { useAdmin } from "@/hooks/use-admin";
@@ -123,6 +124,14 @@ export default function Page() {
     fetchFinancialHistory();
     refetchSummary();
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!member) return <div>No member</div>;
 
