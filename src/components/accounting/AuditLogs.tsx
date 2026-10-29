@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/mongodb/client";
@@ -168,15 +170,17 @@ export function AuditLogs() {
       });
 
       // Soft delete the logs
-      const { error } = await supabase
-        .from("audit_logs")
-        .update({
-          is_deleted: true,
-          deleted_at: new Date().toISOString(),
-          deleted_by: user.user?.id,
-        })
-        .in("id", logIds);
-      if (error) throw error;
+      for (const logId of logIds) {
+        const { error } = await supabase
+          .from("audit_logs")
+          .update({
+            is_deleted: true,
+            deleted_at: new Date().toISOString(),
+            deleted_by: user.user?.id,
+          })
+          .eq("_id", logId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
@@ -225,7 +229,7 @@ export function AuditLogs() {
     if (selectedLogs.length === filteredLogs?.length) {
       setSelectedLogs([]);
     } else {
-      setSelectedLogs(filteredLogs?.map((l) => l.id) || []);
+      setSelectedLogs(filteredLogs?.map((l) => String(l._id)) || []);
     }
   };
 
@@ -399,13 +403,13 @@ export function AuditLogs() {
                 </TableHeader>
                 <TableBody>
                   {filteredLogs.slice(0, 100).map((log) => (
-                    <TableRow key={log.id}>
+                    <TableRow key={String(log._id)}>
                       {isAdmin && (
                         <TableCell>
                           <input
                             type="checkbox"
-                            checked={selectedLogs.includes(log.id)}
-                            onChange={() => toggleSelectLog(log.id)}
+                            checked={selectedLogs.includes(String(log._id))}
+                            onChange={() => toggleSelectLog(String(log._id))}
                             className="rounded"
                           />
                         </TableCell>

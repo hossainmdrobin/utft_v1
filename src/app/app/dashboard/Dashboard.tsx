@@ -239,7 +239,7 @@ export default function Dashboard() {
             <div className="space-y-2">
               {recentActivity.map((activity) => (
                 <div
-                  key={activity.id}
+                   key={String(activity._id)}
                   className="flex items-center justify-between p-2 rounded hover:bg-accent"
                 >
                   <div className="flex-1">

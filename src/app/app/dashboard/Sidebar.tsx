@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react'
 import {
+    History,
     Users,
     DollarSign,
     FileText,
@@ -20,7 +21,7 @@ export const navigation = [
     { name: "Members", href: "/app/dashboard/members", icon: Users, access: ["admin", "president", "director"], adminOnly: false },
     { name: "Share Management", href: "/app/dashboard/share-management", icon: Coins, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
     { name: "Accounting", href: "/app/dashboard/accounting", icon: DollarSign, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: false },
-    { name: "Reports", href: "/app/dashboard/reports", icon: FileText, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: false },
+    { name: "Activity Log", href: "/app/dashboard/activity-log", icon: History, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: false },
     { name: "User Management", href: "/app/dashboard/user-management", icon: Shield, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: true },
     { name: "Profile", href: "/app/dashboard/profile", icon: CircleUserRound, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
     { name: "Settings", href: "/app/dashboard/settings", icon: Settings, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },

@@ -27,11 +27,13 @@ export const models = {
   ShareReceivable,
   ShareTransaction,
   AuditLog,
+  audit_logs: AuditLog,
   ContributionSetting,
   OrganizationSetting,
   TrustSetting,
   ReportTemplate,
   UserRole,
+  user_roles: UserRole,
   AccountingPeriod,
   Setting,
 };

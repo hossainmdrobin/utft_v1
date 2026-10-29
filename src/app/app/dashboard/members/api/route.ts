@@ -4,7 +4,7 @@ import { hashPassword } from "@/integrations/mongodb/lib/auth";
 import { Member } from "@/models/member";
 import { Setting } from "@/models/settingAndStates";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
-import { Activity } from "@/models/activities";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 interface MemberFilter {
   stage?: string;
@@ -79,7 +79,14 @@ export async function POST(req: NextRequest) {
     await Setting.findByIdAndUpdate(setting._id, { $inc: { next_member_serial: 1 } });
 
     const newMember = await Member.create({ ...body, createdBy: member._id, password: await hashPassword(body.password), serial: nextSerial });
-    await Activity.create({ table_name: "Member", record_id: newMember._id, updatedBy: member._id, description: `A member is created with ID:${newMember.user_id}`, action: "create" })
+    await AuditLog.create({
+      table_name: "Member",
+      record_id: newMember._id,
+      action: "INSERT",
+      description: `A member is created with ID:${newMember.user_id}`,
+      changed_by: String(member._id),
+      changed_at: new Date().toISOString(),
+    });
     return NextResponse.json({ data: newMember }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -109,7 +116,15 @@ export async function PATCH(req: NextRequest) {
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
-    await Activity.create({updatedBy:user._id, table_name:"Member",record_id:member._id,newData:member, oldData:oldMember,action:'update'})
+    await AuditLog.create({
+      table_name: "Member",
+      record_id: member._id,
+      action: "UPDATE",
+      old_data: oldMember,
+      new_data: member,
+      changed_by: String(user._id),
+      changed_at: new Date().toISOString(),
+    });
     return NextResponse.json({ data: member });
   } catch (error) {
     return NextResponse.json(
@@ -129,12 +144,22 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Member id is required" }, { status: 400 });
   }
 
-  try {
+   try {
     // Await the query directly to avoid overload/union callable signature issues
-    const member = await (Member as any).findByIdAndDelete(id);
+    const member = await (Member as any).findById(id);
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
+    const oldData = member.toObject ? member.toObject() : member;
+    await (Member as any).findByIdAndDelete(id);
+    await AuditLog.create({
+      table_name: "Member",
+      record_id: member._id,
+      action: "DELETE",
+      old_data: oldData,
+      description: `Member deleted: ${member.user_id ?? member._id}`,
+      changed_at: new Date().toISOString(),
+    });
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     return NextResponse.json(
