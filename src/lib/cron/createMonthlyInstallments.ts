@@ -1,3 +1,4 @@
+import { connectDB } from "@/integrations/mongodb/connection";
 import { Member } from "@/integrations/mongodb/models/Member";
 import { Setting } from "@/integrations/mongodb/models/Setting";
 import { Installment } from "@/models/Installment";
@@ -8,6 +9,7 @@ export type MonthlyInstallmentResult =
   | { ran: true; created: number; month: number; year: number };
 
 export async function createMonthlyInstallments(): Promise<MonthlyInstallmentResult> {
+  await connectDB();
   const today = getCurrentDhakaDate();
   const setting = await Setting.findOne({}).sort({ created_at: 1 }).lean();
 
