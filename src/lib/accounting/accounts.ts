@@ -68,6 +68,17 @@ export async function createAccount(data: any, user?: any) {
 export async function updateAccount(id: string, data: any, user?: any) {
   await connectDB();
   const oldAccount = await AccountModel.findById(id).lean();
+  if (!oldAccount) {
+    throw new Error("Account not found");
+  }
+
+  if (data.code !== undefined || data.type !== undefined) {
+    const hasPostedEntries = await JournalEntryModel.exists({ "lines.account": id, status: "posted" });
+    if (hasPostedEntries) {
+      throw new Error("Cannot change account code or type when posted journal entries exist");
+    }
+  }
+
   const account = await AccountModel.findByIdAndUpdate(id, data, { new: true }).lean();
   if (!account) {
     throw new Error("Account not found");

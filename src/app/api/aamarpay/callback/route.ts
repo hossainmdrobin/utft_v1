@@ -137,6 +137,31 @@ export async function POST(request: NextRequest) {
           status: "success",
         });
       }
+
+      try {
+        const { postPayment } = await import("@/lib/accounting/autoPost");
+        const memberDoc = await Member.findOne({ user_id: member }).lean();
+        await Promise.all(
+          savedInstallments.map(async (installment) => {
+            await postPayment({
+              sourceType: "installment",
+              sourceId: String(installment._id),
+              paymentReference: transaction_id,
+              memberId: String(memberDoc?._id || member),
+              paymentDate: installment.date || new Date().toISOString(),
+              amount: installmentAmount,
+              description: installment.description || "Installment payment",
+              user: {
+                _id: String(memberDoc?._id),
+                full_name: memberDoc?.full_name || member,
+                role: memberDoc?.role,
+              },
+            });
+          }),
+        );
+      } catch (e) {
+        console.error("Auto-post journal entry error (non-blocking):", e);
+      }
     }
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");
     return NextResponse.redirect("http://localhost:3000/app/dashboard/payments", 303);
