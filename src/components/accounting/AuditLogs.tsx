@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { useAdmin } from "@/hooks/use-admin";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { useGetAuditLogsQuery, useDeleteAuditLogsMutation } from "@/store/slices/auditLogSlice/api.auditLog";
+import type { AuditLogEntry } from "@/store/slices/auditLogSlice/api.auditLog";
 import {
   Card,
   CardContent,
@@ -85,8 +85,11 @@ const dateRangeOptions = [
 ];
 
 export function AuditLogs() {
-  const { isAdmin } = useAdmin();
-  const queryClient = useQueryClient();
+  const { data: currentUser } = useGetCurrentUserQuery();
+  const isAdmin = currentUser?.data?.role === "admin";
+  const { data: logsData, isLoading } = useGetAuditLogsQuery();
+  const [deleteAuditLogs] = useDeleteAuditLogsMutation();
+  const logs: AuditLogEntry[] = (logsData as AuditLogEntry[] | undefined) || [];
   const [dateRange, setDateRange] = useState("this_month");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
@@ -95,106 +98,71 @@ export function AuditLogs() {
   const [actionFilter, setActionFilter] = useState("all");
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
-  const [viewLog, setViewLog] = useState<any>(null);
+  const [viewLog, setViewLog] = useState<AuditLogEntry | null>(null);
 
-  const { data: logs, isLoading } = useQuery({
-    queryKey: ["audit-logs", dateRange, customStartDate, customEndDate],
-    queryFn: async () => {
-      let query = supabase
-        .from("audit_logs")
-        .select("*")
-        .eq("is_deleted", false)
-        .order("changed_at", { ascending: false })
-        .limit(500);
+  const now = new Date();
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
 
-      const now = new Date();
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
+  switch (dateRange) {
+    case "today": {
+      startDate = new Date(now);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      break;
+    }
+    case "this_week": {
+      const dayOfWeek = now.getDay();
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - dayOfWeek);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      break;
+    }
+    case "this_month": {
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
+      break;
+    }
+    case "last_month": {
+      startDate = startOfMonth(subMonths(now, 1));
+      endDate = endOfMonth(subMonths(now, 1));
+      break;
+    }
+    case "last_3_months": {
+      startDate = startOfMonth(subMonths(now, 2));
+      endDate = endOfMonth(now);
+      break;
+    }
+    case "custom": {
+      startDate = customStartDate;
+      endDate = customEndDate;
+      break;
+    }
+    default:
+      break;
+  }
 
-      switch (dateRange) {
-        case "today":
-          startDate = new Date(now.setHours(0, 0, 0, 0));
-          endDate = new Date();
-          break;
-        case "this_week":
-          const dayOfWeek = now.getDay();
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - dayOfWeek);
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date();
-          break;
-        case "this_month":
-          startDate = startOfMonth(now);
-          endDate = endOfMonth(now);
-          break;
-        case "last_month":
-          startDate = startOfMonth(subMonths(now, 1));
-          endDate = endOfMonth(subMonths(now, 1));
-          break;
-        case "last_3_months":
-          startDate = startOfMonth(subMonths(now, 2));
-          endDate = endOfMonth(now);
-          break;
-        case "custom":
-          startDate = customStartDate;
-          endDate = customEndDate;
-          break;
-      }
-
-      if (startDate) {
-        query = query.gte("changed_at", startDate.toISOString());
-      }
-      if (endDate) {
-        query = query.lte("changed_at", endDate.toISOString());
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const deleteLogs = useMutation({
-    mutationFn: async (logIds: string[]) => {
-      const { data: user } = await supabase.auth.getUser();
-      
-      // First, log the deletion action
-      await supabase.from("audit_logs").insert({
-        table_name: "audit_logs",
-        record_id: "bulk-delete",
-        action: "DELETE",
-        action_type: "log_deletion",
-        description: `Deleted ${logIds.length} log entries`,
-        changed_by: user.user?.id,
-        new_data: { deleted_count: logIds.length, deleted_ids: logIds.slice(0, 10) },
-      });
-
-      // Soft delete the logs
-      for (const logId of logIds) {
-        const { error } = await supabase
-          .from("audit_logs")
-          .update({
-            is_deleted: true,
-            deleted_at: new Date().toISOString(),
-            deleted_by: user.user?.id,
-          })
-          .eq("_id", logId);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+  const handleDeleteLogs = async (logIds: string[]) => {
+    try {
+      await deleteAuditLogs({ ids: logIds }).unwrap();
       toast.success("Logs deleted successfully");
       setDeleteConfirm(false);
       setSelectedLogs([]);
-    },
-    onError: () => {
+    } catch {
       toast.error("Failed to delete logs");
-    },
-  });
+    }
+  };
 
-  const filteredLogs = logs?.filter((log) => {
+  const filteredLogs = logs.filter((log) => {
     let matches = true;
+
+    if (startDate) {
+      matches = matches && new Date(log.changed_at) >= startDate;
+    }
+    if (endDate) {
+      matches = matches && new Date(log.changed_at) <= endDate;
+    }
 
     if (tableFilter !== "all") {
       matches = matches && log.table_name === tableFilter;
@@ -216,8 +184,8 @@ export function AuditLogs() {
     return matches;
   });
 
-  const uniqueTables = [...new Set((logs?.map((l: any) => l.table_name) || []) as any[])] as string[];
-  const uniqueActions = [...new Set((logs?.map((l: any) => l.action) || []) as any[])] as string[];
+  const uniqueTables: string[] = [...new Set(logs.map((l) => l.table_name))];
+  const uniqueActions: string[] = [...new Set(logs.map((l) => l.action))];
 
   const toggleSelectLog = (id: string) => {
     setSelectedLogs((prev) =>
@@ -528,7 +496,7 @@ export function AuditLogs() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteLogs.mutate(selectedLogs)}
+              onClick={() => handleDeleteLogs(selectedLogs)}
               className="bg-destructive text-destructive-foreground"
             >
               Delete Logs
