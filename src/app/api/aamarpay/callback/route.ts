@@ -1,5 +1,8 @@
 import { Installment } from "@/models/Installment";
+import type { InstallmentDoc } from "@/models/Installment";
 import { GatewayTransaction } from "@/models/GatewayTransaction";
+import { Member } from "@/models/member";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 import { getCurrentDhakaDate } from "@/lib/date/dhaka";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -46,9 +49,14 @@ export async function POST(request: NextRequest) {
         : (installments.length === 0 ? "regular" : "advance");
       const installmentAmount = Number(amount) / Math.max(periods.length, 1);
 
+      const memberDoc = member ? await Member.findOne({ user_id: member }).lean() : null;
+      const changedBy = memberDoc?._id ? String(memberDoc._id) : undefined;
+      const changedByName = memberDoc?.full_name || member || "system";
+
+      let savedInstallments: InstallmentDoc[] = [];
       if (member) {
-        await Promise.all(
-          periods.map(({ month: installmentMonth, year: installmentYear, day: installmentDay }) => {
+        savedInstallments = (await Promise.all(
+          periods.map(async ({ month: installmentMonth, year: installmentYear, day: installmentDay }) => {
             const query = {
               member,
               month: installmentMonth,
@@ -77,9 +85,9 @@ export async function POST(request: NextRequest) {
               setDefaultsOnInsert: true,
             });
           }),
-        );
+        )) as InstallmentDoc[];
       } else {
-        await Installment.create(
+        savedInstallments = await Installment.create(
           periods.map(({ month: installmentMonth, year: installmentYear, day: installmentDay }) => ({
             transaction_id,
             amount: installmentAmount,
@@ -93,6 +101,31 @@ export async function POST(request: NextRequest) {
             description: description || "Installment payment",
           })),
         );
+      }
+
+      try {
+        await Promise.all(
+          savedInstallments.map((installment) =>
+            AuditLog.create({
+              table_name: "Installment",
+              record_id: String(installment._id),
+              action: "UPDATE",
+              action_type: "installment_payment",
+              description: `Installment paid for member ${changedByName} via aamarpay: ${transaction_id}`,
+              changed_by: changedBy,
+              changed_at: new Date().toISOString(),
+              new_data: {
+                transaction_id,
+                amount: installmentAmount,
+                month: installment.month,
+                year: installment.year,
+                status: normalizedStatus,
+              },
+            }),
+          ),
+        );
+      } catch (e) {
+        console.log("Audit log error:", e);
       }
 
       if (transaction_id && member) {
