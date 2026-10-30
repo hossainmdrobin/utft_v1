@@ -57,7 +57,7 @@ export function PasswordChangeSection({ user_id, onPasswordChangeSuccess }: Pass
     return isValid;
   };
 
-  const handleChange = (field: string, value: string) => {
+const handleChange = (field: string, value: string) => {
     setPasswordData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
@@ -65,10 +65,8 @@ export function PasswordChangeSection({ user_id, onPasswordChangeSuccess }: Pass
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!validateForm()) return;
-
     try {
       await changePassword({
         user_id,
@@ -110,7 +108,7 @@ export function PasswordChangeSection({ user_id, onPasswordChangeSuccess }: Pass
         <CardDescription>Update your account password. You must provide your current password to make changes.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="old_password">Current Password *</Label>
             <Input
@@ -157,12 +155,14 @@ export function PasswordChangeSection({ user_id, onPasswordChangeSuccess }: Pass
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="submit" disabled={isChangingPassword} className="px-8 py-6 text-base font-semibold">
+            <Button disabled={isChangingPassword} 
+            onClick={handleSubmit}
+            className="px-8 py-6 text-base font-semibold">
               {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Update Password
             </Button>
           </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
