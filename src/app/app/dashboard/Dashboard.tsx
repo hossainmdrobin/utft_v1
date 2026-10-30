@@ -10,6 +10,7 @@ import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { useGetAuditLogsQuery } from "@/store/slices/auditLogSlice/api.auditLog";
 import { useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
 import { monthArray } from "@/lib/date/dhaka";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Dashboard() {
   const { data: membersData, isLoading: membersLoading } = useGetMembersQuery();
@@ -43,7 +44,6 @@ export default function Dashboard() {
     .slice(0, 10);
 
   const recentInstallments = (installmentsData?.data ?? []).slice(0, 5);
-  console.log("Recent Installments",recentInstallments)
 
   const statsCards = [
     {
@@ -134,11 +134,24 @@ export default function Dashboard() {
                       href={`/members/${member._id || member.id}`}
                       className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
                     >
-                      <div>
-                        <p className="font-medium text-foreground">{member.full_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {label} {format(date ?? new Date(member.created_at), "MMM d, yyyy")}
-                        </p>
+                      <div className="flex items-center">
+                        <Avatar className="h-8 w-8 mr-3">
+                          <AvatarImage src={member.profile_photo || ""} />
+                          <AvatarFallback>
+                            {member.full_name
+                              ? member.full_name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                              : "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground">{member.full_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {label} {format(date ?? new Date(member.created_at), "MMM d, yyyy")}
+                          </p>
+                        </div>
                       </div>
                       <Badge variant={member.stage === "approved" ? "default" : "secondary"}>
                         {member.member_type}
@@ -172,11 +185,24 @@ export default function Dashboard() {
                     href={`/members/${member._id || member.id}`}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
                   >
-                    <div>
-                      <p className="font-medium text-foreground">{member.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(member.created_at), "MMM d, yyyy")}
-                      </p>
+                    <div className="flex items-center">
+                      <Avatar className="h-8 w-8 mr-3">
+                        <AvatarImage src={member.profile_photo || ""} />
+                        <AvatarFallback>
+                          {member.full_name
+                            ? member.full_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                            : "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-foreground">{member.full_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(member.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
                     </div>
                     <Badge variant="secondary">{member.member_type}</Badge>
                   </Link>
@@ -206,15 +232,20 @@ export default function Dashboard() {
                     key={String(installment._id)}
                     className="flex items-center justify-between p-2 rounded hover:bg-accent"
                   >
-                    <div className="flex-1">
+                      <Avatar className="h-8 w-8 mr-3">
+                        <AvatarImage src={installment.member.profile_photo || ""} />
+                        <AvatarFallback>
+                          {installment.member.full_name
+                            ? installment.member.full_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                            : "?"}
+                        </AvatarFallback>
+                      </Avatar>
                       <p className="text-sm text-foreground">
-                        {installment.cus_name || "Unknown member"}
+                        {installment.member.full_name || "Unknown member"}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {monthArray[(installment.month ?? 1) - 1]} {installment.year ?? ""} •{" "}
-                        {format(new Date(installment.created_at ?? Date.now()), "MMM d, yyyy")}
-                      </p>
-                    </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-foreground">
                         ৳{Number(installment.amount ?? 0).toLocaleString()}

@@ -7,7 +7,7 @@ export interface Installment {
 	currency?: string;
 	description?: string;
 	cus_name?: string;
-	member?: string;
+	member?: { _id: string, profile_photo: string, full_name: string };
 	account?: string;
 	method?: string;
 	month?: number;
@@ -20,7 +20,7 @@ export interface Installment {
 }
 
 export interface GetInstallmentsParams {
-	member?: { _id: string, profile_photo: string, full_name: string };
+	member?: string;
 	method?: string;
 	currency?: string;
 	amount_min?: number;
@@ -85,7 +85,7 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 		query: (params) => {
 			if (!params) return "/app/dashboard/payments/api";
 			const searchParams = new URLSearchParams();
-			if (params.member) searchParams.set("member", params.member._id);
+			if (params.member) searchParams.set("member", params.member);
 			if (params.method) searchParams.set("method", params.method);
 			if (params.currency) searchParams.set("currency", params.currency);
 			if (params.amount_min !== undefined) searchParams.set("amount_min", String(params.amount_min));
@@ -105,7 +105,7 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 		query: (params) => {
 			if (!params) return "/app/dashboard/payments/api";
 			const searchParams = new URLSearchParams();
-			if (params.member) searchParams.set("member", params.member._id);
+			if (params.member) searchParams.set("member", params.member);
 			if (params.status) searchParams.set("status", params.status);
 			if (params.month !== undefined) searchParams.set("month", String(params.month));
 			if (params.year !== undefined) searchParams.set("year", String(params.year));
