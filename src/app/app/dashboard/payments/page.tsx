@@ -42,6 +42,7 @@ export default function PaymentsPage() {
         error: installmentsErrorData,
         refetch: refetchInstallments,
     } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
+
     let isPaid = installmentData?.data.find(item => item.month == month && item.year == year)
 
     const { data: gatewayTransactionData } = useGetGatewayTransactionsQuery(
