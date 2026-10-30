@@ -4,16 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import {  useState } from "react";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
-import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
 import { useCreateManualInstallmentMutation, useGetInstallmentsByMemberIdQuery } from "@/store/slices/installmentSlice/api.installment";
 import { useParams } from "next/navigation";
 import SingleInstallmentCard from "./SingleInstallmentCard";
+import { useGetMemberByIdQuery } from "@/store/slices/memberSlice/api.member";
 
 export function NewInstallments() {
     const params = useParams();
     const id = params.id as string;
     const { month, year } = getCurrentDhakaDate()
     const { data: settings } = useGetSettingsQuery()
+    const {data:memberData} = useGetMemberByIdQuery(id)
     const { data } = useGetInstallmentsByMemberIdQuery({ id })
     const [createManualInstallment] = useCreateManualInstallmentMutation()
 
@@ -41,7 +42,7 @@ export function NewInstallments() {
     }
 
     const handleAdvancePayment = () => {
-        console.log("Clicked")
+        console.log("Clicked", installments)
         createManualInstallment({
             member: id,
             data: installments
@@ -120,7 +121,7 @@ export function NewInstallments() {
                         onClick={handleAdvancePayment}
                         disabled={installments.length === 0}>
                         <ShieldCheck className="mr-2 h-4 w-4" />
-                        Pay tatal {(settings?.data?.share_value || 1) * installments.length}
+                        Pay {(settings?.data?.share_value || 1) * installments.length}
                     </Button>
                 </div>
             </CardContent>
