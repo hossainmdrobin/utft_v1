@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
         const newInstallments = await Installment.insertMany(readyData);
         return NextResponse.json({ newInstallments }, { status: 200 })
     } catch (e) {
+        console.log(e)
         return NextResponse.json({ message: "Internal Server Error" }, { status: 500 })
     }
 }

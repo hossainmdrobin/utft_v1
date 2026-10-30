@@ -15,6 +15,7 @@ import ProfilePage from "@/app/app/dashboard/profile/page";
 import { MemberHeader } from "./MemberHeader";
 import { FinancialSummaryCard } from "./FinancialSummaryCard";
 import { FinancialHistoryTabs } from "./FinancialHistoryTabs";
+import { NewInstallments } from "./NewInstallments";
 
 export default function Page() {
   const params = useParams();
@@ -141,6 +142,9 @@ export default function Page() {
       <div className="space-y-6">
         <MemberHeader memberId={id} isAdmin={isAdmin} onEditClick={() => setEditDialogOpen(true)} />
         <ProfilePage memberProp={member} />
+        <div>
+          <NewInstallments />
+        </div>
         <FinancialSummaryCard
           financialSummary={financialSummary}
           financialLoading={financialLoading}
@@ -164,6 +168,9 @@ export default function Page() {
         editMember={member}
         id={member?.user_id}
       />
+      <div>
+
+      </div>
 
       {paymentRecord && (
         <RecordPaymentDialog
