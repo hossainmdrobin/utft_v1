@@ -9,6 +9,7 @@ import {
   useCreateAamarPayPaymentMutation,
   useGetInstallmentQuery,
 } from "@/store/slices/paymentSlice/api.slice";
+import { calculatePerInstallmentFine, mapInstallmentToRecord, type FinePolicy } from "./installment-logic";
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 
 type DueInstallment = {
@@ -24,9 +25,12 @@ type DueInstallment = {
 
 type DueInstallmentsCardProps = {
   currency: (amount: number) => string;
+  defaultDueDay?: number;
+  finePolicy?: FinePolicy;
+  currentDate?: Date;
 };
 
-export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
+export function DueInstallmentsCard({ currency, defaultDueDay = 10, finePolicy, currentDate = new Date() }: DueInstallmentsCardProps) {
   const { day, month, year } = getCurrentDhakaDate();
   const { data: currentUserData } = useGetCurrentUserQuery();
   const memberId = currentUserData?.data?._id;
@@ -48,14 +52,18 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
     }
   }, [paymentData]);
 
-  const dueInstallments = dueInstallmentsData?.data ?? [];
+  const dueInstallments = useMemo(() => dueInstallmentsData?.data ?? [], [dueInstallmentsData]);
 
   const totalSelectedAmount = useMemo(
     () =>
       dueInstallments
         .filter((installment) => selectedIds.includes(String(installment._id)))
-        .reduce((sum, installment) => sum + Number(installment.amount ?? 0), 0),
-    [dueInstallments, selectedIds],
+        .reduce((sum, installment) => {
+          const record = mapInstallmentToRecord(installment, defaultDueDay);
+          const fine = calculatePerInstallmentFine(record, currentDate, finePolicy);
+          return sum + Number(installment.amount ?? 0) + fine;
+        }, 0),
+    [dueInstallments, selectedIds, defaultDueDay, currentDate, finePolicy],
   );
 
   const toggleInstallmentSelection = (installmentId: string) => {
@@ -80,7 +88,11 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
 
     if (validInstallments.length === 0) return;
 
-    const paymentAmount = validInstallments.reduce((sum, installment) => sum + Number(installment.amount ?? 0), 0);
+    const paymentAmount = validInstallments.reduce((sum, installment) => {
+      const record = mapInstallmentToRecord(installment, defaultDueDay);
+      const fine = calculatePerInstallmentFine(record, currentDate, finePolicy);
+      return sum + Number(installment.amount ?? 0) + fine;
+    }, 0);
 
     createAamarPayPayment({
       amount: paymentAmount,
@@ -136,6 +148,13 @@ export function DueInstallmentsCard({ currency }: DueInstallmentsCardProps) {
                           {monthArray[(Number(installment.month ?? month) - 1 + 12) % 12]} {installment.year ?? year}
                         </p>
                         <p className="text-xs text-muted-foreground">Due day: {installment.day ?? day}</p>
+                        {(() => {
+                          const record = mapInstallmentToRecord(installment, defaultDueDay);
+                          const fine = calculatePerInstallmentFine(record, currentDate, finePolicy);
+                          return fine > 0 ? (
+                            <p className="text-xs text-red-600">Fine: {currency(fine)}</p>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                     <span className="font-semibold">{currency(Number(installment.amount ?? 0))}</span>

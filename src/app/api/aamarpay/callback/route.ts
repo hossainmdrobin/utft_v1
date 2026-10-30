@@ -67,6 +67,8 @@ export async function POST(request: NextRequest) {
             const update = {
               $set: {
                 transaction_id,
+                payment_status: "paid",
+                paid_at: new Date().toISOString(),
                 amount: installmentAmount,
                 member,
                 month: installmentMonth,
@@ -90,6 +92,8 @@ export async function POST(request: NextRequest) {
         savedInstallments = await Installment.create(
           periods.map(({ month: installmentMonth, year: installmentYear, day: installmentDay }) => ({
             transaction_id,
+            payment_status: "paid",
+            paid_at: new Date().toISOString(),
             amount: installmentAmount,
             member,
             month: installmentMonth,
@@ -163,10 +167,11 @@ export async function POST(request: NextRequest) {
         console.error("Auto-post journal entry error (non-blocking):", e);
       }
     }
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     // return redirectToPayments(request, isSuccessful ? "success" : status === "cancel" ? "cancel" : "fail");
-    return NextResponse.redirect("http://localhost:3000/app/dashboard/payments", 303);
+    return NextResponse.redirect(`${baseUrl}/app/dashboard/payments`, 303);
   } catch (error) {
     console.error("Error processing AamarPay callback:", error);
-    return NextResponse.redirect("http://localhost:3000/app/dashboard/payments", 303);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/app/dashboard/payments`, 303);
   }
 }
