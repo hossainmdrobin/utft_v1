@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const installments = await Installment.find(filter)
+      .populate("member", "profile_photo full_name")
       .sort({ created_at: -1 })
       .lean();
     return NextResponse.json({ data: installments, count: installments.length });

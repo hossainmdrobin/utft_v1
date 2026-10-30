@@ -43,6 +43,7 @@ export default function Dashboard() {
     .slice(0, 10);
 
   const recentInstallments = (installmentsData?.data ?? []).slice(0, 5);
+  console.log("Recent Installments",recentInstallments)
 
   const statsCards = [
     {
