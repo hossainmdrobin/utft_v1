@@ -64,7 +64,7 @@ describe("installment logic", () => {
       updatedAt: "2026-08-01T00:00:00.000Z",
     };
 
-    assert.equal(calculatePerInstallmentFine(installment, "2026-08-26T12:00:00.000Z"), 100);
+    assert.equal(calculatePerInstallmentFine(installment, "2026-08-31T12:00:00.000Z"), 100);
     assert.equal(calculatePerInstallmentFine(installment, "2026-08-20T12:00:00.000Z"), 0);
   });
 

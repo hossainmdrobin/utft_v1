@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { JournalEntry } from "@/models/JournalEntry";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const ADMIN_ROLES = ["admin", "president", "director"];
 
@@ -49,6 +50,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Access Denied" }, { status: 403 });
   }
 
+  await connectDB();
   const { id } = await params;
   const body = await req.json();
 
@@ -57,12 +59,25 @@ export async function PATCH(
   }
 
   try {
-    await connectDB();
     const JournalEntryModel = JournalEntry as any;
+    const oldEntry = await JournalEntryModel.findById(id).lean();
+    
     const entry = await JournalEntryModel.findByIdAndUpdate(id, body, { new: true }).lean();
     if (!entry) {
       return NextResponse.json({ error: "Journal entry not found" }, { status: 404 });
     }
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String(id),
+      action: "UPDATE",
+      description: `Journal entry updated by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldEntry,
+      new_data: entry,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: entry });
   } catch (error) {
     return NextResponse.json(
@@ -82,6 +97,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Access Denied" }, { status: 403 });
   }
 
+  await connectDB();
   const { id } = await params;
 
   if (!id || id === "undefined" || id === "null") {
@@ -89,12 +105,24 @@ export async function DELETE(
   }
 
   try {
-    await connectDB();
     const JournalEntryModel = JournalEntry as any;
+    const oldEntry = await JournalEntryModel.findById(id).lean();
+    
     const entry = await JournalEntryModel.findByIdAndDelete(id);
     if (!entry) {
       return NextResponse.json({ error: "Journal entry not found" }, { status: 404 });
     }
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String(id),
+      action: "DELETE",
+      description: `Journal entry deleted: ${oldEntry?.reference || id} by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldEntry,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     return NextResponse.json(

@@ -1,25 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getInstallmentStatus, type InstallmentRecord } from "./installment-logic";
 
 export type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
 
 type InstallmentHistoryCardProps = {
   filter: FilterStatus;
   onFilterChange: (status: FilterStatus) => void;
-  installmentData?: {
-    data?: Array<{
-      _id: string;
-      created_at?: string;
-      month?: number;
-      year?: number;
-      amount?: number;
-      status?: string;
-    }>;
-  };
+  records?: InstallmentRecord[];
   currency: (amount: number) => string;
   monthArray: string[];
   getStatusBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
+  currentDate?: Date;
 };
 
 function formatTableDate(dateString?: string) {
@@ -38,11 +31,19 @@ function formatTableDate(dateString?: string) {
 export function InstallmentHistoryCard({
   filter,
   onFilterChange,
-  installmentData,
+  records,
   currency,
   monthArray,
   getStatusBadgeVariant,
+  currentDate = new Date(),
 }: InstallmentHistoryCardProps) {
+  const filteredRecords = (records ?? []).filter((record) => {
+    if (filter === "ALL") return true;
+    const status = record.status === "PAID" ? "PAID" : getInstallmentStatus(record, currentDate);
+    const normalized = status === "DUE_SOON" ? "DUE" : status;
+    return normalized === filter;
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -73,14 +74,18 @@ export function InstallmentHistoryCard({
               </tr>
             </thead>
             <tbody>
-              {installmentData?.data?.map((installment) => {
+              {filteredRecords.map((record) => {
+                const [yearStr, monthStr] = record.period.split("-");
+                const monthIndex = Number(monthStr) - 1;
+                const displayStatus = record.status === "PAID" ? "PAID" : getInstallmentStatus(record, currentDate);
+                const normalizedStatus = displayStatus === "DUE_SOON" ? "DUE" : displayStatus;
                 return (
-                  <tr key={installment._id} className="border-b last:border-0">
-                    <td className="py-3 pr-4">{formatTableDate(installment.created_at)}</td>
-                    <td className="py-3 pr-4">{monthArray[installment.month ?? 0] + " " + (installment.year ?? "")}</td>
-                    <td className="py-3 pr-4">{currency(Number(installment.amount ?? 0))}</td>
+                  <tr key={record.id} className="border-b last:border-0">
+                    <td className="py-3 pr-4">{formatTableDate(record.paidAt ?? record.updatedAt)}</td>
+                    <td className="py-3 pr-4">{monthArray[monthIndex] ?? monthStr} {yearStr}</td>
+                    <td className="py-3 pr-4">{currency(Number(record.amount ?? 0))}</td>
                     <td className="py-3">
-                      <Badge variant={getStatusBadgeVariant(installment?.status ?? "")}>{installment?.status}</Badge>
+                      <Badge variant={getStatusBadgeVariant(normalizedStatus)}>{normalizedStatus}</Badge>
                     </td>
                   </tr>
                 );

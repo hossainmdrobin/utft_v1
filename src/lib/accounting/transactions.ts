@@ -1,6 +1,8 @@
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Account } from "@/models/Account";
 import { JournalEntry } from "@/models/JournalEntry";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
+import { Types } from "mongoose";
 
 const AccountModel = Account as any;
 const JournalEntryModel = JournalEntry as any;
@@ -71,7 +73,7 @@ export async function getTransactionById(id: string) {
   return entry;
 }
 
-export async function createTransaction(data: any) {
+export async function createTransaction(data: any, user?: any) {
   await connectDB();
   const { date, reference, member, description, lines, status = "posted" } = data;
   if (!date) {
@@ -98,19 +100,47 @@ export async function createTransaction(data: any) {
     description: description || "",
     lines,
     status,
+    created_by: user?._id || user?.id || undefined,
   });
 
   if (status === "posted") {
+    const lineAccountIds = [...new Set(lines.map((line) => String(line.account)))];
+    const accounts = await AccountModel.find({
+      _id: { $in: lineAccountIds.map((id) => new Types.ObjectId(id)) },
+    }).lean();
+    const accountById = new Map(accounts.map((acc) => [String(acc._id), acc]));
+    const parentAccountIds = new Set(
+      (await AccountModel.distinct("parentAccount", {
+        parentAccount: { $in: lineAccountIds },
+      })).map(String),
+    );
     for (const line of lines) {
-      const account = await AccountModel.findById(line.account);
+      const account = accountById.get(String(line.account)) as any;
       if (!account) {
         throw new Error(`Account not found: ${line.account}`);
+      }
+      if (parentAccountIds.has(String(line.account))) {
+        throw new Error("Cannot post to a parent account; post to a leaf account instead.");
       }
       await AccountModel.findByIdAndUpdate(
         line.account,
         { $inc: { balance: balanceDelta(account.type, line.debit, line.credit) } },
       );
     }
+  }
+
+  try {
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String((entry as any)._id),
+      action: "INSERT",
+      description: `Transaction/journal entry created: ${(entry as any).reference || (entry as any)._id} by ${user?.full_name || user?.user_id || user?.role || "system"}`,
+      changed_by: user?._id ? String(user._id) : undefined,
+      changed_at: new Date().toISOString(),
+      new_data: entry,
+    });
+  } catch (e) {
+    console.log("Audit log error:", e);
   }
 
   return entry;

@@ -23,6 +23,7 @@ export const models = {
   MonthlyDonation,
   MemberCharge,
   FineRule,
+  fine_rules: FineRule,
   FineTransaction,
   ShareReceivable,
   ShareTransaction,

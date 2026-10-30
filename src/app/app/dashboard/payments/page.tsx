@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, CreditCard, FileWarningIcon, Landmark, Loader, TriangleAlert } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Check, CheckCircle2, CreditCard, Loader, Ticket, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,12 @@ import {
     calculateFinancialSummary,
     getInstallmentStatus,
     INSTALLMENT_WARNING_DAYS,
+    mapInstallmentToRecord,
+    type FinePolicy,
     type InstallmentRecord,
 } from "./installment-logic";
-import { memberInstallments } from "./installment-data";
 import {
+    useCreateAamarPayPaymentMutation,
     useGetGatewayTransactionsQuery,
     useGetInstallmentsQuery,
 } from "@/store/slices/paymentSlice/api.slice";
@@ -23,65 +25,164 @@ import { DueInstallmentsCard } from "./due-installments-card";
 import { InstallmentHistoryCard } from "./installment-history-card";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/mongodb/client";
 
 type FilterStatus = "ALL" | "PAID" | "DUE" | "OVERDUE" | "UPCOMING";
 
-const currency = (amount: number) => `৳${amount.toLocaleString()}`;
-
-function getStatusBadgeVariant(status: string) {
-    status = status.toUpperCase();
-    switch (status) {
-        case "PAID":
-            return "default";
-        case "OVERDUE":
-            return "destructive";
-        case "DUE":
-            return "secondary";
-        case "ADVANCE":
-            return "outline";
-        default:
-            return "outline";
-    }
-}
-
 export default function PaymentsPage() {
-    // CUSTOM HOOKS
-    const { day } = getCurrentDhakaDate()
-    //RTK QUERY
-    const { data: settings, isLoading: settingLoading } = useGetSettingsQuery()
-    const { data: currentUserData, isLaoding: userLoading } = useGetCurrentUserQuery();
+    const { day, month, year } = getCurrentDhakaDate();
+    const { data: settings, isLoading: settingLoading } = useGetSettingsQuery();
+    const { data: currentUserData, isLoading: userLoading } = useGetCurrentUserQuery();
     const memberId = currentUserData?.data?._id;
-    const { data: installmentData } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
+
+    const {
+        data: installmentData,
+        isLoading: installmentsLoading,
+        isError: installmentsError,
+        error: installmentsErrorData,
+        refetch: refetchInstallments,
+    } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
+    let isPaid = installmentData?.data.find(item => item.month == month && item.year == year)
+
     const { data: gatewayTransactionData } = useGetGatewayTransactionsQuery(
         { member: String(memberId) },
         { skip: !memberId },
     );
-    const [filter, setFilter] = useState<FilterStatus>("ALL");
-    const [installments, setInstallments] = useState<InstallmentRecord[]>(memberInstallments);
 
-    const currentDate = useMemo(() => new Date("2026-08-21T12:00:00.000Z"), []);
+    const [createPayment, { data: paymentData, isLoading: isPayingThisMonth }] = useCreateAamarPayPaymentMutation();
+
+    useEffect(() => {
+        if (paymentData?.paymentUrl) {
+            window.location.replace(paymentData.paymentUrl);
+        }
+    }, [paymentData]);
+
+    const [filter, setFilter] = useState<FilterStatus>("ALL");
+    const [activeFineRule, setActiveFineRule] = useState<Record<string, unknown> | null>(null);
+
+    useEffect(() => {
+        if (!memberId) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const { data } = await supabase.from("fine_rules").select("*").order("created_at", { ascending: false });
+                if (cancelled) return;
+                const active = (data ?? []).find((rule: Record<string, unknown>) => rule?.is_active);
+                setActiveFineRule(active ?? null);
+            } catch {
+                if (!cancelled) setActiveFineRule(null);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [memberId]);
+
+    const currentDate = useMemo(() => new Date(), []);
     const member = currentUserData?.data;
 
+    const defaultDueDay = settings?.data?.default_due_day ?? 10;
+    const currencySymbol = settings?.data?.currency_symbol ?? "৳";
+    const currency = (amount: number) => `${currencySymbol}${Number(amount ?? 0).toLocaleString()}`;
+
+    const records: InstallmentRecord[] = useMemo(
+        () => (installmentData?.data ?? []).map((doc) => mapInstallmentToRecord(doc, defaultDueDay)),
+        [installmentData, defaultDueDay],
+    );
+
+    const finePolicy: FinePolicy = useMemo(() => {
+        if (activeFineRule) {
+            return {
+                enabled: true,
+                fineType: activeFineRule.fine_type as "fixed" | "percentage",
+                fineValue: Number(activeFineRule.fine_value ?? 100),
+                gracePeriodDays: Number(activeFineRule.grace_period_days ?? 5),
+                isCumulative: Boolean(activeFineRule.is_cumulative),
+                cumulativeFrequency: (activeFineRule.cumulative_frequency as "daily" | "weekly" | "monthly") ?? "monthly",
+                maxFineAmount:
+                    activeFineRule.max_fine_amount === null || activeFineRule.max_fine_amount === undefined
+                        ? null
+                        : Number(activeFineRule.max_fine_amount),
+            };
+        }
+        return {
+            enabled: settings?.data?.fine_enabled ?? true,
+            fineType: "fixed",
+            fineValue: settings?.data?.amount ?? 100,
+            gracePeriodDays: 5,
+            isCumulative: true,
+            cumulativeFrequency: "monthly",
+            maxFineAmount: null,
+        };
+    }, [activeFineRule, settings]);
+
+    const summary = useMemo(() => calculateFinancialSummary(records, currentDate, finePolicy), [records, currentDate, finePolicy]);
+
     const totalAmountPaid = useMemo(
-        () => (installmentData?.data ?? [])
-            .filter((installment) => installment.status?.toLowerCase() !== "due")
-            .reduce((total, installment) => total + Number(installment.amount ?? 0), 0),
-        [installmentData],
+        () => records.filter((r) => r.status === "PAID").reduce((t, r) => t + r.amount, 0),
+        [records],
     );
     const totalDueAmount = useMemo(
-        () => (installmentData?.data ?? [])
-            .filter((installment) => installment.status?.toLowerCase() === "due")
-            .reduce((total, installment) => total + Number(installment.amount ?? 0), 0),
-        [installmentData],
+        () => records.filter((r) => r.status !== "PAID").reduce((t, r) => t + r.amount, 0) + summary.totalFineAmount,
+        [records, summary.totalFineAmount],
     );
 
-    const summary = useMemo(() => calculateFinancialSummary(installments, currentDate), [installments, currentDate]);
-
-    const nextInstallment = installments.find((installment) => installment.status !== "PAID") ?? installments[0];
+    const nextInstallment = records.find((installment) => installment.status !== "PAID") ?? records[0];
     const nextInstallmentStatus = nextInstallment ? getInstallmentStatus(nextInstallment, currentDate) : "PAID";
     const nextDueDays = nextInstallment ? Math.ceil((new Date(nextInstallment.dueDate).getTime() - currentDate.getTime()) / 86400000) : 0;
 
-    if (settingLoading || userLoading) return <Skeleton />
+    const handlePayThisMonth = () => {
+        if (!memberId) return;
+        const currentInstallment = (installmentData?.data ?? []).find(
+            (inst) => Number(inst.month) === month && Number(inst.year) === year,
+        );
+        const amount = currentInstallment
+            ? Number(currentInstallment.amount ?? 0)
+            : Number(settings?.data?.default_contribution_amount ?? settings?.data?.share_value ?? 0);
+        if (!amount) return;
+        createPayment({
+            amount,
+            description: "Current month installment",
+            name: member?.full_name || "Member",
+            status: "regular",
+            installments: [{ month, year, day }],
+        });
+    };
+
+    if (userLoading || settingLoading) return <Skeleton />;
+
+    if (!memberId) {
+        return (
+            <div className="mx-auto max-w-6xl space-y-6 py-4">
+                <Card>
+                    <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                        Sign in to view your payment dashboard.
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    if (installmentsLoading) return <Skeleton />;
+
+    if (installmentsError) {
+        return (
+            <div className="mx-auto max-w-6xl space-y-6 py-4">
+                <Card>
+                    <CardContent className="space-y-4 py-8 text-center">
+                        <p className="text-sm text-red-600">
+                            {"message" in (installmentsErrorData ?? {})
+                                ? String((installmentsErrorData as { message?: string }).message)
+                                : "Failed to load installments."}
+                        </p>
+                        <Button variant="outline" onClick={() => refetchInstallments()}>
+                            Retry
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="mx-auto max-w-6xl space-y-6 py-4">
@@ -90,14 +191,22 @@ export default function PaymentsPage() {
                     <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Member payment dashboard</p>
                     <h1 className="mt-1 text-3xl font-bold">{member?.full_name || "Member"} installment overview</h1>
                 </div>
-                {settings?.data?.default_due_day < day && <div className="w-fit flex items-center justify-center text-red-400">
-                    <TriangleAlert className="mr-2 h-4 w-4" />
-                    Current month installment is due
+                {!isPaid && settings?.data?.default_due_day < day && (
+                    <div className="w-fit flex items-center justify-center text-red-400">
+                        <TriangleAlert className="mr-2 h-4 w-4" />
+                        Current month installment is due
+                    </div>
+                )}
+                {!isPaid && settings?.data?.default_due_day >= day && (
+                    <Button className="w-fit" onClick={handlePayThisMonth} disabled={isPayingThisMonth}>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        {isPayingThisMonth ? "Processing..." : "Pay Installment of this month"}
+                    </Button>
+                )}
+                {isPaid && <div className="w-fit flex items-center justify-center text-green-400">
+                    <Check size={30} className="mr-2 h-4 w-4" />
+                    Current month installment is Paid
                 </div>}
-                {settings?.data?.default_due_day >= day && <Button className="w-fit">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Pay Installment of this month
-                </Button>}
             </div>
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -127,7 +236,6 @@ export default function PaymentsPage() {
                         <CardTitle className="text-3xl font-semibold">{currency(nextInstallment?.amount ?? 0)}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-1">
-                        {/* <p className="text-sm text-muted-foreground">Due: {nextInstallment ? formatDueDate(nextInstallment.dueDate) : "N/A"}</p> */}
                         <p className="text-sm text-muted-foreground">{Math.abs(nextDueDays)} days remaining</p>
                         <Badge variant={getStatusBadgeVariant(nextInstallmentStatus)}>{nextInstallmentStatus}</Badge>
                     </CardContent>
@@ -143,7 +251,12 @@ export default function PaymentsPage() {
                     </CardContent>
                 </Card>
             </section>
-            <DueInstallmentsCard currency={currency} />
+            <DueInstallmentsCard
+                currency={currency}
+                defaultDueDay={defaultDueDay}
+                finePolicy={finePolicy}
+                currentDate={currentDate}
+            />
 
             <div className="grid gap-6">
                 <Card>
@@ -188,10 +301,11 @@ export default function PaymentsPage() {
             <InstallmentHistoryCard
                 filter={filter}
                 onFilterChange={setFilter}
-                installmentData={installmentData}
+                records={records}
                 currency={currency}
                 monthArray={monthArray}
                 getStatusBadgeVariant={getStatusBadgeVariant}
+                currentDate={currentDate}
             />
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -226,4 +340,22 @@ export default function PaymentsPage() {
             </div>
         </div>
     );
+}
+
+function getStatusBadgeVariant(status: string) {
+    status = status.toUpperCase();
+    switch (status) {
+        case "PAID":
+            return "default";
+        case "OVERDUE":
+            return "destructive";
+        case "DUE":
+            return "secondary";
+        case "DUE_SOON":
+            return "secondary";
+        case "ADVANCE":
+            return "outline";
+        default:
+            return "outline";
+    }
 }

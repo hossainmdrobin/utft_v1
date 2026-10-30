@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/lib/accounting/accounts";
+import { connectDB } from "@/integrations/mongodb/connection";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const ADMIN_ROLES = ["admin", "president", "director"];
 
@@ -16,6 +18,8 @@ export async function GET(req: NextRequest) {
   if (isContra !== null) filters.isActive = isContra === "true";
   const search = searchParams.get("search");
   if (search) filters.search = search;
+  const tree = searchParams.get("tree");
+  if (tree !== null) filters.tree = tree === "true";
 
   try {
     const result = await getAccounts(filters);
@@ -35,6 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Access Denied" }, { status: 403 });
   }
 
+  await connectDB();
   const body = await req.json();
   const { code, name, account_type, description, opening_balance, parent_account_id, parent_id, is_contra } = body;
   if (!name || !account_type) {
@@ -48,11 +53,29 @@ export async function POST(req: NextRequest) {
       parentAccount: parent_account_id || parent_id || null,
       description,
     });
+    
+    await AuditLog.create({
+      table_name: "Account",
+      record_id: String((account as any)._id),
+      action: "INSERT",
+      description: `Account created: ${(account as any).name} (${(account as any).code || "no code"}) by ${user?.full_name || user?.user_id || user?.role}`,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+      new_data: account,
+    });
+    
     return NextResponse.json({ data: account }, { status: 201 });
   } catch (error) {
-    const status = (error as Error)?.message === "Account code already exists" ? 409 : 400;
+    const message = (error as Error)?.message || "Failed to create account";
+    const status =
+      message === "Account code already exists" ||
+      message === "Account cannot be its own parent" ||
+      message === "Circular parent reference detected" ||
+      message === "Parent account not found"
+        ? 409
+        : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to create account" },
+      { error: message },
       { status },
     );
   }
@@ -65,18 +88,43 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Access Denied" }, { status: 403 });
   }
 
+  await connectDB();
   const body = await req.json();
   const { id, ...updateData } = body;
   if (!id) {
     return NextResponse.json({ error: "Account id is required" }, { status: 400 });
   }
   try {
+    const { Account } = await import("@/models/Account");
+    const AccountModel = Account as any;
+    const oldAccount = await AccountModel.findById(id).lean();
+    
     const account = await updateAccount(id, updateData);
+    
+    await AuditLog.create({
+      table_name: "Account",
+      record_id: String(id),
+      action: "UPDATE",
+      description: `Account updated by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldAccount,
+      new_data: account,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: account });
   } catch (error) {
-    const status = (error as Error)?.message === "Account not found" ? 404 : 400;
+    const message = (error as Error)?.message || "Failed to update account";
+    const status =
+      message === "Account not found"
+        ? 404
+        : message === "Account cannot be its own parent" ||
+          message === "Circular parent reference detected" ||
+          message === "Parent account not found"
+          ? 409
+          : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to update account" },
+      { error: message },
       { status },
     );
   }
@@ -89,23 +137,41 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Access Denied" }, { status: 403 });
   }
 
+  await connectDB();
   const body = await req.json();
   const { id } = body;
   if (!id) {
     return NextResponse.json({ error: "Account id is required" }, { status: 400 });
   }
   try {
+    const { Account } = await import("@/models/Account");
+    const AccountModel = Account as any;
+    const oldAccount = await AccountModel.findById(id).lean();
+    
     await deleteAccount(id);
+    
+    await AuditLog.create({
+      table_name: "Account",
+      record_id: String(id),
+      action: "DELETE",
+      description: `Account deleted: ${oldAccount?.name || id} by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldAccount,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
+    const message = (error as Error)?.message || "Failed to delete account";
     const status =
-      (error as Error)?.message === "Cannot delete an account that has attached transactions"
+      message === "Cannot delete an account that has attached transactions" ||
+      message === "Cannot delete an account that has child accounts"
         ? 409
-        : (error as Error)?.message === "Account not found"
+        : message === "Account not found"
           ? 404
           : 400;
     return NextResponse.json(
-      { error: (error as Error)?.message || "Failed to delete account" },
+      { error: message },
       { status },
     );
   }

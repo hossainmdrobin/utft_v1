@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { getTransactions, createTransaction } from "@/lib/accounting/transactions";
+import { connectDB } from "@/integrations/mongodb/connection";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const ADMIN_ROLES = ["admin", "president", "director"];
 
@@ -45,9 +47,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Access Denied" }, { status: 403 });
   }
 
+  await connectDB();
   const body = await req.json();
   try {
     const entry = await createTransaction(body);
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String((entry as any)._id),
+      action: "INSERT",
+      description: `Journal entry created: ${(entry as any).reference || (entry as any)._id} by ${user?.full_name || user?.user_id || user?.role}`,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+      new_data: entry,
+    });
+    
     return NextResponse.json({ data: entry }, { status: 201 });
   } catch (error) {
     console.log(error)

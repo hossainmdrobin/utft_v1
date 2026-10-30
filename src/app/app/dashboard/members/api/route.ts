@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       table_name: "Member",
       record_id: newMember._id,
       action: "INSERT",
-      description: `A member is created with ID:${newMember.user_id}`,
+      description: `Member created by ${member.full_name || member.user_id} (${member.role}): ${newMember.user_id || newMember.full_name}`,
       changed_by: String(member._id),
       changed_at: new Date().toISOString(),
     });
@@ -116,6 +116,16 @@ export async function PATCH(req: NextRequest) {
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
+    
+    let description = `Member updated by ${user.full_name || user.user_id} (${user.role})`;
+    if (updateData.stage === "approved" && oldMember?.stage !== "approved") {
+      description = `Member APPROVED by ${user.full_name || user.user_id} (${user.role}): ${member.user_id || member.full_name}`;
+    } else if (updateData.stage === "rejected" && oldMember?.stage !== "rejected") {
+      description = `Member REJECTED by ${user.full_name || user.user_id} (${user.role}): ${member.user_id || member.full_name}`;
+    } else if (updateData.stage) {
+      description = `Member status changed to ${updateData.stage} by ${user.full_name || user.user_id} (${user.role}): ${member.user_id || member.full_name}`;
+    }
+    
     await AuditLog.create({
       table_name: "Member",
       record_id: member._id,
@@ -124,6 +134,7 @@ export async function PATCH(req: NextRequest) {
       new_data: member,
       changed_by: String(user._id),
       changed_at: new Date().toISOString(),
+      description,
     });
     return NextResponse.json({ data: member });
   } catch (error) {

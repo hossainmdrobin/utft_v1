@@ -74,7 +74,7 @@ export function ProfileCard({ member, formData }: ProfileCardProps) {
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-2">
           <p>For security reasons, your User ID, Account Role, and created details cannot be changed from this profile page.</p>
-          <p>If you need to change your password, please contact the administration department.</p>
+          <p>You can update your password using the "Change Password" section below.</p>
         </CardContent>
       </Card>
     </div>

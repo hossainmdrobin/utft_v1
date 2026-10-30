@@ -96,8 +96,7 @@ export function MarkAsPaidDialog({
 
       if (error) throw error;
 
-      // Create journal entry for the payment
-      await createJournalEntry(paymentValue);
+      await postPaymentToLedger(paymentValue);
 
       toast.success(`Payment of ৳${paymentValue.toFixed(2)} recorded successfully`);
       onOpenChange(false);
@@ -110,78 +109,34 @@ export function MarkAsPaidDialog({
     }
   };
 
-  const createJournalEntry = async (amount: number) => {
+  const postPaymentToLedger = async (amount: number) => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      const { data: entryNumber } = await supabase.rpc("generate_entry_number");
-
       const monthName = new Date(receivable.year, receivable.month - 1, 1).toLocaleDateString("en-US", {
         month: "long",
         year: "numeric",
       });
 
-      // Get account IDs for Cash and Share Capital Receivable
-      const { data: cashAccount } = await supabase
-        .from("accounts")
-        .select("id")
-        .eq("code", "1211") // Cash at Hand
-        .maybeSingle();
-
-      const { data: shareCapitalAccount } = await supabase
-        .from("accounts")
-        .select("id")
-        .eq("code", "1222") // Share Capital Receivable
-        .maybeSingle();
-
-      if (!cashAccount || !shareCapitalAccount) {
-        console.error("Required accounts not found for journal entry");
-        return;
-      }
-
-      // Create journal entry
-      const { data: entry, error: entryError } = await supabase
-        .from("journal_entries")
-        .insert({
-          entry_number: entryNumber,
-          entry_date: paymentDate.toISOString().split("T")[0],
+      const res = await fetch("/app/dashboard/payments/api/post-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceType: "share",
+          sourceId: receivable.id,
+          paymentReference: receivable.id,
+          memberId: receivable.member_id,
+          paymentDate: paymentDate.toISOString(),
+          amount,
           description: `Share payment received from ${receivable.member?.full_name || "Member"} for ${monthName}`,
-          member_id: receivable.member_id,
-          total_debit: amount,
-          total_credit: amount,
-          created_by: user.user?.id,
-          status: "posted",
-          posted_at: new Date().toISOString(),
-          posted_by: user.user?.id,
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (entryError) throw entryError;
-
-      // Create journal entry lines
-      const lines = [
-        {
-          journal_entry_id: entry.id,
-          account_id: cashAccount.id,
-          description: `Share payment from ${receivable.member?.full_name || "Member"}`,
-          debit: amount,
-          credit: 0,
-          member_id: receivable.member_id,
-        },
-        {
-          journal_entry_id: entry.id,
-          account_id: shareCapitalAccount.id,
-          description: `Share receivable cleared for ${receivable.member?.full_name || "Member"}`,
-          debit: 0,
-          credit: amount,
-          member_id: receivable.member_id,
-        },
-      ];
-
-      await supabase.from("journal_entry_lines").insert(lines);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to post payment to ledger");
+      }
     } catch (error) {
-      console.error("Error creating journal entry:", error);
-      // Don't throw - journal entry creation is secondary to payment recording
+      console.error("Error posting payment to ledger:", error);
+      toast.warning(`Payment recorded, but ledger entry failed: ${(error as Error).message}. It can be retried.`);
     }
   };
 

@@ -22,6 +22,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { statusColors } from "./constants";
 import { AccountDoc } from "@/models/Account";
 import { useGetJournalEntriesQuery } from "@/store/slices/journalEntrySlice/api.journalEntry";
+import { useGetAccountsQuery } from "@/store/slices/accountSlice/api.account";
 import { format } from "date-fns";
 
 interface AccountDetailDialogProps {
@@ -62,6 +63,12 @@ export function AccountDetailDialog({ account, open, onOpenChange }: AccountDeta
   const entries: TransactionEntry[] = result?.data ?? [];
   const count = result?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(count / limit));
+
+  const { data: accountsData } = useGetAccountsQuery();
+  const allAccounts: AccountDoc[] = accountsData?.data ?? [];
+  const parent = account.parentAccount
+    ? allAccounts.find((a) => String(a._id) === String(account.parentAccount))
+    : null;
 
   const rows = entries.flatMap((entry: TransactionEntry) => {
     const lines = (entry.lines || []).filter(
@@ -113,6 +120,14 @@ export function AccountDetailDialog({ account, open, onOpenChange }: AccountDeta
               <span className="text-muted-foreground">Status:</span>{" "}
               {account.isActive ? "Active" : "Inactive"}
             </div>
+            {account.parentAccount && (
+              <div>
+                <span className="text-muted-foreground">Parent Account:</span>{" "}
+                <span className="font-mono">
+                  {parent ? parent.name : String(account.parentAccount)}
+                </span>
+              </div>
+            )}
             {account.description && (
               <div className="col-span-2">
                 <span className="text-muted-foreground">Description:</span> {account.description}

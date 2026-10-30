@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { JournalEntry } from "@/models/JournalEntry";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const ADMIN_ROLES = ["admin", "president", "director"];
 
@@ -51,6 +52,7 @@ export async function PATCH(
     );
   }
 
+  await connectDB();
   const { id } = await params;
   const body = await req.json();
 
@@ -60,10 +62,24 @@ export async function PATCH(
 
   try {
     const JournalEntryModel = JournalEntry as any;
+    const oldEntry = await JournalEntryModel.findById(id).lean();
+    
     const entry = await JournalEntryModel.findByIdAndUpdate(id, body, { new: true }).lean();
     if (!entry) {
       return NextResponse.json({ error: "Journal entry not found" }, { status: 404 });
     }
+    
+    await AuditLog.create({
+      table_name: "JournalEntry",
+      record_id: String(id),
+      action: "UPDATE",
+      description: `Journal entry updated by ${user?.full_name || user?.user_id || user?.role}`,
+      old_data: oldEntry,
+      new_data: entry,
+      changed_by: String(user?._id),
+      changed_at: new Date().toISOString(),
+    });
+    
     return NextResponse.json({ data: entry });
   } catch (error) {
     return NextResponse.json(

@@ -115,6 +115,7 @@ export default function Page() {
         paid_amount: Number(record.paid_amount),
         description,
         period,
+        memberId: record.member_id,
       },
     });
     setPaymentDialogOpen(true);

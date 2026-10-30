@@ -2,6 +2,8 @@ import { Document, Schema, model, models } from "mongoose";
 
 interface IInstallment extends Document {
   transaction_id?: string;
+  payment_status?: string;
+  paid_at?: string;
   amount: number;
   currency?: string;
   description?: string;
@@ -21,6 +23,8 @@ interface IInstallment extends Document {
 const installmentSchema = new Schema(
   {
     transaction_id: { type: String, required: false },
+    payment_status: { type: String, default: "unpaid", enum: ["unpaid", "paid"] },
+    paid_at: { type: String, required: false },
     amount: { type: Number, required: true },
     currency: { type: String ,default:'BDT'},
     description: { type: String, },

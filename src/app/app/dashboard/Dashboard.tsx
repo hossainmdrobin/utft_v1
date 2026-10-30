@@ -1,128 +1,92 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, DollarSign, TrendingUp, UserCheck, Clock, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/mongodb/client";
+import { Users, DollarSign, UserCheck, Clock, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-
-interface DashboardStats {
-  totalMembers: number;
-  activeMembers: number;
-  pendingMembers: number;
-  totalShares: number;
-  totalShareValue: number;
-}
+import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
+import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
+import { useGetAuditLogsQuery } from "@/store/slices/auditLogSlice/api.auditLog";
+import { useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
+import { monthArray } from "@/lib/date/dhaka";
 
 export default function Dashboard() {
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: async (): Promise<DashboardStats> => {
-      const [membersResult, sharesResult, settingsResult] = await Promise.all([
-        supabase.from("members").select("status, share_quantity"),
-        supabase.from("share_transactions").select("share_quantity"),
-        supabase.from("trust_settings").select("value").eq("key", "share_price").maybeSingle(),
-      ]);
+  const { data: membersData, isLoading: membersLoading } = useGetMembersQuery();
+  const { data: settings, isLoading: settingsLoading } = useGetSettingsQuery();
+  const { data: auditLogs, isLoading: activityLoading } = useGetAuditLogsQuery();
+  const { data: installmentsData, isLoading: installmentsLoading } = useGetInstallmentsQuery();
 
-      if (membersResult.error) throw membersResult.error;
-      if (sharesResult.error) throw sharesResult.error;
+  const members = membersData?.data ?? [];
+  const totalMembers = members.length;
+  const activeMembers = members.filter((m) => m.stage === "approved").length;
+  const pendingMembers = members.filter((m) => m.stage === "pending").length;
+  const totalShares = members
+    .filter((m) => m.stage === "approved")
+    .reduce((sum, m) => sum + (m.share_quantity || 0), 0);
+  const sharePrice = settings?.data?.share_value ?? 1000;
+  const totalShareValue = totalShares * sharePrice;
 
-      const members = membersResult.data || [];
-      const activeMembers = members.filter((m) => m.status === "active");
-      const pendingMembers = members.filter((m) => m.status === "pending");
-      const totalShares = activeMembers.reduce((sum, m) => sum + (m.share_quantity || 0), 0);
-      const sharePrice = (settingsResult.data?.value as any)?.price || 1000;
-      const totalShareValue = totalShares * sharePrice;
+  const statsLoading = membersLoading || settingsLoading;
 
-      return {
-        totalMembers: members.length,
-        activeMembers: activeMembers.length,
-        pendingMembers: pendingMembers.length,
-        totalShares,
-        totalShareValue,
-      };
-    },
-  });
+  const recentMembers = [...members]
+    .sort((a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime())
+    .slice(0, 5);
 
-  const { data: recentMembers, isLoading: recentLoading } = useQuery({
-    queryKey: ["recent-members"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, full_name, member_type, status, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
+  const pendingApprovals = [...members]
+    .filter((m) => m.stage === "pending")
+    .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+    .slice(0, 5);
 
-      if (error) throw error;
-      return data;
-    },
-  });
+  const recentActivity = [...(auditLogs ?? [])]
+    .sort((a, b) => new Date(b.changed_at ?? 0).getTime() - new Date(a.changed_at ?? 0).getTime())
+    .slice(0, 10);
 
-  const { data: pendingApprovals, isLoading: pendingLoading } = useQuery({
-    queryKey: ["pending-approvals"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, full_name, member_type, created_at")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: recentActivity, isLoading: activityLoading } = useQuery({
-    queryKey: ["recent-activity"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("id, action, description, changed_at, table_name")
-        .order("changed_at", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      return data;
-    },
-  });
+  const recentInstallments = (installmentsData?.data ?? []).slice(0, 5);
 
   const statsCards = [
     {
       title: "Total Members",
-      value: statsLoading ? "..." : stats?.totalMembers.toString() || "0",
+      value: statsLoading ? "..." : totalMembers.toString(),
       change: "",
       icon: Users,
       color: "text-primary",
     },
     {
       title: "Active Members",
-      value: statsLoading ? "..." : stats?.activeMembers.toString() || "0",
+      value: statsLoading ? "..." : activeMembers.toString(),
       change: "",
       icon: UserCheck,
       color: "text-accent",
     },
     {
       title: "Pending Approvals",
-      value: statsLoading ? "..." : stats?.pendingMembers.toString() || "0",
+      value: statsLoading ? "..." : pendingMembers.toString(),
       change: "",
       icon: Clock,
       color: "text-orange-500",
     },
     {
       title: "Total Share Capital",
-      value: statsLoading ? "..." : `৳${stats?.totalShareValue.toLocaleString() || "0"}`,
-      change: `${stats?.totalShares || 0} shares`,
+      value: statsLoading ? "..." : `৳${totalShareValue.toLocaleString()}`,
+      change: `${totalShares} shares`,
       icon: DollarSign,
       color: "text-primary",
     },
   ];
 
+  function memberJoinedUpdated(member: { created_at?: string; updated_at?: string }) {
+    const created = member.created_at ? new Date(member.created_at) : null;
+    const updated = member.updated_at ? new Date(member.updated_at) : null;
+    const same = created && updated && created.getTime() === updated.getTime();
+    if (same || !updated) {
+      return { label: "Joined", date: created };
+    }
+    return { label: "Updated", date: updated };
+  }
+
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
       <div>
         <h2 className="text-3xl font-bold text-foreground">Welcome back!</h2>
         <p className="text-muted-foreground mt-1">
@@ -130,7 +94,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((stat) => (
           <Card key={stat.title} className="shadow-soft">
@@ -150,36 +113,38 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle>Recent Members</CardTitle>
           </CardHeader>
           <CardContent>
-            {recentLoading ? (
+            {membersLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            ) : recentMembers && recentMembers.length > 0 ? (
+            ) : recentMembers.length > 0 ? (
               <div className="space-y-3">
-                {recentMembers.map((member) => (
-                  <Link
-                    key={member.id}
-                    href={`/members/${member.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{member.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(member.created_at), "MMM d, yyyy")}
-                      </p>
-                    </div>
-                    <Badge variant={member.status === "active" ? "default" : "secondary"}>
-                      {member.member_type}
-                    </Badge>
-                  </Link>
-                ))}
+                {recentMembers.map((member) => {
+                  const { label, date } = memberJoinedUpdated(member);
+                  return (
+                    <Link
+                      key={member._id || member.id}
+                      href={`/members/${member._id || member.id}`}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">{member.full_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {label} {format(date ?? new Date(member.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                      <Badge variant={member.stage === "approved" ? "default" : "secondary"}>
+                        {member.member_type}
+                      </Badge>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
@@ -194,16 +159,16 @@ export default function Dashboard() {
             <CardTitle>Pending Approvals</CardTitle>
           </CardHeader>
           <CardContent>
-            {pendingLoading ? (
+            {membersLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            ) : pendingApprovals && pendingApprovals.length > 0 ? (
+            ) : pendingApprovals.length > 0 ? (
               <div className="space-y-3">
                 {pendingApprovals.map((member) => (
                   <Link
-                    key={member.id}
-                    href={`/members/${member.id}`}
+                    key={member._id || member.id}
+                    href={`/members/${member._id || member.id}`}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
                   >
                     <div>
@@ -223,9 +188,52 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle>Recent Installments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {installmentsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : recentInstallments.length > 0 ? (
+              <div className="space-y-2">
+                {recentInstallments.map((installment) => (
+                  <div
+                    key={String(installment._id)}
+                    className="flex items-center justify-between p-2 rounded hover:bg-accent"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground">
+                        {installment.cus_name || "Unknown member"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {monthArray[(installment.month ?? 1) - 1]} {installment.year ?? ""} •{" "}
+                        {format(new Date(installment.created_at ?? Date.now()), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-foreground">
+                        ৳{Number(installment.amount ?? 0).toLocaleString()}
+                      </p>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {installment.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No installments yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Recent Activity */}
       <Card className="shadow-soft">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
@@ -235,7 +243,7 @@ export default function Dashboard() {
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : recentActivity && recentActivity.length > 0 ? (
+          ) : recentActivity.length > 0 ? (
             <div className="space-y-2">
               {recentActivity.map((activity) => (
                 <div
@@ -264,4 +272,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

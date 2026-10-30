@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/mongodb/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { usePostPaymentMutation } from "@/store/slices/postPaymentSlice/api.postPayment";
 
 type PaymentType = "donation" | "charge" | "fine";
 
@@ -20,6 +21,7 @@ interface RecordPaymentDialogProps {
     paid_amount: number;
     description?: string;
     period?: string;
+    memberId?: string;
   };
   onSuccess?: () => void;
 }
@@ -104,6 +106,8 @@ export function RecordPaymentDialog({
 
       if (error) throw error;
 
+      await postPaymentToLedger(paymentAmount);
+
       toast.success(`Payment of ৳${paymentAmount.toFixed(2)} recorded successfully`);
       onOpenChange(false);
       onSuccess?.();
@@ -118,6 +122,29 @@ export function RecordPaymentDialog({
       toast.error(error.message || "Failed to record payment");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [postPayment] = usePostPaymentMutation();
+
+  const postPaymentToLedger = async (amount: number) => {
+    try {
+      const result = await postPayment({
+        sourceType: paymentType,
+        sourceId: record.id,
+        paymentReference: record.id,
+        memberId: record.memberId,
+        paymentDate: new Date().toISOString(),
+        amount,
+        description: record.description || `${paymentType} payment`,
+      }).unwrap();
+
+      if (result.isDuplicate) {
+        console.log("Duplicate ledger entry detected, skipping duplicate creation");
+      }
+    } catch (error) {
+      console.error("Error posting payment to ledger:", error);
+      toast.warning(`Payment recorded, but ledger entry failed: ${(error as Error).message}. It can be retried.`);
     }
   };
 

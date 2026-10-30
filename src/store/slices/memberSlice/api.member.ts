@@ -1,12 +1,19 @@
 import { injectEndpoint } from "@/store/baseApi";
+import { MemberDoc } from '@/models/member';
 
-type MemberFilters = {
+export interface MemberFilters {
   stage?: string;
   user_id?: string;
   role?: string;
   member_type?: string;
   search?: string;
-};
+}
+
+export interface ChangePasswordRequest {
+  user_id: string;
+  old_password: string;
+  new_password: string;
+}
 
 export const memberApi = injectEndpoint("memberApi", (builder) => ({
   getMembers: builder.query<any, Partial<MemberFilters> | void>({
@@ -51,11 +58,20 @@ export const memberApi = injectEndpoint("memberApi", (builder) => ({
     }),
     invalidatesTags: (result, error, { id }) => [{ type: "Members", id }, "Members"],
   }),
+  changePassword: builder.mutation<any, ChangePasswordRequest>({
+    query: (body) => ({
+      url: "/app/dashboard/members/api/change-password",
+      method: "PATCH",
+      body,
+    }),
+    invalidatesTags: ["Members"],
+  }),
 }));
 
 export const {
   useGetMembersQuery,
   useGetMemberByIdQuery,
   useUpdateMemberMutation,
-  useCreateMemberMutation
+  useCreateMemberMutation,
+  useChangePasswordMutation
 } = memberApi;
