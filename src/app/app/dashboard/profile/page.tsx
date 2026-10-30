@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
 import { useState, useEffect } from "react";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
-import { useUpdateMemberMutation } from "@/store/slices/memberSlice/api.member";
+import { useUpdateMemberMutation, useChangePasswordMutation } from "@/store/slices/memberSlice/api.member";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -10,12 +10,14 @@ import { ProfileCard } from "./ProfileCard";
 import { PersonalDetailsSection } from "./PersonalDetailsSection";
 import { ContactDetailsSection } from "./ContactDetailsSection";
 import { NomineeDetailsSection } from "./NomineeDetailsSection";
+import { PasswordChangeSection } from "./PasswordChangeSection";
 import { MemberDoc } from "@/models/member";
 
 export default function ProfilePage({memberProp}:{memberProp?:MemberDoc}) {
   const { toast } = useToast();
   const { data: currentUserData, isLoading: isAuthLoading, error: authError } = useGetCurrentUserQuery();
   const [updateMember, { isLoading: isUpdating }] = useUpdateMemberMutation();
+  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
 
   const member = memberProp || currentUserData?.data || null;
 
@@ -159,6 +161,7 @@ export default function ProfilePage({memberProp}:{memberProp?:MemberDoc}) {
             <PersonalDetailsSection formData={formData} handleChange={handleChange} onPhotoUpload={handlePhotoUpload} isUploadingPhoto={isUploadingPhoto} />
             <ContactDetailsSection formData={formData} handleChange={handleChange} />
             <NomineeDetailsSection formData={formData} handleChange={handleChange} />
+            <PasswordChangeSection user_id={member.user_id} />
 
             <div className="flex justify-end gap-3">
               <Button type="submit" disabled={isUpdating} className="px-8 py-6 text-base font-semibold">
