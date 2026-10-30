@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, CreditCard, Loader, TriangleAlert } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, CreditCard, Loader, Ticket, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +42,7 @@ export default function PaymentsPage() {
         error: installmentsErrorData,
         refetch: refetchInstallments,
     } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
+    let isPaid = installmentData?.data.find(item => item.month == month && item.year == year)
 
     const { data: gatewayTransactionData } = useGetGatewayTransactionsQuery(
         { member: String(memberId) },
@@ -190,18 +191,22 @@ export default function PaymentsPage() {
                     <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Member payment dashboard</p>
                     <h1 className="mt-1 text-3xl font-bold">{member?.full_name || "Member"} installment overview</h1>
                 </div>
-                {settings?.data?.default_due_day < day && (
+                {!isPaid && settings?.data?.default_due_day < day && (
                     <div className="w-fit flex items-center justify-center text-red-400">
                         <TriangleAlert className="mr-2 h-4 w-4" />
                         Current month installment is due
                     </div>
                 )}
-                {settings?.data?.default_due_day >= day && (
+                {!isPaid && settings?.data?.default_due_day >= day && (
                     <Button className="w-fit" onClick={handlePayThisMonth} disabled={isPayingThisMonth}>
                         <CreditCard className="mr-2 h-4 w-4" />
                         {isPayingThisMonth ? "Processing..." : "Pay Installment of this month"}
                     </Button>
                 )}
+                {isPaid && <div className="w-fit flex items-center justify-center text-green-400">
+                    <Check size={30} className="mr-2 h-4 w-4" />
+                    Current month installment is Paid
+                </div>}
             </div>
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
