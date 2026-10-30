@@ -43,7 +43,6 @@ export default function Dashboard() {
     .slice(0, 10);
 
   const recentInstallments = (installmentsData?.data ?? []).slice(0, 5);
-  console.log("Recent Installments",recentInstallments)
 
   const statsCards = [
     {
@@ -208,7 +207,7 @@ export default function Dashboard() {
                   >
                     <div className="flex-1">
                       <p className="text-sm text-foreground">
-                        {installment.cus_name || "Unknown member"}
+                        {installment.member.full_name || "Unknown member"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {monthArray[(installment.month ?? 1) - 1]} {installment.year ?? ""} •{" "}
