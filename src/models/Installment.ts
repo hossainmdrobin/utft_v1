@@ -9,6 +9,7 @@ interface IInstallment extends Document {
   description?: string;
   cus_name?: string;
   member?: string;
+  created_by?:string;
   account?: string;
   method?: string;
   month?: number;
@@ -26,16 +27,17 @@ const installmentSchema = new Schema(
     payment_status: { type: String, default: "unpaid", enum: ["unpaid", "paid"] },
     paid_at: { type: String, required: false },
     amount: { type: Number, required: true },
-    currency: { type: String ,default:'BDT'},
+    currency: { type: String, default: 'BDT' },
     description: { type: String, },
     cus_name: { type: String },
-    month:{type:Number, min:1, max:12},
-    year:{type:Number, min:2000},
-    day:{type:Number, min:1, max:31},
-    status:{type:String, default:"regular", enum:["regular", "due", "advance"]},
-    date:{ type: String },
-    method: {type:String,default:'aamarpay' },
+    month: { type: Number, min: 1, max: 12 },
+    year: { type: Number, min: 2000 },
+    day: { type: Number, min: 1, max: 31 },
+    status: { type: String, default: "regular", enum: ["regular", "due", "advance"] },
+    date: { type: String },
+    method: { type: String, default: 'aamarpay' },
     member: { type: Schema.Types.ObjectId, ref: "Member" },
+    created_by: { type: Schema.Types.ObjectId, ref: "Member" },
     account: { type: Schema.Types.ObjectId, ref: "Account" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
