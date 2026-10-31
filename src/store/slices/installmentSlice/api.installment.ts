@@ -24,12 +24,13 @@ export const manualInstallmentApi = injectEndpoint("installmentApi", (builder) =
             method: "POST",
             body,
         }),
-        invalidatesTags: ["JournalEntries", "Accounts"],
+        invalidatesTags: ["INSTALLMENT"],
     }),
     getInstallmentsByMemberId: builder.query<Installment, GetInstallmentsByMemberIdReq>({
         query: ({ id, limit = 20, page = 1 }) => ({
             url: `/api/installments/${id}?limit=${limit}&page=${page}`
-        })
+        }),
+        providesTags:["INSTALLMENT"]
     })
 }));
 

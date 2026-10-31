@@ -19,14 +19,15 @@ export function NewInstallments() {
     const [createManualInstallment] = useCreateManualInstallmentMutation()
     console.log(data)
     const lastInstallmentThisYear = (data || [])
-        .filter(item => item.year == year && item.payment_status == 'paid')
-        .sort(function (a, b) { return b.month - a.month })[0]
+        .filter(item => item.payment_status === "paid")
+        .sort((a, b) => b.year - a.year || b.month - a.month)[0];
 
     const getInstallments = (count: number) => Array.from({ length: count }, (_, index) => {
+        const maxYear = Math.max(year, lastInstallmentThisYear?.year || 0)
         const maxMonth = Math.max(month, lastInstallmentThisYear?.month || 0)
         const monthNumber = maxMonth + 1 + index;
         const temp_month = monthNumber % 12;
-        const temp_year = year + Math.floor(monthNumber / 12);
+        const temp_year = maxYear + Math.floor(monthNumber / 12);
 
         return {
             month: temp_month,
@@ -44,6 +45,7 @@ export function NewInstallments() {
 
     const handleAdvancePayment = async () => {
         try {
+            console.log(installments)
             await createManualInstallment({
                 member: id,
                 data: installments
