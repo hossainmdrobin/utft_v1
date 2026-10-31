@@ -13,7 +13,7 @@ import { NomineeDetailsSection } from "./NomineeDetailsSection";
 import { PasswordChangeSection } from "./PasswordChangeSection";
 import { MemberDoc } from "@/models/member";
 
-export default function ProfilePage({memberProp}:{memberProp?:MemberDoc}) {
+export default function ProfilePage({ memberProp }: { memberProp?: MemberDoc }) {
   const { toast } = useToast();
   const { data: currentUserData, isLoading: isAuthLoading, error: authError } = useGetCurrentUserQuery();
   const [updateMember, { isLoading: isUpdating }] = useUpdateMemberMutation();
@@ -161,7 +161,6 @@ export default function ProfilePage({memberProp}:{memberProp?:MemberDoc}) {
             <PersonalDetailsSection formData={formData} handleChange={handleChange} onPhotoUpload={handlePhotoUpload} isUploadingPhoto={isUploadingPhoto} />
             <ContactDetailsSection formData={formData} handleChange={handleChange} />
             <NomineeDetailsSection formData={formData} handleChange={handleChange} />
-            <PasswordChangeSection user_id={member.user_id} />
 
             <div className="flex justify-end gap-3">
               <Button type="submit" disabled={isUpdating} className="px-8 py-6 text-base font-semibold">
@@ -169,6 +168,9 @@ export default function ProfilePage({memberProp}:{memberProp?:MemberDoc}) {
                 Save Changes
               </Button>
             </div>
+            <hr />
+            <PasswordChangeSection user_id={member.user_id} />
+
           </form>
         </div>
       </div>
