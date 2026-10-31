@@ -8,6 +8,7 @@ import { useCreateManualInstallmentMutation, useGetInstallmentsByMemberIdQuery }
 import { useParams } from "next/navigation";
 import SingleInstallmentCard from "./SingleInstallmentCard";
 import { useGetMemberByIdQuery } from "@/store/slices/memberSlice/api.member";
+import { resetGlobalCursorStyle } from "node_modules/react-resizable-panels/dist/declarations/src/utils/cursor";
 
 export function NewInstallments() {
     const params = useParams();
@@ -45,11 +46,11 @@ export function NewInstallments() {
 
     const handleAdvancePayment = async () => {
         try {
-            console.log(installments)
             await createManualInstallment({
                 member: id,
                 data: installments
             }).unwrap()
+            setInstallmentCount(1)
         } catch (e: any) {
             console.error(e)
         }
