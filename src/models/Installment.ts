@@ -9,7 +9,7 @@ interface IInstallment extends Document {
   description?: string;
   cus_name?: string;
   member?: string;
-  created_by?:string;
+  created_by?: string;
   account?: string;
   method?: string;
   month?: number;
@@ -38,6 +38,7 @@ const installmentSchema = new Schema(
     method: { type: String, default: 'aamarpay' },
     member: { type: Schema.Types.ObjectId, ref: "Member" },
     created_by: { type: Schema.Types.ObjectId, ref: "Member" },
+    updated_by: { type: Schema.Types.ObjectId, ref: "Member" },
     account: { type: Schema.Types.ObjectId, ref: "Account" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }

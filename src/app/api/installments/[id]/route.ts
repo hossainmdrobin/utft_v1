@@ -2,7 +2,7 @@ import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { Installment } from "@/models/Installment";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await getCurrentMember(req, ["admin", "president", "director"]);
         const { id } = await params;
