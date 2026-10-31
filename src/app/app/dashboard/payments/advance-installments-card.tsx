@@ -4,7 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
 import { useEffect, useState } from "react";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
-import { useCreateAamarPayPaymentMutation } from "@/store/slices/paymentSlice/api.slice";
+import { useCreateAamarPayPaymentMutation, useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type AdvanceInstallmentsCardProps = {
     currency: (amount: number) => string;
@@ -14,14 +16,36 @@ export function AdvanceInstallmentsCard({
     currency,
 }: AdvanceInstallmentsCardProps) {
     const { month, year } = getCurrentDhakaDate()
-    const { data: settings } = useGetSettingsQuery()
+    const { data: settings, isLoading: settingLoading } = useGetSettingsQuery()
+    const { data: currentUserData, isLoading: userLoading } = useGetCurrentUserQuery();
+    const memberId = currentUserData?.data?._id;
+    const {
+        data: installmentData,
+        isLoading: installmentsLoading,
+        // isError: installmentsError,
+        // error: installmentsErrorData,
+        // refetch: refetchInstallments,
+    } = useGetInstallmentsQuery({ member: String(memberId) }, { skip: !memberId });
+    const loading = settingLoading || userLoading || installmentsLoading;
+    if (loading) return <Skeleton />
+
+    const lastInstallmentThisYear = (installmentData?.data || [])
+        .filter(item => item.payment_status === "paid")
+        .sort((a, b) => b.year - a.year || b.month - a.month)[0];
 
     const getInstallments = (count: number) => Array.from({ length: count }, (_, index) => {
-        const monthNumber = month + 1 + index
+        // const monthNumber = month + 1 + index
+        const maxYear = Math.max(year, lastInstallmentThisYear?.year || 0)
+        const maxMonth = Math.max(month, lastInstallmentThisYear?.month || 0)
+        let jump = 1;
+        if (year == maxYear && month == maxMonth) jump = 2;
+        const monthNumber = maxMonth + jump + index;
+        const temp_month = monthNumber % 12;
+        const temp_year = maxYear + Math.floor(monthNumber / 12);
 
         return {
-            month: monthNumber % 12,
-            year: year + Math.floor(monthNumber / 12),
+            month: temp_month,
+            year: temp_year,
         }
     })
 
@@ -33,9 +57,11 @@ export function AdvanceInstallmentsCard({
     }
 
     const handleAdvancePayment = () => {
+        if (installments.length == 0 || !currentUserData?.data?.share_quantity || !settings?.data?.share_value) return
+        const amount = installments.length * (settings?.data?.share_value || 0) * currentUserData?.data?.share_quantity;
         createInstallment({
             installments,
-            amount: installments.length * (settings?.data?.share_value || 0),
+            amount,
             description: "Advanced Payment",
             status: "advance",
         })
@@ -111,7 +137,7 @@ export function AdvanceInstallmentsCard({
                     </div>
                     <div className="text-left sm:text-right">
                         <p className="text-sm text-muted-foreground">Total</p>
-                        <p className="text-2xl font-bold">{currency((settings?.data?.share_value || 0) * installments.length)}</p>
+                        <p className="text-2xl font-bold">{currency((settings?.data?.share_value * currentUserData.data.share_quantity || 0) * installments.length)}</p>
                     </div>
                     <Button
                         onClick={handleAdvancePayment}

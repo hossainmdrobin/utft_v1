@@ -45,10 +45,12 @@ export default function PaymentsPage() {
 
     let isPaid = installmentData?.data.find(item => item.month == month && item.year == year)
 
-    const { data: gatewayTransactionData } = useGetGatewayTransactionsQuery(
+    const { data: gatewayTransactionData, getGetwayTransactionLoading } = useGetGatewayTransactionsQuery(
         { member: String(memberId) },
         { skip: !memberId },
     );
+
+    const loading = settingLoading || userLoading || installmentsLoading || getGetwayTransactionLoading;
 
     const [createPayment, { data: paymentData, isLoading: isPayingThisMonth }] = useCreateAamarPayPaymentMutation();
 
@@ -150,7 +152,7 @@ export default function PaymentsPage() {
         });
     };
 
-    if (userLoading || settingLoading) return <Skeleton />;
+    if (loading) return <Skeleton />;
 
     if (!memberId) {
         return (
@@ -295,9 +297,7 @@ export default function PaymentsPage() {
                 </Card>
             </div>
 
-            <AdvanceInstallmentsCard
-                currency={currency}
-            />
+            <AdvanceInstallmentsCard currency={currency}/>
 
             <InstallmentHistoryCard
                 filter={filter}
