@@ -2,7 +2,7 @@ import { CircleDollarSign, Minus, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentDhakaDate, monthArray } from "@/lib/date/dhaka";
-import {  useState } from "react";
+import { useState } from "react";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { useCreateManualInstallmentMutation, useGetInstallmentsByMemberIdQuery } from "@/store/slices/installmentSlice/api.installment";
 import { useParams } from "next/navigation";
@@ -14,10 +14,10 @@ export function NewInstallments() {
     const id = params.id as string;
     const { month, year } = getCurrentDhakaDate()
     const { data: settings } = useGetSettingsQuery()
-    const {data:memberData} = useGetMemberByIdQuery(id)
+    const { data: memberData } = useGetMemberByIdQuery(id)
     const { data } = useGetInstallmentsByMemberIdQuery({ id })
     const [createManualInstallment] = useCreateManualInstallmentMutation()
-
+    console.log(data)
     const lastInstallmentThisYear = (data || [])
         .filter(item => item.year == year && item.payment_status == 'paid')
         .sort(function (a, b) { return b.month - a.month })[0]
@@ -32,7 +32,8 @@ export function NewInstallments() {
             month: temp_month,
             year: temp_year,
             status: month == monthNumber - 1 ? "regular" : "advance",
-            amount: settings?.data?.share_value || 0
+            amount: settings?.data?.share_value || 0,
+            payment_status: "paid"
         }
     })
 
@@ -41,13 +42,17 @@ export function NewInstallments() {
         setInstallments(getInstallments(Math.max(1, count)))
     }
 
-    const handleAdvancePayment = () => {
-        console.log("Clicked", installments)
-        createManualInstallment({
-            member: id,
-            data: installments
-        })
+    const handleAdvancePayment = async () => {
+        try {
+            await createManualInstallment({
+                member: id,
+                data: installments
+            }).unwrap()
+        } catch (e: any) {
+            console.error(e)
+        }
     }
+
 
     return (
         <Card>
@@ -128,8 +133,17 @@ export function NewInstallments() {
             <CardContent>
                 <CardTitle className="flex items-center gap-2"><CircleDollarSign className="h-5 w-5 text-primary" /> Due Intallments</CardTitle>
                 <CardDescription>Installments are missed to pay before deadline</CardDescription>
+                {data?.filter(item => item.status == 'due').length == 0 && <div className="flex justify-center border py-4 mt-3 rounded text-green-400">Now Due Installment</div>}
                 {data && <div>{
-                    data?.filter(item => item.status == "due").map(item => <SingleInstallmentCard />)
+                    data?.filter(item => item.status == 'due').map((item, index) => <SingleInstallmentCard key={index} {...item} />)
+                }
+                </div>}
+            </CardContent>
+            <CardContent>
+                <CardTitle className="flex items-center gap-2"><CircleDollarSign className="h-5 w-5 text-primary" /> Recent Intallments</CardTitle>
+                <CardDescription>Installments are missed to pay before deadline</CardDescription>
+                {data && <div>{
+                    data?.map((item, index) => <SingleInstallmentCard key={index} {...item} />)
                 }
                 </div>}
             </CardContent>
