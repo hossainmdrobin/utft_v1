@@ -60,7 +60,7 @@ export async function createMonthlyInstallments(): Promise<MonthlyInstallmentRes
     return { ran: true, created: result.upsertedCount, month: today.month, year: today.year };
   } catch (e) {
     await MonthlyInstallmentCornSchema.create({ success: false, ...today })
-
+    return { ran: false, reason: "not_due_day", today };
     console.log(e)
   }
 
