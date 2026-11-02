@@ -13,12 +13,11 @@ import { resetGlobalCursorStyle } from "node_modules/react-resizable-panels/dist
 export function NewInstallments() {
     const params = useParams();
     const id = params.id as string;
-    const { month, year } = getCurrentDhakaDate()
+    const { month, year, day } = getCurrentDhakaDate()
     const { data: settings } = useGetSettingsQuery()
     const { data: memberData } = useGetMemberByIdQuery(id)
     const { data } = useGetInstallmentsByMemberIdQuery({ id })
     const [createManualInstallment] = useCreateManualInstallmentMutation()
-    console.log(data)
     const lastInstallmentThisYear = (data || [])
         .filter(item => item.payment_status === "paid")
         .sort((a, b) => b.year - a.year || b.month - a.month)[0];
@@ -26,7 +25,9 @@ export function NewInstallments() {
     const getInstallments = (count: number) => Array.from({ length: count }, (_, index) => {
         const maxYear = Math.max(year, lastInstallmentThisYear?.year || 0)
         const maxMonth = Math.max(month, lastInstallmentThisYear?.month || 0)
-        const monthNumber = maxMonth + 1 + index;
+        let jump = 1;
+        if (year == maxYear && month == maxMonth) jump = 2;
+        const monthNumber = maxMonth + jump + index;
         const temp_month = monthNumber % 12;
         const temp_year = maxYear + Math.floor(monthNumber / 12);
 
@@ -34,7 +35,7 @@ export function NewInstallments() {
             month: temp_month,
             year: temp_year,
             status: month == monthNumber - 1 ? "regular" : "advance",
-            amount: settings?.data?.share_value || 0,
+            amount: settings?.data?.share_value * memberData.data.share_quantity || 0,
             payment_status: "paid"
         }
     })
@@ -123,7 +124,7 @@ export function NewInstallments() {
                     </div>
                     <div className="text-left sm:text-right">
                         <p className="text-sm text-muted-foreground">Total</p>
-                        <p className="text-2xl font-bold">{(settings?.data?.share_value || 0) * installments.length}</p>
+                        <p className="text-2xl font-bold">{(settings?.data?.share_value * memberData.data.share_quantity || 0) * installments.length}</p>
                     </div>
                     <Button
                         onClick={handleAdvancePayment}
