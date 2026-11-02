@@ -13,6 +13,13 @@ if (!global.mongooseCache) {
 const cached = global.mongooseCache;
 
 export async function connectDB() {
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return;
+  }
+
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
   if (cached.conn) {
     return cached.conn;
   }
