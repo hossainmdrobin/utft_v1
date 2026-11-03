@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { useGetCurrentUserQuery } from '@/store/slices/authSlice/api.auth';
 import { Skeleton } from '@/components/ui/skeleton';
 export const navigation = [
-    { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: false },
+    { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, access: ["admin", "president", "director", "accountant", "auditor","member"], adminOnly: false },
     { name: "Payments", href: "/app/dashboard/payments", icon: CreditCard, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
     { name: "Members", href: "/app/dashboard/members", icon: Users, access: ["admin", "president", "director"], adminOnly: false },
     // { name: "Share Management", href: "/app/dashboard/share-management", icon: Coins, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
