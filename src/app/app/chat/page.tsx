@@ -1,7 +1,9 @@
-import React from 'react'
+import ChatWindow from './ChatWindow';
 
 export default function Chat() {
   return (
-    <div>The chat interface</div>
-  )
+    <div className="h-full w-full">
+      <ChatWindow />
+    </div>
+  );
 }

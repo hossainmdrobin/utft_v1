@@ -25,8 +25,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return (
         <>
             <div className="flex h-screen bg-background">
-                <Sidebar />
-                {children}
+            <Sidebar />
+            <div className="flex-1 h-full">{children}</div>
             </div>
         </>
     );
