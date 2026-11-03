@@ -11,7 +11,8 @@ import {
     // Shield,
     // Coins,
     CircleUserRound,
-    CreditCard
+    CreditCard,
+    Sparkles
 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useGetCurrentUserQuery } from '@/store/slices/authSlice/api.auth';
@@ -25,8 +26,9 @@ export const navigation = [
     { name: "Activity Log", href: "/app/dashboard/activity-log", icon: History, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: false },
     // { name: "User Management", href: "/app/dashboard/user-management", icon: Shield, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: true },
     { name: "Profile", href: "/app/dashboard/profile", icon: CircleUserRound, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
-    { name: "Settings", href: "/app/dashboard/settings", icon: Settings, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
+    { name: "Settings", href: "/app/dashboard/member_settings", icon: Settings, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
     { name: "Settings(Employee)", href: "/app/dashboard/settings", icon: Settings, access: ["admin", "president", "director", "accountant"], adminOnly: false },
+    { name: "Ask", href: "/app/chat", icon: Sparkles, access: ["admin", "president", "director", "accountant"], adminOnly: false },
 ];
 export default function Sidebar({ setSidebarOpen }: { setSidebarOpen: (boolean) => void }) {
     const pathname = usePathname();
