@@ -26,7 +26,7 @@ export const journalEntryApi = injectEndpoint("journalEntryApi", (builder) => ({
         if (member) params.set("member", member);
         if (status) params.set("status", status);
         if (search) params.set("search", search);
-  if (account) params.set("account", account);
+        if (account) params.set("account", account);
         if (page !== undefined) params.set("page", String(page));
         if (limit !== undefined) params.set("limit", String(limit));
       }
@@ -57,7 +57,7 @@ export const journalEntryApi = injectEndpoint("journalEntryApi", (builder) => ({
   }),
 
   // Update a journal entry (id + entry fields)
-  updateJournalEntry: builder.mutation<JournalEntryDoc, { id: string; [key: string]: any }>({
+  updateJournalEntry: builder.mutation<JournalEntryDoc, { id: string;[key: string]: any }>({
     query: (body) => {
       const { id, ...rest } = body;
       return {

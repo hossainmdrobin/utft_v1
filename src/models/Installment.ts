@@ -4,7 +4,7 @@ interface IInstallment extends Document {
   transaction_id?: string;
   payment_status?: string;
   paid_at?: string;
-  amount: number;
+  amount?: number;
   currency?: string;
   description?: string;
   cus_name?: string;
@@ -26,7 +26,7 @@ const installmentSchema = new Schema(
     transaction_id: { type: String, required: false },
     payment_status: { type: String, default: "unpaid", enum: ["unpaid", "paid"] },
     paid_at: { type: String, required: false },
-    amount: { type: Number, required: true },
+    amount: { type: Number, required: false },
     currency: { type: String, default: 'BDT' },
     description: { type: String, },
     cus_name: { type: String },
