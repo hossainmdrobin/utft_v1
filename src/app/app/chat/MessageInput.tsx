@@ -16,14 +16,14 @@ export default function MessageInput({ onSend }: { onSend: (text: string) => voi
     }
   };
   return (
-    <div className="flex items-end gap-2 border-t bg-transparent px-4 py-3">
+    <div className="flex items-end gap-2 border-t bg-transparent px-4 py-3 absolute bottom-0 right-0 left-0">
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKey}
         rows={1}
         placeholder="Type a message..."
-        className="max-h-32 flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="max-h-32 flex-1 py-4 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
       />
       <button
         onClick={handleSend}

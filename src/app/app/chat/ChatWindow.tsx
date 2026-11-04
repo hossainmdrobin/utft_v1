@@ -4,8 +4,14 @@ import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { chatPartner, initialMessages, Message } from './dummyData';
+import { useParams } from 'next/navigation';
+import StartChat from './StartChat';
 
 export default function ChatWindow() {
+  const params = useParams()
+  const chatId = params.chatId as string
+  console.log(chatId)
+
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const handleSend = (text: string) => {
     const msg: Message = {
@@ -18,9 +24,10 @@ export default function ChatWindow() {
     setMessages((prev) => [...prev, msg]);
   };
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
+    <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
       <ChatHeader partner={chatPartner} />
-      <MessageList messages={messages} partner={chatPartner} />
+      {chatId && <MessageList messages={messages} partner={chatPartner} />}
+      {!chatId &&  <StartChat />}
       <MessageInput onSend={handleSend} />
     </div>
   );
