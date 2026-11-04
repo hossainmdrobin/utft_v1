@@ -13,6 +13,8 @@ export default function ChatWindow() {
   console.log(chatId)
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [inputValue, setInputValue] = useState('');
+  
   const handleSend = (text: string) => {
     const msg: Message = {
       id: `m-${Date.now()}`,
@@ -22,13 +24,19 @@ export default function ChatWindow() {
       date: 'Today',
     };
     setMessages((prev) => [...prev, msg]);
+    setInputValue('');
   };
+
+  const handleExamplePrompt = (prompt: string) => {
+    setInputValue(prompt);
+  };
+  
   return (
     <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
       <ChatHeader partner={chatPartner} />
       {chatId && <MessageList messages={messages} partner={chatPartner} />}
-      {!chatId &&  <StartChat />}
-      <MessageInput onSend={handleSend} />
+      {!chatId &&  <StartChat onExamplePrompt={handleExamplePrompt} />}
+      <MessageInput onSend={handleSend} value={inputValue} onChange={setInputValue} />
     </div>
   );
 }
