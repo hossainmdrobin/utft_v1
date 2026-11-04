@@ -75,14 +75,14 @@ export async function POST(
         const agentStartedAt = Date.now();
 
         const stream = await agent.stream(
-            { messages: history },
+            { messages: history } as any,
             {
                 streamMode: "updates",
                 configurable: {
                     thread_id: `${chatId}`,
                 },
             }
-        );
+        ) as any;
         // THE ASSISTANT MESSAGE VARIABLE
         let assistantResponse = "";
         const readable = new ReadableStream({
