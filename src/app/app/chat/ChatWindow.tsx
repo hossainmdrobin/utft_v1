@@ -10,7 +10,6 @@ import StartChat from './StartChat';
 export default function ChatWindow() {
   const params = useParams()
   const chatId = params.chatId as string
-  console.log(chatId)
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');

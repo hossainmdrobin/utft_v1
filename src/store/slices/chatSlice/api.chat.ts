@@ -1,4 +1,6 @@
+import { ChatDoc } from "@/models/Chat";
 import { injectEndpoint } from "@/store/baseApi";
+
 
 export const chatApi = injectEndpoint("chatApi", (builder) => ({
   getConversations: builder.query<any, void>({
@@ -8,7 +10,7 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
     }),
     providesTags: ["Chat"],
   }),
-  createConversation: builder.mutation<any, { title?: string }>({
+  createConversation: builder.mutation<ChatDoc, { message:string }>({
     query: (body) => ({
       url: "/api/chat",
       method: "POST",
