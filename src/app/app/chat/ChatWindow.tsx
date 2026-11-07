@@ -37,13 +37,11 @@ export default function ChatWindow() {
         setMessages(mapped);
       })
       .finally(() => setLoading(false));
-  }, [chatId]);
-
-  if(!chatId) return <div> Loading</div>
+  }, []);
 
   useEffect(()=>{
     if(messages.length == 1) runAgentStream(chatId,"")
-  },[messages])
+  },[])
 
   const handleSend = (text: string) => {
     const msg: Message = {
@@ -65,7 +63,7 @@ export default function ChatWindow() {
     <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
       <ChatHeader partner={chatPartner} />
       {loading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
-      {chatId && <MessageList messages={messages} partner={chatPartner} />}
+      {chatId && <MessageList events={events} messages={messages} partner={chatPartner} />}
       {!chatId && <StartChat onExamplePrompt={handleExamplePrompt} />}
       <MessageInput onSend={handleSend} value={inputValue} onChange={setInputValue} />
     </div>

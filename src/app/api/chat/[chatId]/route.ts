@@ -203,31 +203,12 @@ export async function POST(
 
                     // 3. Save the assistant response to MongoDB.
 
-                    const result = await ChatModel.create({
-                        chat:chatId,
+                    await MessageModel.create({
+                        chat: chatId,
                         role: "assistant",
-                        content: assistantResponse,
+                        message: assistantResponse,
 
                     })
-                    // const result = await ChatModel.updateOne(
-                    //     {
-                    //         _id: chatId,
-                    //     },
-                    //     {
-                    //         $push: {
-                    //             messages: {
-                    //                 role: "assistant",
-                    //                 content: assistantResponse,
-                    //                 createdAt: new Date(),
-                    //             },
-                    //         },
-                    //         $set: { updatedAt: new Date() },
-                    //     },
-                    // );
-
-                    if (result.matchedCount !== 1) {
-                        throw new Error("Conversation was not found during message persistence");
-                    }
                     // 4. Mark completion only after persistence succeeds.
                     controller.enqueue(encode({ type: "done" }));
                     controller.close();

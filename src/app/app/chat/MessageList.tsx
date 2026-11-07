@@ -2,8 +2,10 @@
 import { useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import { Message } from './dummyData';
+import { AgentEvent } from '@/lib/ai_service/events';
+import { ChatPanel } from './chat-panel';
 
-export default function MessageList({ messages, partner }: { messages: Message[]; partner: any }) {
+export default function MessageList({ messages, partner, events }: { messages: Message[]; partner: any, events: AgentEvent[] }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,6 +35,8 @@ export default function MessageList({ messages, partner }: { messages: Message[]
             ))}
           </div>
         ))}
+        <ChatPanel events={events} />
+
         <div ref={bottomRef} />
       </div>
     </div>
