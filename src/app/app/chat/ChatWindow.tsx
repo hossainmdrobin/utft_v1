@@ -13,6 +13,8 @@ export default function ChatWindow() {
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
+
+  
   
   const handleSend = (text: string) => {
     const msg: Message = {

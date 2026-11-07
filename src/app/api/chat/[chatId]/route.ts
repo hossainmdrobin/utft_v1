@@ -39,7 +39,7 @@ export async function POST(
     try {
         console.log("AUTHENTICATING USER");
         // 1. Authenticate the request.
-        const user = await getCurrentMember(request, ["admin", "president", "director"]);
+        const user = await getCurrentMember(request);
         if (!user?._id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 },);
         console.log('VALIDATION PROJECT ID')
         // 2. Validate request input.
@@ -62,6 +62,8 @@ export async function POST(
         await connectDB();
 
 
+        await MessageModel.create({ chat: chatId, role: "user", message: prompt });
+
         const messages = await MessageModel.find({ chat: chatId })
             .limit(10)
             .lean();
@@ -80,6 +82,8 @@ export async function POST(
                 streamMode: "updates",
                 configurable: {
                     thread_id: `${chatId}`,
+                    userId: (user as any)._id,
+                    role: (user as any).role,
                 },
             }
         ) as any;
@@ -239,5 +243,20 @@ export async function POST(
             { error: "Unable to edit project" },
             { status: 500 },
         );
+    }
+}
+
+
+
+export async function GET(
+    request: NextRequest,
+    { params }: RouteContext,
+) {
+    try {
+        const { chatId } = await params;
+        const messages = await MessageModel.find({ chat: chatId });
+        return NextResponse.json(messages, { status: 200 })
+    } catch (e) {
+        return NextResponse.json({ message: "Internal Server Error" })
     }
 }

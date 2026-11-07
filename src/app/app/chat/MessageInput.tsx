@@ -1,7 +1,7 @@
 'use client';
-import { useState, KeyboardEvent } from 'react';
+import { useState, KeyboardEvent, useEffect } from 'react';
 import { Send } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { redirect, useParams } from 'next/navigation';
 import { useCreateConversationMutation } from '@/store/slices/chatSlice/api.chat';
 import { useAgentStream } from '@/lib/ai_service/use-agent-stream';
 import { createAgent } from 'langchain';
@@ -26,9 +26,11 @@ export default function MessageInput({
   const handleSend = () => {
     if (!text.trim()) return;
 
-    if (!chatId) createChat({ message: text })
-    if (chatId)
+    if (!chatId) createChat({ prompt: text })
+    if (chatId) {
       onSend(text.trim());
+      runAgentStream(chatId, text.trim());
+    }
     if (value === undefined) {
       setInternalText('');
     }
@@ -45,6 +47,10 @@ export default function MessageInput({
     if(chatId) runAgentStream(chatId,text)
       if(!chatId) createChat({prompt:text})
   }
+
+  useEffect(()=>{
+if(data) redirect(`/app/chat/${data?.data?._id}`)
+  },[data])
 
   return (
     <div className="flex items-end gap-2 border-t bg-transparent px-4 py-3 absolute bottom-0 right-0 left-0">

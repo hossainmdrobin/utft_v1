@@ -16,7 +16,7 @@ export function useAgentStream() {
       let streamFailed = false;
 
       try {
-        const response = await fetch(`/api/${chatId}`, {
+        const response = await fetch(`/api/chat/${chatId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

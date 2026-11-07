@@ -10,7 +10,7 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
     }),
     providesTags: ["Chat"],
   }),
-  createConversation: builder.mutation<ChatDoc, { message:string }>({
+  createConversation: builder.mutation<ChatDoc, { prompt?: string; message?: string; title?: string }>({
     query: (body) => ({
       url: "/api/chat",
       method: "POST",
@@ -18,6 +18,11 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
     }),
     invalidatesTags: ["Chat"],
   }),
+  getMessageByChatId: builder.query<any, any>({
+      query: ()=>({
+        url:`/api/chat/`
+      })
+  })
 }));
 
 export const {
