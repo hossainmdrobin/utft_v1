@@ -40,8 +40,8 @@ export default function ChatWindow() {
   }, []);
 
   useEffect(()=>{
-    if(messages.length == 1) runAgentStream(chatId,"")
-  },[])
+    if(messages.length == 1 && !streamLoading) runAgentStream(chatId,"")
+  },[messages])
 
   const handleSend = (text: string) => {
     const msg: Message = {
@@ -65,7 +65,7 @@ export default function ChatWindow() {
       {loading && streamLoading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
       {chatId && <MessageList events={events} messages={messages} partner={chatPartner} />}
       {!chatId && <StartChat onExamplePrompt={handleExamplePrompt} />}
-      <MessageInput onSend={handleSend} value={inputValue} onChange={setInputValue} />
+      <MessageInput onSend={runAgentStream} value={inputValue} onChange={setInputValue} />
     </div>
   );
 }

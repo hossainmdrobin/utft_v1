@@ -3,22 +3,20 @@ import { useState, KeyboardEvent, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { redirect, useParams } from 'next/navigation';
 import { useCreateConversationMutation } from '@/store/slices/chatSlice/api.chat';
-import { useAgentStream } from '@/lib/ai_service/use-agent-stream';
-import { createAgent } from 'langchain';
 
 export default function MessageInput({
   onSend,
   value,
   onChange
 }: {
-  onSend: (text: string) => void;
+  onSend: (chatId: string, text: string) => Promise<boolean>;
   value?: string;
   onChange?: (text: string) => void;
 }) {
   const params = useParams()
   const chatId = params.chatId as string
-  const [createChat, { data, isLoading }] = useCreateConversationMutation();
-  const { runAgentStream } = useAgentStream();
+  const [createChat, { data }] = useCreateConversationMutation();
+  // const { runAgentStream } = useAgentStream();
   const [internalText, setInternalText] = useState('');
   const text = value !== undefined ? value : internalText;
   const setText = onChange || setInternalText;
@@ -28,8 +26,7 @@ export default function MessageInput({
 
     if (!chatId) createChat({ prompt: text })
     if (chatId) {
-      onSend(text.trim());
-      runAgentStream(chatId, text.trim());
+      onSend(chatId, text.trim());
     }
     if (value === undefined) {
       setInternalText('');
@@ -44,13 +41,13 @@ export default function MessageInput({
   };
 
   const callAgent = () => {
-    if(chatId) runAgentStream(chatId,text)
-      if(!chatId) createChat({prompt:text})
+    if (chatId) onSend(chatId, text)
+    if (!chatId) createChat({ prompt: text })
   }
 
-  useEffect(()=>{
-if(data) redirect(`/app/chat/${data?.data?._id}`)
-  },[data])
+  useEffect(() => {
+    if (data) redirect(`/app/chat/${data?.data?._id}`)
+  }, [data])
 
   return (
     <div className="flex items-end gap-2 border-t bg-transparent px-4 py-3 absolute bottom-0 right-0 left-0">
