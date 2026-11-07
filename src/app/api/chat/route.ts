@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import ChatModel from "@/models/Chat";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import MessageModel from "@/models/Message";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,10 @@ export async function POST(request: NextRequest) {
     if (!user?._id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json().catch(() => ({}));
-    const title = typeof body?.title === "string" ? body.title.trim() : "";
+    if(!body?.prompt) return NextResponse.json({message:"Prompt is required"},{status:400})
+    console.log(body)
+  await MessageModel.create({message:body.prompt, chat:user?._id, role:'user'})
+    const title = body.prompt.split(/\s+/).slice(0, 5).join(" ");
 
     await connectDB();
     const chat = await ChatModel.create({ user: (user as any)._id, title });

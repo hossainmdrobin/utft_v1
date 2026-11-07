@@ -254,9 +254,10 @@ export async function GET(
 ) {
     try {
         const { chatId } = await params;
-        const messages = await MessageModel.find({ chat: chatId });
+        const messages = await MessageModel.find({ chat: chatId }).limit(15)
         return NextResponse.json(messages, { status: 200 })
     } catch (e) {
+        console.log(e)
         return NextResponse.json({ message: "Internal Server Error" })
     }
 }

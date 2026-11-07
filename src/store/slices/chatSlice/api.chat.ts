@@ -18,9 +18,9 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
     }),
     invalidatesTags: ["Chat"],
   }),
-  getMessageByChatId: builder.query<any, any>({
-      query: ()=>({
-        url:`/api/chat/`
+  getMessageByChatId: builder.query<any, {id:string}>({
+      query: ({id})=>({
+        url:`/api/chat/${id}`
       })
   })
 }));
@@ -28,4 +28,5 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
 export const {
   useGetConversationsQuery,
   useCreateConversationMutation,
+  useGetMessageByChatIdQuery
 } = chatApi;

@@ -1,10 +1,9 @@
 'use client';
 import { useEffect, useRef } from 'react';
-import { Message } from './dummyData';
-import { User } from './dummyData';
 import MessageBubble from './MessageBubble';
+import { MessageDoc } from '@/models/Message';
 
-export default function MessageList({ messages, partner }: { messages: Message[]; partner: User }) {
+export default function MessageList({ messages }: { messages: MessageDoc[] }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,7 +29,7 @@ export default function MessageList({ messages, partner }: { messages: Message[]
               <span className="rounded-full bg-gray-200 px-3 py-1 text-xs text-gray-600">{g.date}</span>
             </div>
             {g.items.map((m) => (
-              <MessageBubble key={m.id} message={m} partner={partner} />
+              <MessageBubble key={m.id} message={m}  />
             ))}
           </div>
         ))}
