@@ -26,13 +26,14 @@ export async function POST(request: NextRequest) {
     if (!user?._id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json().catch(() => ({}));
-    if(!body?.prompt) return NextResponse.json({message:"Prompt is required"},{status:400})
+    if (!body?.prompt) return NextResponse.json({ message: "Prompt is required" }, { status: 400 })
     console.log(body)
-  await MessageModel.create({message:body.prompt, chat:user?._id, role:'user'})
     const title = body.prompt.split(/\s+/).slice(0, 5).join(" ");
 
     await connectDB();
     const chat = await ChatModel.create({ user: (user as any)._id, title });
+    await MessageModel.create({ message: body.prompt, chat: chat?._id, role: 'user' })
+
 
     return NextResponse.json({ data: chat }, { status: 201 });
   } catch (error) {

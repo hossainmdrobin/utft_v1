@@ -11,7 +11,22 @@ import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 
 
 
-export const runtime = "nodejs";
+export async function GET(
+    request: NextRequest,
+    { params }: RouteContext,
+) {
+    try {
+        const user = await getCurrentMember(request);
+        if (!user?._id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+        const { chatId } = await params;
+        await connectDB();
+        const messages = await MessageModel.find({ chat: chatId }).sort({ createdAt: 1 }).lean();
+        return NextResponse.json({ data: messages });
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
+    }
+}
 export const maxDuration = 300;
 
 type RouteContext = {
@@ -51,22 +66,20 @@ export async function POST(
 
         if (!body || typeof body !== "object" || !("prompt" in body) || typeof body.prompt !== "string")
             return NextResponse.json({ error: "A prompt is required" }, { status: 400 },);
-        console.log("VALIDATING PROMPT")
-        const prompt = body.prompt.trim();
-        if (!prompt || prompt.length > 10000)
-            return NextResponse.json({ error: "Prompt must be 1-10000 characters" }, { status: 400 },);
-        console.log('CREATING SANDBOX')
-
-
         // SAVING THE MESSAGE PROMPT
         await connectDB();
-
-
-        await MessageModel.create({ chat: chatId, role: "user", message: prompt });
-
         const messages = await MessageModel.find({ chat: chatId })
             .limit(10)
             .lean();
+        const prompt = body.prompt.trim();
+        console.log("VALIDATING PROMPT")
+
+        if ((!prompt || prompt.length > 10000) && messages?.length > 1)
+            return NextResponse.json({ error: "Prompt must be 1-10000 characters" }, { status: 400 },);
+        console.log('CREATING SANDBOX')
+
+        if (messages?.length > 1)
+            await MessageModel.create({ chat: chatId, role: "user", message: prompt });
 
         const history: BaseMessage[] = messages.reverse().map((message) => {
             return message.role === "user"
@@ -189,21 +202,28 @@ export async function POST(
 
 
                     // 3. Save the assistant response to MongoDB.
-                    const result = await ChatModel.updateOne(
-                        {
-                            _id: chatId,
-                        },
-                        {
-                            $push: {
-                                messages: {
-                                    role: "assistant",
-                                    content: assistantResponse,
-                                    createdAt: new Date(),
-                                },
-                            },
-                            $set: { updatedAt: new Date() },
-                        },
-                    );
+
+                    const result = await ChatModel.create({
+                        chat:chatId,
+                        role: "assistant",
+                        content: assistantResponse,
+
+                    })
+                    // const result = await ChatModel.updateOne(
+                    //     {
+                    //         _id: chatId,
+                    //     },
+                    //     {
+                    //         $push: {
+                    //             messages: {
+                    //                 role: "assistant",
+                    //                 content: assistantResponse,
+                    //                 createdAt: new Date(),
+                    //             },
+                    //         },
+                    //         $set: { updatedAt: new Date() },
+                    //     },
+                    // );
 
                     if (result.matchedCount !== 1) {
                         throw new Error("Conversation was not found during message persistence");
@@ -243,21 +263,5 @@ export async function POST(
             { error: "Unable to edit project" },
             { status: 500 },
         );
-    }
-}
-
-
-
-export async function GET(
-    request: NextRequest,
-    { params }: RouteContext,
-) {
-    try {
-        const { chatId } = await params;
-        const messages = await MessageModel.find({ chat: chatId }).limit(15)
-        return NextResponse.json(messages, { status: 200 })
-    } catch (e) {
-        console.log(e)
-        return NextResponse.json({ message: "Internal Server Error" })
     }
 }
