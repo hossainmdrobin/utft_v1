@@ -62,7 +62,7 @@ export default function ChatWindow() {
   return (
     <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
       <ChatHeader partner={chatPartner} />
-      {loading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
+      {loading && streamLoading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
       {chatId && <MessageList events={events} messages={messages} partner={chatPartner} />}
       {!chatId && <StartChat onExamplePrompt={handleExamplePrompt} />}
       <MessageInput onSend={handleSend} value={inputValue} onChange={setInputValue} />
