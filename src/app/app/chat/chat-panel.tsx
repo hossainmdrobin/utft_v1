@@ -49,7 +49,7 @@ export function ChatPanel({ events }: { events: AgentEvent[] }) {
       <div className="space-y-3 overflow-auto p-1">
         {events.length === 0 ? (
           <div className="py-8 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--agent-bg-sunken)]">
+            {/* <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--agent-bg-sunken)]">
               <svg
                 width="24"
                 height="24"
@@ -65,10 +65,10 @@ export function ChatPanel({ events }: { events: AgentEvent[] }) {
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />
               </svg>
-            </div>
-            <p className="text-sm text-[var(--agent-text-dim)]">
+            </div> */}
+            {/* <p className="text-sm text-[var(--agent-text-dim)]">
               No events yet. Run the agent to see activity.
-            </p>
+            </p> */}
           </div>
         ) : (
           events.map((event, index) => {
@@ -86,12 +86,15 @@ export function ChatPanel({ events }: { events: AgentEvent[] }) {
 
             if (event.type === "process_output") {
               return (
-                <pre
-                  key={index}
-                  className="overflow-x-auto rounded-lg bg-[var(--agent-bg-sunken)] p-3 font-mono text-xs text-[var(--agent-text)]"
-                >
-                  {event.data}
-                </pre>
+                <div>
+                  <span>Processing Output</span>
+                </div>
+                // <pre
+                //   key={index}
+                //   className="overflow-x-auto rounded-lg bg-[var(--agent-bg-sunken)] p-3 font-mono text-xs text-[var(--agent-text)]"
+                // >
+                //   {event.data}
+                // </pre>
               );
             }
 
@@ -108,9 +111,9 @@ export function ChatPanel({ events }: { events: AgentEvent[] }) {
                     </span>
                     <EventBadge type="tool_call" />
                   </div>
-                  <pre className="overflow-x-auto text-xs text-[var(--agent-text-muted)]">
+                  {/* <pre className="overflow-x-auto text-xs text-[var(--agent-text-muted)]">
                     {JSON.stringify(event.args, null, 2)}
-                  </pre>
+                  </pre> */}
                 </div>
               );
             }

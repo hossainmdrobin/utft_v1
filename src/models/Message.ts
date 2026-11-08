@@ -1,16 +1,17 @@
 import { Schema, model, models, type InferSchemaType, type Model, type Types } from 'mongoose';
 
 export interface MessageDoc {
-    chat: Types.ObjectId;
-    role: "user" | "assistant";
-    message: string;
-    created_at: Date;
+  _id: Types.ObjectId,
+  chat: Types.ObjectId;
+  role: "user" | "assistant";
+  message: string;
+  created_at: Date;
 }
 const messageSchema = new Schema(
   {
     chat: { type: Schema.Types.ObjectId, ref: 'Chat' },
-    role:{type:String},
-    message:{type:String},
+    role: { type: String },
+    message: { type: String },
   },
   { timestamps: true },
 );

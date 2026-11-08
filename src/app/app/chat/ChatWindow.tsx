@@ -1,59 +1,27 @@
 'use client';
 import { useState, useEffect } from 'react';
-import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import { chatPartner, Message } from './dummyData';
 import { useParams } from 'next/navigation';
 import StartChat from './StartChat';
 import { useAgentStream } from '@/lib/ai_service/use-agent-stream';
+import { useGetMessageByChatIdQuery } from '@/store/slices/chatSlice/api.chat';
+import ChatHeader from './ChatHeader';
+
 
 export default function ChatWindow() {
   const params = useParams()
   const chatId = params.chatId as string
 
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [loading, setLoading] = useState(false);
+  const {data} = useGetMessageByChatIdQuery({id:chatId})
 
   //CUSTOM HOOK
   const {runAgentStream, events, loading:streamLoading} = useAgentStream()
-  console.log(events)
-
-  useEffect(() => {
-    if (!chatId) return;
-    setLoading(true);
-    fetch(`/api/chat/${chatId}`)
-      .then((r) => r.json())
-      .then((json) => {
-        const data = json?.data ?? [];
-        const mapped: Message[] = data.map((m: any, i: number) => ({
-          id: m._id ?? `m-${i}`,
-          text: m.message,
-          timestamp: new Date(m.createdAt ?? m.created_at ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          sender: m.role === 'user' ? 'me' : 'them',
-          date: 'Today',
-        }));
-        setMessages(mapped);
-      })
-      .finally(() => setLoading(false));
-  }, []);
 
   useEffect(()=>{
-    if(messages.length == 1 && !streamLoading) runAgentStream(chatId,"")
-  },[messages])
-
-  const handleSend = (text: string) => {
-    const msg: Message = {
-      id: `m-${Date.now()}`,
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      sender: 'me',
-      date: 'Today',
-    };
-    setMessages((prev) => [...prev, msg]);
-    setInputValue('');
-  };
+    if(data?.data?.length == 1 && !streamLoading) runAgentStream(chatId,"")
+  },[data])
 
   const handleExamplePrompt = (prompt: string) => {
     setInputValue(prompt);
@@ -61,9 +29,9 @@ export default function ChatWindow() {
 
   return (
     <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
-      <ChatHeader partner={chatPartner} />
-      {loading && streamLoading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
-      {chatId && <MessageList events={events} messages={messages} partner={chatPartner} />}
+      <ChatHeader />
+      { streamLoading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
+      {chatId && data && <MessageList events={events} messages={data.data}  />}
       {!chatId && <StartChat onExamplePrompt={handleExamplePrompt} />}
       <MessageInput onSend={runAgentStream} value={inputValue} onChange={setInputValue} />
     </div>

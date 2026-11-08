@@ -1,6 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* @import "tailwindcss"; */
+/* Import a Prism theme for code snippets */
+@import "prismjs/themes/prism-tomorrow.css";
 
 /* Trust Management App Design System */
 

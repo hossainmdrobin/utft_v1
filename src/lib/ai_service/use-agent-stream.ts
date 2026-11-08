@@ -57,7 +57,7 @@ export function useAgentStream() {
               const event: AgentEvent = JSON.parse(line);
 
               // Update local state live as chunks arrive
-              setEvents((prev) => [...prev, event]);
+              setEvents((prev) => [ event]);
 
               if (event.type === "error") {
                 streamFailed = true;
