@@ -6,9 +6,8 @@ import { ChatPanel } from './chat-panel';
 import { MessageDoc } from '@/models/Message';
 
 
-export default function MessageList({ messages, events }: { messages: MessageDoc[]; events: AgentEvent[] }) {
+export default function MessageList({ messages, events,currentMessage }: { messages: MessageDoc[]; events: AgentEvent[],currentMessage:string }) {
   const bottomRef = useRef<HTMLDivElement>(null);
-    console.log("Messages",messages)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -17,6 +16,7 @@ export default function MessageList({ messages, events }: { messages: MessageDoc
   if (messages?.length === 0) {
     return <div className="flex flex-1 items-center justify-center text-sm text-gray-400">No messages yet</div>;
   }
+  const currentMessageObj:MessageDoc = {message:currentMessage || "",role:'user'}
 
   return (
     <div className="flex-1 overflow-y-auto bg-transparent px-4 py-4">
@@ -26,6 +26,8 @@ export default function MessageList({ messages, events }: { messages: MessageDoc
             <MessageBubble key={i} message={m} />
           ))}
         </div>
+        {currentMessage && <MessageBubble message={currentMessageObj} />}
+
         <ChatPanel events={events} />
 
         <div ref={bottomRef} />

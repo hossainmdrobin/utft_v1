@@ -1,11 +1,11 @@
 import { Schema, model, models, type InferSchemaType, type Model, type Types } from 'mongoose';
 
 export interface MessageDoc {
-  _id: Types.ObjectId,
-  chat: Types.ObjectId;
+  _id?: Types.ObjectId,
+  chat?: Types.ObjectId;
   role: "user" | "assistant";
   message: string;
-  created_at: Date;
+  created_at?: Date;
 }
 const messageSchema = new Schema(
   {

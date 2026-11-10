@@ -7,16 +7,17 @@ import { useCreateConversationMutation } from '@/store/slices/chatSlice/api.chat
 export default function MessageInput({
   onSend,
   value,
-  onChange
+  onChange,
+  setCurrentMessage
 }: {
   onSend: (chatId: string, text: string) => Promise<boolean>;
   value?: string;
   onChange?: (text: string) => void;
+  setCurrentMessage: (text: string) => void;
 }) {
   const params = useParams()
   const chatId = params.chatId as string
   const [createChat, { data }] = useCreateConversationMutation();
-  // const { runAgentStream } = useAgentStream();
   const [internalText, setInternalText] = useState('');
   const text = value !== undefined ? value : internalText;
   const setText = onChange || setInternalText;
@@ -43,6 +44,8 @@ export default function MessageInput({
   const callAgent = () => {
     if (chatId) onSend(chatId, text)
     if (!chatId) createChat({ prompt: text })
+    setCurrentMessage(text)
+    setInternalText("")
   }
 
   useEffect(() => {

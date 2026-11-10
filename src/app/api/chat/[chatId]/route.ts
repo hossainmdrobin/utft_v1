@@ -69,6 +69,7 @@ export async function POST(
         // SAVING THE MESSAGE PROMPT
         await connectDB();
         const messages = await MessageModel.find({ chat: chatId })
+            .sort({ createdAt: -1 })
             .limit(10)
             .lean();
         const prompt = body.prompt.trim();

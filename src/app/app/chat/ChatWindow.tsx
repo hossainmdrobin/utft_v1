@@ -14,14 +14,23 @@ export default function ChatWindow() {
   const chatId = params.chatId as string
 
   const [inputValue, setInputValue] = useState('');
-  const {data} = useGetMessageByChatIdQuery({id:chatId})
-
+  const [currentMessage, setCurrentMessage] = useState("");
+  const { data, refetch: refetchMessage } = useGetMessageByChatIdQuery({ id: chatId })
   //CUSTOM HOOK
-  const {runAgentStream, events, loading:streamLoading} = useAgentStream()
+  const { runAgentStream, events, loading: streamLoading } = useAgentStream()
 
-  useEffect(()=>{
-    if(data?.data?.length == 1 && !streamLoading) runAgentStream(chatId,"")
-  },[data])
+  useEffect(() => {
+    if (data?.data?.length == 1 && !streamLoading) runAgentStream(chatId, "")
+  }, [data])
+
+  useEffect(() => {
+    const isDone = events.find(item => item.type == 'done')
+    const isMessage = events.find(item=>item.type=='message')
+    if (isDone) {
+      refetchMessage()
+    }
+    if(isMessage) setCurrentMessage("")
+  }, [events])
 
   const handleExamplePrompt = (prompt: string) => {
     setInputValue(prompt);
@@ -30,10 +39,10 @@ export default function ChatWindow() {
   return (
     <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
       <ChatHeader />
-      { streamLoading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
-      {chatId && data && <MessageList events={events} messages={data.data}  />}
+      {streamLoading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
+      {chatId && data && <MessageList events={events} messages={data.data} currentMessage={currentMessage} />}
       {!chatId && <StartChat onExamplePrompt={handleExamplePrompt} />}
-      <MessageInput onSend={runAgentStream} value={inputValue} onChange={setInputValue} />
+      <MessageInput onSend={runAgentStream} value={inputValue} setCurrentMessage={setCurrentMessage} onChange={setInputValue}/>
     </div>
   );
 }
