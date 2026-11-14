@@ -74,7 +74,7 @@ export async function POST(
             return NextResponse.json({ error: "A prompt is required" }, { status: 400 },);
         // SAVING THE MESSAGE PROMPT
         await connectDB();
-        const messages = await MessageModel.find({ chat: chatId })
+        let messages = await MessageModel.find({ chat: chatId })
             .sort({ createdAt: -1 })
             .limit(10)
             .lean();
@@ -83,16 +83,19 @@ export async function POST(
 
         if ((!prompt || prompt.length > 10000) && messages?.length > 1)
             return NextResponse.json({ error: "Prompt must be 1-10000 characters" }, { status: 400 },);
-        console.log('CREATING SANDBOX')
 
-        if (messages?.length > 1)
-            await MessageModel.create({ chat: chatId, role: "user", message: prompt });
+        if (messages?.length > 1) {
+            const newMessage = await MessageModel.create({ chat: chatId, role: "user", message: prompt });
+            messages = [newMessage, ...messages]
+        }
 
         const history: BaseMessage[] = messages.reverse().map((message) => {
             return message.role === "user"
                 ? new HumanMessage(message.message)
                 : new AIMessage(message.message);
         });
+
+        console.log('THE HISTORY:', history)
 
         const agentStartedAt = Date.now();
 
