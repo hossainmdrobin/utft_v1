@@ -148,4 +148,38 @@
   .shadow-medium {
     box-shadow: var(--shadow-medium);
   }
+
+  /* Custom scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+:root {
+  --scrollbar-thumb: hsl(214 32% 75%);
+  --scrollbar-thumb-hover: hsl(214 32% 65%);
+}
+
+.dark {
+  --scrollbar-thumb: hsl(217 33% 25%);
+  --scrollbar-thumb-hover: hsl(217 33% 35%);
 }

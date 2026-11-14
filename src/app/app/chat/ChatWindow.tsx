@@ -45,7 +45,7 @@ export default function ChatWindow() {
   };
 
   return (
-    <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md">
+    <div className="flex relative h-full flex-col overflow-hidden rounded-xl border bg-transparent shadow-md w-[calc(100vw-16rem)]">
       <ChatHeader />
       {tokenUsage && (
         <div className="px-4 py-1.5 border border-[var(--agent-bg-sunken)]/30 bg-[var(--agent-bg-sunken)]/50 rounded-lg text-[11px] text-[var(--agent-text-muted)] flex items-center gap-4">

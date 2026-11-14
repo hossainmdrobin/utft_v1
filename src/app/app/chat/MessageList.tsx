@@ -19,7 +19,7 @@ export default function MessageList({ messages, events,currentMessage }: { messa
   const currentMessageObj:MessageDoc = {message:currentMessage || "",role:'user'}
 
   return (
-    <div className="flex-1 overflow-y-auto bg-transparent px-4 py-4">
+    <div className="flex-1 overflow-y-auto bg-transparent px-4 py-4 pb-28">
       <div className="space-y-4">
         <div className="space-y-3">
           {messages && messages?.map((m,i) => (
