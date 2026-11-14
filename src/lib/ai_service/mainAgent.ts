@@ -4,6 +4,7 @@ import { ChatOpenAI } from "@langchain/openai"
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { dbTools } from "@/lib/ai_service/tools/db";
+import { memberTools } from "@/lib/ai_service/tools/member";
 
 
 // const model = new ChatGroq({
@@ -37,6 +38,6 @@ const hello = tool(
 
 export const agent = createDeepAgent({
   model,
-  tools: [hello, ...dbTools],
+  tools: [hello, ...dbTools, ...memberTools],
   systemPrompt: "You are a helpful AI assistant. You may use DB tools to answer questions about members, accounts, transactions, chats, etc. Surface only the current user's data unless role is admin. Format results readably. Refuse unknown/private models.",
 })
