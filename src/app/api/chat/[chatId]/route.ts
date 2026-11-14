@@ -1,7 +1,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { AIMessage, BaseMessage, HumanMessage } from "@langchain/core/messages";
+import {
+    AIMessage,
+    BaseMessage,
+    HumanMessage,
+    mergeUsageMetadata,
+    UsageMetadata,
+} from "@langchain/core/messages";
 import { connectDB } from "@/integrations/mongodb/connection";
 import ChatModel, { ChatDoc } from "@/models/Chat";
 import MessageModel, { MessageDoc } from "@/models/Message";
@@ -103,11 +109,37 @@ export async function POST(
         ) as any;
         // THE ASSISTANT MESSAGE VARIABLE
         let assistantResponse = "";
+        // Aggregated token usage across all LLM calls in this agent run.
+        let usage: UsageMetadata | undefined = undefined;
+
+        function collectUsageFromChunk(chunk: any): void {
+            const gather = (node: any): void => {
+                if (node === null || node === undefined || typeof node !== "object") {
+                    return;
+                }
+                if (Array.isArray(node.messages)) {
+                    for (const message of node.messages) {
+                        if (isAIMessage(message) && message.usage_metadata) {
+                            usage = mergeUsageMetadata(usage, message.usage_metadata as UsageMetadata);
+                        }
+                    }
+                }
+                for (const key of Object.keys(node)) {
+                    const val = node[key];
+                    if (val !== null && val !== undefined && typeof val === "object") {
+                        gather(val);
+                    }
+                }
+            };
+            gather(chunk);
+        }
+
         const readable = new ReadableStream({
             async start(controller) {
                 try {
                     controller.enqueue(encode({ type: "thinking" }))
                     for await (const chunk of stream) {
+                        collectUsageFromChunk(chunk);
                         console.log(
                             "AGENT STREAM DURATION (seconds):",
                             ((Date.now() - agentStartedAt) / 1000).toFixed(1),
@@ -211,7 +243,15 @@ export async function POST(
 
                     })
                     // 4. Mark completion only after persistence succeeds.
-                    controller.enqueue(encode({ type: "done" }));
+                    const doneEvent: { type: "done" } & Partial<Pick<UsageMetadata, "input_tokens" | "output_tokens" | "total_tokens">> = {
+                        type: "done",
+                    };
+                    if (usage) {
+                        doneEvent.input_tokens = usage.input_tokens;
+                        doneEvent.output_tokens = usage.output_tokens;
+                        doneEvent.total_tokens = usage.total_tokens;
+                    }
+                    controller.enqueue(encode(doneEvent));
                     controller.close();
 
                 } catch (error) {
