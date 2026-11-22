@@ -104,6 +104,8 @@ export default function ChatWindow() {
         setCurrentMessage={setCurrentMessage}
         onChange={setInputValue}
         selectedModel={selectedModel}
+        onSelectModel={setSelectedModel}
+        availableModels={availableModels}
       />
     </div>
   );
