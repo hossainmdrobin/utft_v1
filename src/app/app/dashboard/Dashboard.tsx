@@ -131,7 +131,7 @@ export default function Dashboard() {
                   return (
                     <Link
                       key={member._id || member.id}
-                      href={`/members/${member._id || member.id}`}
+                      href={`/app/dashboard/members/${member._id || member.id}`}
                       className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
                     >
                       <div className="flex items-center">
@@ -140,9 +140,9 @@ export default function Dashboard() {
                           <AvatarFallback>
                             {member.full_name
                               ? member.full_name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
                               : "?"}
                           </AvatarFallback>
                         </Avatar>
@@ -191,9 +191,9 @@ export default function Dashboard() {
                         <AvatarFallback>
                           {member.full_name
                             ? member.full_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
                             : "?"}
                         </AvatarFallback>
                       </Avatar>
@@ -228,33 +228,35 @@ export default function Dashboard() {
             ) : recentInstallments.length > 0 ? (
               <div className="space-y-2">
                 {recentInstallments.map((installment) => (
-                  <div
-                    key={String(installment._id)}
-                    className="flex items-center justify-between p-2 rounded hover:bg-accent"
-                  >
+                  <Link href={`/app/dashboard/members/${installment.member._id}`}>
+                    <div
+                      key={String(installment._id)}
+                      className="flex items-center justify-between p-2 rounded hover:bg-accent"
+                    >
                       <Avatar className="h-8 w-8 mr-3">
                         <AvatarImage src={installment.member.profile_photo || ""} />
                         <AvatarFallback>
                           {installment.member.full_name
                             ? installment.member.full_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
                             : "?"}
                         </AvatarFallback>
                       </Avatar>
                       <p className="text-sm text-foreground">
                         {installment.member.full_name || "Unknown member"}
                       </p>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-foreground">
-                        ৳{Number(installment.amount ?? 0).toLocaleString()}
-                      </p>
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        {installment.status}
-                      </Badge>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-foreground">
+                          ৳{Number(installment.amount ?? 0).toLocaleString()}
+                        </p>
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {installment.status}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -279,7 +281,7 @@ export default function Dashboard() {
             <div className="space-y-2">
               {recentActivity.map((activity) => (
                 <div
-                   key={String(activity._id)}
+                  key={String(activity._id)}
                   className="flex items-center justify-between p-2 rounded hover:bg-accent"
                 >
                   <div className="flex-1">
