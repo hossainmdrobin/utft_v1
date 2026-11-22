@@ -12,7 +12,7 @@ import { connectDB } from "@/integrations/mongodb/connection";
 import ChatModel, { ChatDoc } from "@/models/Chat";
 import MessageModel, { MessageDoc } from "@/models/Message";
 import { AgentEvent } from "@/lib/ai_service/events";
-import { agent } from "@/lib/ai_service/mainAgent";
+import { getAgent } from "@/lib/ai_service/mainAgent";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 
 
@@ -27,8 +27,9 @@ export async function GET(
 
         const { chatId } = await params;
         await connectDB();
+        const chat = await ChatModel.findById(chatId).lean();
         const messages = await MessageModel.find({ chat: chatId }).sort({ createdAt: 1 }).lean();
-        return NextResponse.json({ data: messages });
+        return NextResponse.json({ data: messages, chat });
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
     }
@@ -39,7 +40,7 @@ type RouteContext = {
     params: Promise<{ chatId: string }>;
 };
 
-type BodyType = { prompt: string, conversationId: string }
+type BodyType = { prompt: string; conversationId?: string; model?: string };
 
 function encode(event: AgentEvent) {
     return new TextEncoder().encode(
@@ -74,6 +75,13 @@ export async function POST(
             return NextResponse.json({ error: "A prompt is required" }, { status: 400 },);
         // SAVING THE MESSAGE PROMPT
         await connectDB();
+        const chat = await ChatModel.findById(chatId);
+        const activeModel = body.model || chat?.model || process.env.DEFAULT_AI_MODEL || "gh/gpt-5.4-nano";
+
+        if (body.model && chat && chat.model !== body.model) {
+            await ChatModel.findByIdAndUpdate(chatId, { model: body.model });
+        }
+
         let messages = await MessageModel.find({ chat: chatId })
             .sort({ createdAt: -1 })
             .limit(10)
@@ -99,7 +107,9 @@ export async function POST(
 
         const agentStartedAt = Date.now();
 
-        const stream = await agent.stream(
+        const selectedAgent = getAgent(activeModel);
+
+        const stream = await selectedAgent.stream(
             { messages: history } as any,
             {
                 streamMode: "updates",

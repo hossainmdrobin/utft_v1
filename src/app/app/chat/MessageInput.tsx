@@ -8,12 +8,14 @@ export default function MessageInput({
   onSend,
   value,
   onChange,
-  setCurrentMessage
+  setCurrentMessage,
+  selectedModel,
 }: {
   onSend: (chatId: string, text: string) => Promise<boolean>;
   value?: string;
   onChange?: (text: string) => void;
   setCurrentMessage: (text: string) => void;
+  selectedModel?: string;
 }) {
   const params = useParams()
   const chatId = params.chatId as string
@@ -25,7 +27,7 @@ export default function MessageInput({
   const handleSend = () => {
     if (!text.trim()) return;
 
-    if (!chatId) createChat({ prompt: text })
+    if (!chatId) createChat({ prompt: text, model: selectedModel })
     if (chatId) {
       onSend(chatId, text.trim());
     }
@@ -43,7 +45,7 @@ export default function MessageInput({
 
   const callAgent = () => {
     if (chatId) onSend(chatId, text)
-    if (!chatId) createChat({ prompt: text })
+    if (!chatId) createChat({ prompt: text, model: selectedModel })
     setCurrentMessage(text)
     setInternalText("")
   }

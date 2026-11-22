@@ -10,7 +10,7 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
     }),
     providesTags: ["Chat"],
   }),
-  createConversation: builder.mutation<ChatDoc, { prompt?: string; message?: string; title?: string }>({
+  createConversation: builder.mutation<ChatDoc, { prompt?: string; message?: string; title?: string; model?: string }>({
     query: (body) => ({
       url: "/api/chat",
       method: "POST",
@@ -22,11 +22,18 @@ export const chatApi = injectEndpoint("chatApi", (builder) => ({
       query: ({id})=>({
         url:`/api/chat/${id}`
       })
-  })
+  }),
+  getAvailableModels: builder.query<{ data: string[] }, void>({
+    query: () => ({
+      url: "/api/chat/models",
+      method: "GET",
+    }),
+  }),
 }));
 
 export const {
   useGetConversationsQuery,
   useCreateConversationMutation,
-  useGetMessageByChatIdQuery
+  useGetMessageByChatIdQuery,
+  useGetAvailableModelsQuery,
 } = chatApi;

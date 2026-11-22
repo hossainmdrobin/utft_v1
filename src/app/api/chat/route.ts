@@ -31,7 +31,11 @@ export async function POST(request: NextRequest) {
     const title = body.prompt.split(/\s+/).slice(0, 5).join(" ");
 
     await connectDB();
-    const chat = await ChatModel.create({ user: (user as any)._id, title });
+    const chat = await ChatModel.create({
+      user: (user as any)._id,
+      title,
+      model: body.model || process.env.DEFAULT_AI_MODEL || "gh/gpt-5.4-nano",
+    });
     await MessageModel.create({ message: body.prompt, chat: chat?._id, role: 'user' })
 
 

@@ -8,7 +8,7 @@ export function useAgentStream() {
   const [events, setEvents] = useState<AgentEvent[]>([]);
 
   const runAgentStream = useCallback(
-    async ( chatId: string, prompt: string) => {
+    async (chatId: string, prompt: string, model?: string) => {
       setIsLoading(true);
       setError(null);
       setEvents([]);
@@ -21,7 +21,7 @@ export function useAgentStream() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ prompt}),
+          body: JSON.stringify({ prompt, ...(model ? { model } : {}) }),
         });
 
         if (!response.ok) {
