@@ -9,7 +9,7 @@ const JournalEntryModel = JournalEntry as any;
 
 const DEBIT_NORMAL_TYPES = new Set(["asset", "expense"]);
 
-function balanceDelta(accountType: string, debit: number, credit: number): number {
+export function balanceDelta(accountType: string, debit: number, credit: number): number {
   const d = Number(debit) || 0;
   const c = Number(credit) || 0;
   if (DEBIT_NORMAL_TYPES.has(accountType)) {
@@ -73,7 +73,7 @@ export async function getTransactionById(id: string) {
   return entry;
 }
 
-export async function createTransaction(data: any, user?: any) {
+export async function createTransaction(data: any, user?: any, session?: any) {
   await connectDB();
   const { date, reference, member, description, lines, status = "posted" } = data;
   if (!date) {
@@ -101,7 +101,8 @@ export async function createTransaction(data: any, user?: any) {
     lines,
     status,
     created_by: user?._id || user?.id || undefined,
-  });
+    actioned_by: user?._id || user?.id || undefined,
+  }, session ? { session } : undefined);
 
   if (status === "posted") {
     const lineAccountIds = [...new Set(lines.map((line) => String(line.account)))];
@@ -125,6 +126,7 @@ export async function createTransaction(data: any, user?: any) {
       await AccountModel.findByIdAndUpdate(
         line.account,
         { $inc: { balance: balanceDelta(account.type, line.debit, line.credit) } },
+        session ? { session } : undefined,
       );
     }
   }
@@ -138,7 +140,7 @@ export async function createTransaction(data: any, user?: any) {
       changed_by: user?._id ? String(user._id) : undefined,
       changed_at: new Date().toISOString(),
       new_data: entry,
-    });
+    }, session ? { session } : undefined);
   } catch (e) {
     console.log("Audit log error:", e);
   }

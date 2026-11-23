@@ -1,7 +1,10 @@
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import { connectDB } from "@/integrations/mongodb/connection";
 import { Installment } from "@/models/Installment";
-import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
+import { postInstallmentPayment } from "@/lib/accounting/installmentPost";
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
     try {
@@ -16,6 +19,8 @@ export async function POST(req: NextRequest) {
         if (!Array.isArray(data) || data.length === 0) {
             return NextResponse.json({ message: "No installments to create" }, { status: 400 })
         }
+
+        await connectDB();
 
         // Check for existing installments to avoid duplicate key errors
         const existingKeys = await Installment.find(
@@ -41,37 +46,47 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const readyData = toCreate.map((item) => {
-            return { ...item, created_by: currentUser._id, member }
-        })
+        const results: any[] = [];
+        for (const item of toCreate) {
+            const doc = { ...item, created_by: currentUser._id, member };
 
-        const newInstallments = await Installment.insertMany(readyData, { ordered: false });
-
-        try {
-            await Promise.all(
-                newInstallments.map((installment) =>
-                    AuditLog.create({
-                        table_name: "Installment",
-                        record_id: String(installment._id),
-                        action: "INSERT",
-                        description: `Installment created by ${currentUser.full_name || currentUser.user_id || currentUser.role}`,
-                        new_data: installment,
-                        changed_by: String(currentUser._id),
-                        changed_at: new Date().toISOString(),
-                    }),
-                ),
-            );
-        } catch (e) {
-            console.log("Audit log error:", e);
+            if (String(item.payment_status) === "paid") {
+                const posted = await postInstallmentPayment({
+                    action: "create",
+                    member,
+                    amount: Number(item.amount),
+                    date: item.date || new Date().toISOString(),
+                    description: item.description || `Advance installment for ${item.month}/${item.year}`,
+                    user: currentUser,
+                    month: item.month,
+                    year: item.year,
+                    day: item.day,
+                    status: item.status,
+                    method: item.method,
+                    paid_at: item.paid_at,
+                    transaction_id: item.transaction_id,
+                    currency: item.currency,
+                    account: item.account,
+                });
+                results.push({
+                    ...doc,
+                    _id: posted.installment?._id,
+                    payment_status: "paid",
+                    journalEntry: posted.journalEntry,
+                    isDuplicate: posted.isDuplicate,
+                });
+            } else {
+                const created = await Installment.create(doc);
+                results.push(created);
+            }
         }
 
-        return NextResponse.json({ newInstallments }, { status: 200 })
+        return NextResponse.json({ data: results }, { status: 200 })
     } catch (e: any) {
         console.log(e)
         if (e.code === 11000) {
             return NextResponse.json({ message: "Installment already exists for this member and period" }, { status: 409 })
         }
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 })
+        return NextResponse.json({ message: e.message || "Internal Server Error" }, { status: 500 })
     }
 }
-
