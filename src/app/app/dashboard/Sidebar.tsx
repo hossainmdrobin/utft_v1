@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export const navigation = [
     { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, access: ["admin", "president", "director", "accountant", "auditor","member"], adminOnly: false },
     { name: "Payments", href: "/app/dashboard/payments", icon: CreditCard, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
+    { name: "Installments", href: "/app/dashboard/installments", icon: CreditCard, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: true },
     { name: "Members", href: "/app/dashboard/members", icon: Users, access: ["admin", "president", "director"], adminOnly: false },
     // { name: "Share Management", href: "/app/dashboard/share-management", icon: Coins, access: ["admin", "president", "director", "accountant", "auditor", "member"], adminOnly: false },
     { name: "Accounting", href: "/app/dashboard/accounting", icon: DollarSign, access: ["admin", "president", "director", "accountant", "auditor"], adminOnly: false },
