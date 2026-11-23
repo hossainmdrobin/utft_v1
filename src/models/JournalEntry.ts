@@ -33,7 +33,7 @@ const journalEntrySchema = new Schema<IJournalEntry>({
   date: { type: Date, required: true },
   reference: { type: String },
   member: { type: Schema.Types.ObjectId, ref: "Member" },
-  description: { type: String, required: true },
+  description: { type: String, required: false },
   lines: [journalEntryLineSchema],
   status: { type: String, enum: ["draft", "posted", "void"], default: "posted" },
 }, { timestamps: true });

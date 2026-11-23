@@ -40,6 +40,10 @@ export interface PostInstallmentPaymentResult {
 }
 
 function parseObjectId(input: unknown, fieldName: string): string {
+  // Mongoose ObjectId instances (from lean() docs) are not plain strings
+  if (input instanceof Types.ObjectId) {
+    return input.toString();
+  }
   if (typeof input !== "string") {
     throw new Error(`${fieldName} must be a string`);
   }
