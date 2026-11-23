@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { models } from "@/integrations/mongodb/models";
+import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 export const dynamic = "force-dynamic";
 
@@ -150,6 +152,20 @@ export async function POST(req: NextRequest) {
   }
 
   const doc = await Model.create(data);
+  try {
+    const member = await getCurrentMember(req);
+    const user = member instanceof NextResponse ? undefined : member;
+    await AuditLog.create({
+      table_name: model,
+      record_id: String(doc._id),
+      action: "INSERT",
+      new_data: doc,
+      changed_by: user ? String(user._id) : undefined,
+      changed_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.log("Audit log error:", e);
+  }
   return NextResponse.json({ data: doc }, { status: 201 });
 }
 
@@ -167,9 +183,25 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: `Model ${model} not found` }, { status: 404 });
   }
 
+  const oldDoc = await Model.findOne(filter).lean();
   const doc = await Model.findOneAndUpdate(filter, data, { new: true }).lean();
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  try {
+    const member = await getCurrentMember(req);
+    const user = member instanceof NextResponse ? undefined : member;
+    await AuditLog.create({
+      table_name: model,
+      record_id: String(doc._id),
+      action: "UPDATE",
+      old_data: oldDoc,
+      new_data: doc,
+      changed_by: user ? String(user._id) : undefined,
+      changed_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.log("Audit log error:", e);
   }
   return NextResponse.json({ data: doc });
 }
@@ -188,6 +220,21 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: `Model ${model} not found` }, { status: 404 });
   }
 
+  const oldDoc = await Model.findOne(filter).lean();
   await Model.findOneAndDelete(filter);
+  try {
+    const member = await getCurrentMember(req);
+    const user = member instanceof NextResponse ? undefined : member;
+    await AuditLog.create({
+      table_name: model,
+      record_id: oldDoc ? String(oldDoc._id) : JSON.stringify(filter),
+      action: "DELETE",
+      old_data: oldDoc,
+      changed_by: user ? String(user._id) : undefined,
+      changed_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.log("Audit log error:", e);
+  }
   return NextResponse.json({ success: true });
 }

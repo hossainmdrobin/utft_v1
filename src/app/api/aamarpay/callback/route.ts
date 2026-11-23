@@ -172,6 +172,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/app/dashboard/payments`, 303);
   } catch (error) {
     console.error("Error processing AamarPay callback:", error);
+    try {
+      await AuditLog.create({
+        table_name: "Payment",
+        record_id: "callback-error",
+        action: "CALLBACK_FAILED",
+        description: `AamarPay callback failed: ${error instanceof Error ? error.message : String(error)}`,
+        changed_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.log("Audit log error:", e);
+    }
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/app/dashboard/payments`, 303);
   }
 }

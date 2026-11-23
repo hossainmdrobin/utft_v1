@@ -1,4 +1,5 @@
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,20 @@ export async function POST(request: NextRequest) {
     const result = await gatewayResponse.json().catch(() => null);
     if (!gatewayResponse.ok || !result?.payment_url) {
         return NextResponse.json({ error: result?.error || "AamarPay did not return a payment URL." }, { status: 502 });
+    }
+
+    try {
+        await AuditLog.create({
+            table_name: "Payment",
+            record_id: transactionId,
+            action: "CREATE",
+            description: `Payment initiated by ${user.full_name || user.user_id || user.role}: ${transactionId}`,
+            new_data: { amount, description, installments },
+            changed_by: String(user._id),
+            changed_at: new Date().toISOString(),
+        });
+    } catch (e) {
+        console.log("Audit log error:", e);
     }
 
     return NextResponse.json({ paymentUrl: result.payment_url, transactionId });

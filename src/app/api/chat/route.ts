@@ -3,6 +3,7 @@ import { connectDB } from "@/integrations/mongodb/connection";
 import ChatModel from "@/models/Chat";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import MessageModel from "@/models/Message";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,6 +38,31 @@ export async function POST(request: NextRequest) {
       model: body.model || process.env.DEFAULT_AI_MODEL || "gh/gpt-5.4-nano",
     });
     await MessageModel.create({ message: body.prompt, chat: chat?._id, role: 'user' })
+
+    try {
+      await Promise.all([
+        AuditLog.create({
+          table_name: "Chat",
+          record_id: String(chat?._id),
+          action: "INSERT",
+          description: `Conversation created by ${(user as any).full_name || (user as any).user_id || (user as any).role}`,
+          new_data: chat,
+          changed_by: String((user as any)._id),
+          changed_at: new Date().toISOString(),
+        }),
+        AuditLog.create({
+          table_name: "Message",
+          record_id: String(chat?._id),
+          action: "INSERT",
+          description: `User message sent in conversation ${String(chat?._id)}`,
+          new_data: { message: body.prompt, role: "user", chat: chat?._id },
+          changed_by: String((user as any)._id),
+          changed_at: new Date().toISOString(),
+        }),
+      ]);
+    } catch (e) {
+      console.log("Audit log error:", e);
+    }
 
 
     return NextResponse.json({ data: chat }, { status: 201 });

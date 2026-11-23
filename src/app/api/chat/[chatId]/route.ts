@@ -11,6 +11,7 @@ import {
 import { connectDB } from "@/integrations/mongodb/connection";
 import ChatModel, { ChatDoc } from "@/models/Chat";
 import MessageModel, { MessageDoc } from "@/models/Message";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 import { AgentEvent } from "@/lib/ai_service/events";
 import { getAgent } from "@/lib/ai_service/mainAgent";
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
@@ -94,6 +95,19 @@ export async function POST(
 
         if (messages?.length > 1) {
             const newMessage = await MessageModel.create({ chat: chatId, role: "user", message: prompt });
+            try {
+                await AuditLog.create({
+                    table_name: "Message",
+                    record_id: String(newMessage._id),
+                    action: "INSERT",
+                    description: `User message sent in chat ${chatId} by ${(user as any).full_name || (user as any).user_id || (user as any).role}`,
+                    new_data: { chat: chatId, role: "user", message: prompt },
+                    changed_by: String((user as any)._id),
+                    changed_at: new Date().toISOString(),
+                });
+            } catch (e) {
+                console.log("Audit log error:", e);
+            }
             messages = [newMessage, ...messages]
         }
 

@@ -2,6 +2,7 @@ import { Agenda } from "agenda";
 import { MongoBackend } from "@agendajs/mongo-backend";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { createMonthlyInstallments } from "./createMonthlyInstallments";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const monthlyInstallmentJob = "create-monthly-installments";
 const mongoAddress = process.env.MONGODB_URI || "mongodb://localhost:27017/utft";
@@ -20,6 +21,20 @@ const agenda = new Agenda({
 agenda.define(monthlyInstallmentJob, async () => {
   await connectDB();
   const result = await createMonthlyInstallments();
+  try {
+    await AuditLog.create({
+      table_name: "System",
+      record_id: "cron-monthly-installments",
+      action: "CRON_EXECUTION",
+      description: result?.ran
+        ? `Monthly installment job succeeded: ${result.created} created for ${result.month}/${result.year}`
+        : `Monthly installment job skipped: ${(result as { reason?: string })?.reason ?? "unknown"}`,
+      new_data: result,
+      changed_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("Audit log error:", e);
+  }
   console.info("Monthly installment job completed:", result);
 });
 

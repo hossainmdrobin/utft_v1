@@ -1,10 +1,12 @@
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { Installment } from "@/models/Installment";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
     try {
         const currentUser = await getCurrentMember(req, ["admin", "president", "director"])
+        if (currentUser instanceof NextResponse) return currentUser;
         const body = await req.json();
         const { member, data } = body;
         if (!member || !data) {
@@ -44,6 +46,25 @@ export async function POST(req: NextRequest) {
         })
 
         const newInstallments = await Installment.insertMany(readyData, { ordered: false });
+
+        try {
+            await Promise.all(
+                newInstallments.map((installment) =>
+                    AuditLog.create({
+                        table_name: "Installment",
+                        record_id: String(installment._id),
+                        action: "INSERT",
+                        description: `Installment created by ${currentUser.full_name || currentUser.user_id || currentUser.role}`,
+                        new_data: installment,
+                        changed_by: String(currentUser._id),
+                        changed_at: new Date().toISOString(),
+                    }),
+                ),
+            );
+        } catch (e) {
+            console.log("Audit log error:", e);
+        }
+
         return NextResponse.json({ newInstallments }, { status: 200 })
     } catch (e: any) {
         console.log(e)
