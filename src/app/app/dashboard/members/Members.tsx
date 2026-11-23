@@ -1,11 +1,16 @@
 'use client'
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AddMemberDialog } from "./AddMemberDialog";
 import { MembersTable } from "@/components/members/MembersTable";
 import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
+import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
+import {
+  useGetInstallmentsQuery,
+  type Installment,
+} from "@/store/slices/paymentSlice/api.slice";
 import type { MemberDoc } from "@/models/member";
 import MemberFilter from "./MemberFilter";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
@@ -13,9 +18,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 type MemberDisplay = MemberDoc & { id: string };
 
+function isInstallmentPaid(item: Installment): boolean {
+  return (
+    item.payment_status === "paid" ||
+    String(item.status || "").toLowerCase() === "paid" ||
+    Boolean(item.transaction_id)
+  );
+}
+
+function normalizeMemberId(value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "object") {
+    const id = (value as { _id?: unknown })._id;
+    return id === null || id === undefined ? undefined : String(id);
+  }
+  return String(value);
+}
+
 export default function Members() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [receivables, setReceivables] = useState<Record<string, { amount: number; status: string }>>({});
 
   const [filters, setFilters] = useState<{
     stage?: string;
@@ -26,7 +47,38 @@ export default function Members() {
   }>({});
   const { data: currentMember } = useGetCurrentUserQuery()
   const isAdmin = ['admin', 'director', 'president']?.includes(currentMember?.role)
-  const { data, isLoading } = useGetMembersQuery(Object.keys(filters).length > 0 ? filters : undefined);
+  const { data, isLoading: membersLoading } = useGetMembersQuery(Object.keys(filters).length > 0 ? filters : undefined);
+  const {
+    data: settingsData,
+    isLoading: settingsLoading,
+    isError: settingsError,
+  } = useGetSettingsQuery();
+  const {
+    data: installmentData,
+    isLoading: installmentsLoading,
+    isError: installmentsError,
+  } = useGetInstallmentsQuery();
+
+  const unpaidCountByMember = useMemo(() => {
+    const map = new Map<string, number>();
+    const installments = installmentData?.data ?? [];
+    for (const installment of installments) {
+      if (isInstallmentPaid(installment)) continue;
+      const memberId = normalizeMemberId(installment.member);
+      if (!memberId) continue;
+      map.set(memberId, (map.get(memberId) ?? 0) + 1);
+    }
+    return map;
+  }, [installmentData]);
+
+  const shareValue = Number(settingsData?.data?.share_value) || 0;
+  const currencySymbol = settingsData?.data?.currency_symbol || "৳";
+  const currencyDecimalPlaces = Number.isFinite(Number(settingsData?.data?.currency_decimal_places))
+    ? Number(settingsData?.data?.currency_decimal_places)
+    : 2;
+  const currencyPosition = settingsData?.data?.currency_position || "before";
+
+  const isLoading = membersLoading || settingsLoading || installmentsLoading;
 
   return (
     <>
@@ -82,7 +134,13 @@ export default function Members() {
               <MembersTable
                 members={data?.data}
                 loading={isLoading}
-                receivables={receivables}
+                unpaidCountByMember={unpaidCountByMember}
+                installmentsUnavailable={installmentsError}
+                settingsUnavailable={settingsError}
+                shareValue={shareValue}
+                currencySymbol={currencySymbol}
+                currencyDecimalPlaces={currencyDecimalPlaces}
+                currencyPosition={currencyPosition}
                 isAdmin={isAdmin}
                 onAddMember={() => setAddDialogOpen(true)}
               />

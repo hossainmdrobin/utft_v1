@@ -7,13 +7,14 @@ export interface Installment {
 	currency?: string;
 	description?: string;
 	cus_name?: string;
-	member?: { _id: string, profile_photo: string, full_name: string };
+	member?: { _id: string; profile_photo?: string; full_name?: string } | string | { [key: string]: any } | undefined;
 	account?: string;
 	method?: string;
 	month?: number;
 	year?: number;
 	day?: number;
 	status?: string;
+	payment_status?: string;
 	date?: string;
 	created_at?: string;
 	updated_at?: string;
@@ -81,7 +82,7 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 			body,
 		}),
 	}),
-	getInstallments: builder.query<GetInstallmentsResponse, GetInstallmentsParams | void>({
+		getInstallments: builder.query<GetInstallmentsResponse, GetInstallmentsParams | void>({
 		query: (params) => {
 			if (!params) return "/app/dashboard/payments/api";
 			const searchParams = new URLSearchParams();
@@ -100,6 +101,7 @@ export const paymentApi = injectEndpoint("paymentApi", (builder) => ({
 			const qs = searchParams.toString();
 			return `/app/dashboard/payments/api${qs ? `?${qs}` : ""}`;
 		},
+		providesTags: ["INSTALLMENT"],
 	}),
 	getInstallment: builder.query<GetInstallmentsResponse, GetInstallmentsParams | void>({
 		query: (params) => {

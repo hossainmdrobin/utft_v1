@@ -15,19 +15,39 @@ import Link from "next/link";
 
 interface MembersTableProps {
   members: any[];
-  receivables: Record<string, { amount: number; status: string }>;
   loading: boolean;
   isAdmin: boolean;
   onAddMember: () => void;
+  unpaidCountByMember: Map<string, number>;
+  installmentsUnavailable?: boolean;
+  settingsUnavailable?: boolean;
+  shareValue: number;
+  currencySymbol: string;
+  currencyDecimalPlaces: number;
+  currencyPosition: "before" | "after" | string;
 }
 
 export function MembersTable({
   members,
-  receivables,
   loading,
   isAdmin,
   onAddMember,
+  unpaidCountByMember,
+  installmentsUnavailable,
+  settingsUnavailable,
+  shareValue,
+  currencySymbol,
+  currencyDecimalPlaces,
+  currencyPosition,
 }: MembersTableProps) {
+  const formatCurrency = (amount: number) => {
+    const decimals = Number.isFinite(currencyDecimalPlaces) ? currencyDecimalPlaces : 2;
+    const formatted = Number(amount || 0).toFixed(decimals);
+    if (String(currencyPosition).toLowerCase() === "after") {
+      return `${formatted}${currencySymbol}`;
+    }
+    return `${currencySymbol}${formatted}`;
+  };
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: "outline",
@@ -142,9 +162,16 @@ export function MembersTable({
                         className="cursor-pointer"
                       // onClick={() => onMemberClick(member.id)}
                       >
-                        <PaymentStatusBadge
-                          status={receivables[member.id]?.status || "cleared"}
-                        />
+                        {(() => {
+                          if (installmentsUnavailable) {
+                            return null;
+                          }
+                          const memberId = member?._id ?? member?.id;
+                          const rawCount = memberId ? unpaidCountByMember.get(String(memberId)) : 0;
+                          const isApproved = member?.stage === "approved";
+                          const effectiveCount = isApproved ? (rawCount ?? 0) : 0;
+                          return <PaymentStatusBadge status={effectiveCount > 0 ? "due" : "cleared"} />;
+                        })()}
                       </TableCell>
                       <TableCell
                         className="cursor-pointer"
@@ -156,7 +183,18 @@ export function MembersTable({
                         className="font-semibold cursor-pointer text-primary hover:underline"
                       // onClick={() => onFinancialReportClick(member.id)}
                       >
-                        ৳{(receivables[member.id]?.amount || 0).toFixed(2)}
+                        {(() => {
+                          if (installmentsUnavailable) {
+                            return "--";
+                          }
+                          const memberId = member?._id ?? member?.id;
+                          const rawCount = memberId ? unpaidCountByMember.get(String(memberId)) : 0;
+                          const isApproved = member?.stage === "approved";
+                          const effectiveCount = isApproved ? (rawCount ?? 0) : 0;
+                          const shareQty = Number(member?.share_quantity) || 0;
+                          const receivable = shareQty * shareValue * effectiveCount;
+                          return formatCurrency(receivable);
+                        })()}
                       </TableCell>
                       {updateAccess.includes(data?.data.role) && (
                         <TableCell onClick={(e) => e.stopPropagation()}>

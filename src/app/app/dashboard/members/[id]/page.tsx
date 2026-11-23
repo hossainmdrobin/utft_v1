@@ -12,10 +12,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useGetMemberByIdQuery } from "@/store/slices/memberSlice/api.member";
 import { supabase } from "@/integrations/mongodb/client";
 import ProfilePage from "@/app/app/dashboard/profile/page";
+import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
 import { MemberHeader } from "./MemberHeader";
 import { FinancialSummaryCard } from "./FinancialSummaryCard";
 import { FinancialHistoryTabs } from "./FinancialHistoryTabs";
-import { NewInstallments } from "./NewInstallments";
+import { MemberInstallmentsSection } from "./MemberInstallmentsSection";
 
 export default function Page() {
   const params = useParams();
@@ -25,6 +26,9 @@ export default function Page() {
   const router = useRouter();
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
+  const { data: currentUserData } = useGetCurrentUserQuery();
+  const userRole = currentUserData?.data?.role;
+  const isAdministrator = isAdmin || ["admin", "president", "director"].includes(userRole || "");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -140,18 +144,15 @@ export default function Page() {
   return (
     <>
       <div className="space-y-6">
-        <MemberHeader memberId={id} isAdmin={isAdmin} onEditClick={() => setEditDialogOpen(true)} />
+        <MemberHeader memberId={id} isAdmin={isAdministrator} onEditClick={() => setEditDialogOpen(true)} />
         <ProfilePage memberProp={member} />
-        <div>
-          <NewInstallments />
-        </div>
         <FinancialSummaryCard
           financialSummary={financialSummary}
           financialLoading={financialLoading}
         />
         <FinancialHistoryTabs
           memberId={id}
-          isAdmin={isAdmin}
+          isAdmin={isAdministrator}
           donations={donations}
           charges={charges}
           fines={fines}
@@ -159,6 +160,7 @@ export default function Page() {
           onPayClick={openPaymentDialog}
           formatMonthYear={formatMonthYear}
         />
+        {isAdministrator && <MemberInstallmentsSection memberId={id} member={member} />}
       </div>
 
       <SignupForm
