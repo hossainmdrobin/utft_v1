@@ -4,6 +4,7 @@ import { JournalEntry } from "@/models/JournalEntry";
 import { createTransaction } from "@/lib/accounting/transactions";
 import { seedAccounts } from "@/lib/accounting/seedAccounts";
 import { getCurrentDhakaDate } from "@/lib/date/dhaka";
+import { Setting } from "@/integrations/mongodb/models/Setting";
 
 const AccountModel = Account as any;
 const JournalEntryModel = JournalEntry as any;
@@ -95,32 +96,67 @@ export async function postPayment(input: PostPaymentInput): Promise<PostPaymentR
   }
 
   let lines: Array<{ account: string; debit: number; credit: number; description?: string }>;
-  if (overrideLines && overrideLines.length > 0) {
-    lines = overrideLines.map((l) => ({
-      account: l.accountId,
-      debit: Number(l.debit) || 0,
-      credit: Number(l.credit) || 0,
-      description: l.description,
-    }));
-  } else {
-    const creditInfo = CREDIT_ACCOUNT_BY_SOURCE[sourceType];
-    if (!creditInfo) {
-      throw new Error(`No default mapping for source type: ${sourceType}`);
+
+  if (sourceType === "installment") {
+    // Installment postings must be trusted from server-side config.
+    // Requirements: ignore any `overrideLines` from the request.
+    const setting = await Setting.findOne({}).sort({ created_at: 1 }).lean();
+    const config = setting?.installmentAccounting;
+    const debitAccountId = config?.debitAccount ? String(config.debitAccount) : null;
+    const creditAccountId = config?.creditAccount ? String(config.creditAccount) : null;
+
+    if (!debitAccountId || !creditAccountId) {
+      throw new Error("Missing installmentAccounting configuration for installment postings");
+    }
+    if (debitAccountId === creditAccountId) {
+      throw new Error("Invalid installmentAccounting configuration: debitAccount and creditAccount must differ");
     }
 
-    const cashAccount = await AccountModel.findOne({ code: DEFAULT_CASH_CODE }).lean();
-    const creditAccount = await AccountModel.findOne({ code: creditInfo.code }).lean();
-    if (!cashAccount) {
-      throw new Error(`Cash account not found: ${DEFAULT_CASH_CODE}`);
-    }
-    if (!creditAccount) {
-      throw new Error(`Credit account not found: ${creditInfo.code}`);
+    const [debitAccount, creditAccount] = await Promise.all([
+      AccountModel.findById(debitAccountId).lean(),
+      AccountModel.findById(creditAccountId).lean(),
+    ]);
+    if (!debitAccount) throw new Error("installmentAccounting.debitAccount not found");
+    if (!creditAccount) throw new Error("installmentAccounting.creditAccount not found");
+    if (!debitAccount.isActive) throw new Error("installmentAccounting.debitAccount must be active");
+    if (!creditAccount.isActive) throw new Error("installmentAccounting.creditAccount must be active");
+    if (debitAccount.type !== "asset") throw new Error("installmentAccounting.debitAccount type must be asset");
+    if (creditAccount.type !== "liability" && creditAccount.type !== "equity") {
+      throw new Error("installmentAccounting.creditAccount type must be liability or equity");
     }
 
     lines = [
-      { account: String(cashAccount._id), debit: Number(amount), credit: 0, description: `Cash at Bank - ${description}` },
-      { account: String(creditAccount._id), debit: 0, credit: Number(amount), description: `${creditInfo.name} - ${description}` },
+      { account: debitAccountId, debit: Number(amount), credit: 0, description: `Cash at Bank - ${description}` },
+      { account: creditAccountId, debit: 0, credit: Number(amount), description: `Member Contributions Payable - ${description}` },
     ];
+  } else {
+    if (overrideLines && overrideLines.length > 0) {
+      lines = overrideLines.map((l) => ({
+        account: l.accountId,
+        debit: Number(l.debit) || 0,
+        credit: Number(l.credit) || 0,
+        description: l.description,
+      }));
+    } else {
+      const creditInfo = CREDIT_ACCOUNT_BY_SOURCE[sourceType];
+      if (!creditInfo) {
+        throw new Error(`No default mapping for source type: ${sourceType}`);
+      }
+
+      const cashAccount = await AccountModel.findOne({ code: DEFAULT_CASH_CODE }).lean();
+      const creditAccount = await AccountModel.findOne({ code: creditInfo.code }).lean();
+      if (!cashAccount) {
+        throw new Error(`Cash account not found: ${DEFAULT_CASH_CODE}`);
+      }
+      if (!creditAccount) {
+        throw new Error(`Credit account not found: ${creditInfo.code}`);
+      }
+
+      lines = [
+        { account: String(cashAccount._id), debit: Number(amount), credit: 0, description: `Cash at Bank - ${description}` },
+        { account: String(creditAccount._id), debit: 0, credit: Number(amount), description: `${creditInfo.name} - ${description}` },
+      ];
+    }
   }
 
   const entry = await createTransaction(

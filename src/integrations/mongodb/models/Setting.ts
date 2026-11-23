@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from "mongoose";
+import { Schema, model, models, Document, Types } from "mongoose";
 
 interface ISetting extends Document {
   organization_address?: string;
@@ -18,6 +18,10 @@ interface ISetting extends Document {
   amount:number;
   next_member_serial: number;
   share_value: number;
+  installmentAccounting?: {
+    debitAccount?: Types.ObjectId;
+    creditAccount?: Types.ObjectId;
+  };
   updated_by?: string;
   created_at?: string;
   updated_at?: string;
@@ -42,6 +46,10 @@ const settingSchema = new Schema(
     amount:{type:Number, default:200},
     next_member_serial: { type: Number, required: true, default: 1 },
     share_value: { type: Number, required: true, default: 0 },
+    installmentAccounting: {
+      debitAccount: { type: Schema.Types.ObjectId, ref: "Account" },
+      creditAccount: { type: Schema.Types.ObjectId, ref: "Account" },
+    },
     updated_by: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }

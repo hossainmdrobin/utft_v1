@@ -9,13 +9,14 @@ import { SerialShareSection } from "./components/SerialShareSection";
 import { ContributionSection } from "./components/ContributionSection";
 import { FineSection } from "./components/FineSection";
 import { useGetCurrentUserQuery } from "@/store/slices/authSlice/api.auth";
+import { InstallmentAccountingConfigurationSection } from "./components/InstallmentAccountingConfigurationSection";
 
 export default function SettingsPage() {
   const { data, isLoading: adminLoading } = useGetCurrentUserQuery();
   const { data: settings, isLoading } = useGetSettingsQuery();
   const [updateSettings, { isLoading: saving }] = useUpdateSettingsMutation();
   const isAdmin = ["admin", "president", "director"].includes(data?.data?.role);
-  const handleUpdate = async (patch: Record<string, any>) => {
+  const handleUpdate = async (patch: Record<string, unknown>) => {
     try {
       await updateSettings(patch).unwrap();
     } catch (error) {
@@ -46,7 +47,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6">
+        <div className="grid gap-6">
         <OrganizationInfoSection
           settings={settings?.data}
           onUpdate={handleUpdate}
@@ -71,19 +72,25 @@ export default function SettingsPage() {
           isAdmin={isAdmin}
           isSaving={saving}
         />
-        <ContributionSection
-          settings={settings?.data}
-          onUpdate={handleUpdate}
-          isAdmin={isAdmin}
-          isSaving={saving}
-        />
-        <FineSection
-          settings={settings?.data}
-          onUpdate={handleUpdate}
-          isAdmin={isAdmin}
-          isSaving={saving}
-        />
+          <ContributionSection
+            settings={settings?.data}
+            onUpdate={handleUpdate}
+            isAdmin={isAdmin}
+            isSaving={saving}
+          />
+          <InstallmentAccountingConfigurationSection
+            settings={settings?.data}
+            onUpdate={handleUpdate}
+            isAdmin={isAdmin}
+            isSaving={saving}
+          />
+          <FineSection
+            settings={settings?.data}
+            onUpdate={handleUpdate}
+            isAdmin={isAdmin}
+            isSaving={saving}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
 }

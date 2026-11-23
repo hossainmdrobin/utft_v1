@@ -20,5 +20,9 @@ export interface SettingInput {
   fine_enabled: boolean;
   next_member_serial: number;
   share_value: number;
+  installmentAccounting?: {
+    debitAccount?: string;
+    creditAccount?: string;
+  };
   updated_by?: string;
 }
