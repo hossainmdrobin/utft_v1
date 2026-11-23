@@ -9,14 +9,14 @@ import { useGetMembersQuery } from "@/store/slices/memberSlice/api.member";
 import { useGetSettingsQuery } from "@/store/slices/settingSlice/api.setting";
 import { useGetAuditLogsQuery } from "@/store/slices/auditLogSlice/api.auditLog";
 import { useGetInstallmentsQuery } from "@/store/slices/paymentSlice/api.slice";
-import { monthArray } from "@/lib/date/dhaka";
+import { monthArray, getCurrentDhakaDate } from "@/lib/date/dhaka";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Dashboard() {
   const { data: membersData, isLoading: membersLoading } = useGetMembersQuery();
   const { data: settings, isLoading: settingsLoading } = useGetSettingsQuery();
   const { data: auditLogs, isLoading: activityLoading } = useGetAuditLogsQuery();
-  const { data: installmentsData, isLoading: installmentsLoading } = useGetInstallmentsQuery();
+  const { data: installmentsData, isLoading: installmentsLoading, isError: installmentsError } = useGetInstallmentsQuery();
 
   const members = membersData?.data ?? [];
   const totalMembers = members.length;
@@ -44,6 +44,17 @@ export default function Dashboard() {
     .slice(0, 10);
 
   const recentInstallments = (installmentsData?.data ?? []).slice(0, 5);
+
+  function isUnpaid(installment: { payment_status?: string; status?: string; transaction_id?: string }) {
+    return !installment.transaction_id && installment.payment_status !== "paid" && String(installment.status ?? "").toLowerCase() !== "paid";
+  }
+
+  const currentDhaka = getCurrentDhakaDate();
+  const allInstallments = installmentsData?.data ?? [];
+  const unpaidAll = allInstallments.filter(isUnpaid).length;
+  const unpaidThisMonth = allInstallments.filter(
+    (i) => isUnpaid(i) && Number(i.year) === currentDhaka.year && Number(i.month) === currentDhaka.month,
+  ).length;
 
   const statsCards = [
     {
@@ -74,6 +85,20 @@ export default function Dashboard() {
       icon: DollarSign,
       color: "text-primary",
     },
+    {
+      title: "Due This Month",
+      value: installmentsLoading ? "..." : installmentsError ? "—" : unpaidThisMonth.toString(),
+      change: "",
+      icon: Clock,
+      color: "text-orange-500",
+    },
+    {
+      title: "Due (All Time)",
+      value: installmentsLoading ? "..." : installmentsError ? "—" : unpaidAll.toString(),
+      change: "",
+      icon: Clock,
+      color: "text-red-500",
+    },
   ];
 
   function memberJoinedUpdated(member: { created_at?: string; updated_at?: string }) {
@@ -95,7 +120,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statsCards.map((stat) => (
           <Card key={stat.title} className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between pb-2">

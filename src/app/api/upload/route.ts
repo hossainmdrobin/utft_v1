@@ -3,6 +3,7 @@ import { v2 as cloudinary, type UploadApiResponse, type UploadApiErrorResponse }
 import { getCurrentMember } from "@/lib/authenticaiton/verifications";
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Media } from "@/models/Media";
+import { AuditLog } from "@/integrations/mongodb/models/AuditLog";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -84,6 +85,20 @@ export async function POST(req: NextRequest) {
       altText: typeof altText === "string" ? altText : "",
       uploadedBy: user._id,
     });
+
+    try {
+      await AuditLog.create({
+        table_name: "Media",
+        record_id: String(media._id),
+        action: "INSERT",
+        description: `File uploaded by ${user.full_name || user.user_id || user.role}: ${file.name}`,
+        new_data: media,
+        changed_by: String(user._id),
+        changed_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.log("Audit log error:", e);
+    }
 
     return NextResponse.json(
       {
