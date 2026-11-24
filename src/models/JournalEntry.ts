@@ -1,3 +1,9 @@
+/**
+ * JournalEntry Model
+ * In this system, double-entry financial transactions are represented by JournalEntry documents.
+ * "Transaction" in accounting routes and services corresponds to this model.
+ */
+
 import { Schema, model, models, Document } from "mongoose";
 
 export type JournalEntryStatus = "draft" | "posted" | "void";

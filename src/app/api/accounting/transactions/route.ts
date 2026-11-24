@@ -10,10 +10,10 @@ export async function GET(req: NextRequest) {
   await getCurrentMember(req);
   const { searchParams } = new URL(req.url);
   const filters: any = {};
-  const dateFrom = searchParams.get("dateFrom");
-  const dateTo = searchParams.get("dateTo");
+  const dateFrom = searchParams.get("dateFrom") || searchParams.get("date_from");
+  const dateTo = searchParams.get("dateTo") || searchParams.get("date_to");
   const order = searchParams.get("order");
-  const member = searchParams.get("member");
+  const member = searchParams.get("member") || searchParams.get("member_id");
   const status = searchParams.get("status");
   const search = searchParams.get("search");
   const account = searchParams.get("account");

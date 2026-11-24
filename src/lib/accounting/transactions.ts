@@ -1,3 +1,9 @@
+/**
+ * Accounting Transaction Service
+ * In this system, double-entry financial transactions are recorded as JournalEntry documents.
+ * "Transaction" and "JournalEntry" refer to the same underlying accounting ledger records.
+ */
+
 import { connectDB } from "@/integrations/mongodb/connection";
 import { Account } from "@/models/Account";
 import { JournalEntry } from "@/models/JournalEntry";
