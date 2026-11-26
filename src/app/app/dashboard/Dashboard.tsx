@@ -17,7 +17,7 @@ export default function Dashboard() {
   const { data: settings, isLoading: settingsLoading } = useGetSettingsQuery();
   const { data: auditLogs, isLoading: activityLoading } = useGetAuditLogsQuery();
   const { data: installmentsData, isLoading: installmentsLoading, isError: installmentsError } = useGetInstallmentsQuery();
-
+console.log(installmentsData)
   const members = membersData?.data ?? [];
   const totalMembers = members.length;
   const activeMembers = members.filter((m) => m.stage === "approved").length;
@@ -253,16 +253,16 @@ export default function Dashboard() {
             ) : recentInstallments.length > 0 ? (
               <div className="space-y-2">
                 {recentInstallments.map((installment) => (
-                  <Link href={`/app/dashboard/members/${installment.member._id}`}>
+                  <Link href={`/app/dashboard/members/${installment.member?._id}`}>
                     <div
                       key={String(installment._id)}
                       className="flex items-center justify-between p-2 rounded hover:bg-accent"
                     >
                       <Avatar className="h-8 w-8 mr-3">
-                        <AvatarImage src={installment.member.profile_photo || ""} />
+                        <AvatarImage src={installment.member?.profile_photo || ""} />
                         <AvatarFallback>
-                          {installment.member.full_name
-                            ? installment.member.full_name
+                          {installment.member?.full_name
+                            ? installment.member?.full_name
                               .split(" ")
                               .map((n) => n[0])
                               .join("")
@@ -270,7 +270,7 @@ export default function Dashboard() {
                         </AvatarFallback>
                       </Avatar>
                       <p className="text-sm text-foreground">
-                        {installment.member.full_name || "Unknown member"}
+                        {installment.member?.full_name || "Unknown member"}
                       </p>
                       <div className="text-right">
                         <p className="text-sm font-medium text-foreground">

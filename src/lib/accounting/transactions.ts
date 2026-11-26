@@ -99,7 +99,7 @@ export async function createTransaction(data: any, user?: any, session?: any) {
     throw new Error("Total debits must equal total credits");
   }
 
-  const entry = await JournalEntryModel.create({
+  const entryDoc = new JournalEntryModel({
     date: new Date(date),
     reference: reference || undefined,
     member: member || null,
@@ -108,18 +108,23 @@ export async function createTransaction(data: any, user?: any, session?: any) {
     status,
     created_by: user?._id || user?.id || undefined,
     actioned_by: user?._id || user?.id || undefined,
-  }, session ? { session } : undefined);
+  });
+  const entry = await entryDoc.save(session ? { session } : undefined);
 
   if (status === "posted") {
     const lineAccountIds = [...new Set(lines.map((line) => String(line.account)))];
-    const accounts = await AccountModel.find({
+    const accountsQuery = AccountModel.find({
       _id: { $in: lineAccountIds.map((id) => new Types.ObjectId(id)) },
-    }).lean();
-    const accountById = new Map(accounts.map((acc) => [String(acc._id), acc]));
+    });
+    if (session) accountsQuery.session(session);
+    const accounts = await accountsQuery.lean();
+    const accountById = new Map(accounts.map((acc: any) => [String(acc._id), acc]));
+    const distinctQuery = AccountModel.distinct("parentAccount", {
+      parentAccount: { $in: lineAccountIds },
+    });
+    if (session) distinctQuery.session(session);
     const parentAccountIds = new Set(
-      (await AccountModel.distinct("parentAccount", {
-        parentAccount: { $in: lineAccountIds },
-      })).map(String),
+      (await distinctQuery).map(String),
     );
     for (const line of lines) {
       const account = accountById.get(String(line.account)) as any;
@@ -138,7 +143,7 @@ export async function createTransaction(data: any, user?: any, session?: any) {
   }
 
   try {
-    await AuditLog.create({
+    const logDoc = new (AuditLog as any)({
       table_name: "JournalEntry",
       record_id: String((entry as any)._id),
       action: "INSERT",
@@ -146,7 +151,8 @@ export async function createTransaction(data: any, user?: any, session?: any) {
       changed_by: user?._id ? String(user._id) : undefined,
       changed_at: new Date().toISOString(),
       new_data: entry,
-    }, session ? { session } : undefined);
+    });
+    await logDoc.save(session ? { session } : undefined);
   } catch (e) {
     console.log("Audit log error:", e);
   }

@@ -44,7 +44,9 @@ export const manualInstallmentApi = injectEndpoint("installmentApi", (builder) =
         }),
         invalidatesTags: (result, error, arg) => [
             { type: "INSTALLMENT", id: arg.member },
-            "INSTALLMENT"
+            "INSTALLMENT",
+            "JournalEntries",
+            "Accounts",
         ],
     }),
     getInstallmentsByMemberId: builder.query<Installment[], GetInstallmentsByMemberIdReq>({
@@ -72,7 +74,9 @@ export const manualInstallmentApi = injectEndpoint("installmentApi", (builder) =
         invalidatesTags: (result, error, arg) => [
             { type: "INSTALLMENT", id: arg.id },
             ...(arg.memberId ? [{ type: "INSTALLMENT" as const, id: arg.memberId }] : []),
-            "INSTALLMENT"
+            "INSTALLMENT",
+            "JournalEntries",
+            "Accounts",
         ],
     })
 }));
